@@ -47,6 +47,18 @@ export class AuthExampleCdkStack extends cdk.Stack {
       partitionKey: { name: 'userId', type: AttributeType.STRING },
       removalPolicy: RemovalPolicy.DESTROY, // WARNING: This will delete the table and its data on stack deletion
     })
+    // Add global indexes.
+    dynamoTable.addGlobalSecondaryIndex({
+      indexName: 'auth-index',
+      partitionKey: {
+        name: 'email', type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'hashedPassword', type: AttributeType.STRING,
+      },
+      // projectionType: ProjectionType.KEYS_ONLY,
+    })
+    // Grant DB access to the lambda.
     dynamoTable.grantReadWriteData(lambdaFunction)
 
     // Create API Gateway.
