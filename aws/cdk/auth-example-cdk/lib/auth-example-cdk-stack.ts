@@ -1,7 +1,8 @@
+import { randomUUID } from 'crypto'
 import * as cdk from 'aws-cdk-lib'
 import { RemovalPolicy } from 'aws-cdk-lib'
 import { LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway'
-import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb'
+import { AttributeType, BillingMode, Table } from 'aws-cdk-lib/aws-dynamodb'
 import { Runtime, Architecture, Code, LogFormat, Function, LayerVersion } from 'aws-cdk-lib/aws-lambda'
 import { Construct } from 'constructs'
 
@@ -34,14 +35,16 @@ export class AuthExampleCdkStack extends cdk.Stack {
       logFormat: LogFormat.JSON,
       layers: [lambdaNodeModuleLayer],
       environment: {
-
+        USERS_TABLE_NAME: tableName,
+        JWT_SECRET: randomUUID(),
       },
     })
 
     // Create DynamoDB.
     const dynamoTable = new Table(this, tableName, {
       tableName: tableName,
-      partitionKey: { name: 'email', type: AttributeType.STRING },
+      billingMode: BillingMode.PAY_PER_REQUEST,
+      partitionKey: { name: 'userId', type: AttributeType.STRING },
       removalPolicy: RemovalPolicy.DESTROY, // WARNING: This will delete the table and its data on stack deletion
     })
     dynamoTable.grantReadWriteData(lambdaFunction)
