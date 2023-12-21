@@ -20,8 +20,6 @@ const buildLambdaResponse = (statusCode, body, options = {}) => {
 // index.js
 export const handler = async (event) => {
   try {
-    // if (process.env.DEBUG) console.log('event :>> ', event)
-
     // Get attributes of the request.
     const reqBody = JSON.parse(event.body)
     const reqMethod = event.httpMethod
@@ -32,7 +30,7 @@ export const handler = async (event) => {
 
     // Console log attributes.
     console.log({
-      reqBody,
+      // reqBody,
       reqMethod,
       reqPath,
       reqPathParameters,
