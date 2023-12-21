@@ -1,17 +1,25 @@
-import * as cdk from 'aws-cdk-lib';
-import { RemovalPolicy } from 'aws-cdk-lib';
-import { LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway';
-import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
-import { Runtime, Architecture, Code, LogFormat, Function } from 'aws-cdk-lib/aws-lambda';
-import { Construct } from 'constructs';
+import * as cdk from 'aws-cdk-lib'
+import { RemovalPolicy } from 'aws-cdk-lib'
+import { LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway'
+import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb'
+import { Runtime, Architecture, Code, LogFormat, Function, LayerVersion } from 'aws-cdk-lib/aws-lambda'
+import { Construct } from 'constructs'
 
+const lambdaNodeModuleLayerName = 'auth-example-lambda-node-module-layer'
 const lambdaName = 'auth-example-lambda'
 const tableName = 'auth-example-users'
 const apiName = 'auth-example-api'
 
 export class AuthExampleCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
-    super(scope, id, props);
+    super(scope, id, props)
+
+    // Create Lambda layer/s.
+    const lambdaNodeModuleLayer = new LayerVersion(this, lambdaNodeModuleLayerName, {
+      layerVersionName: lambdaNodeModuleLayerName,
+      code: Code.fromAsset('../../lambda/auth-example-lambda-node-module-layer'), // Replace with the actual path
+      compatibleRuntimes: [Runtime.NODEJS_20_X], // Choose the appropriate runtime
+    })
 
     // Create Lambda.
     const lambdaFunction = new Function(this, lambdaName, {
@@ -24,6 +32,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
       memorySize: 128,
       retryAttempts: 0,
       logFormat: LogFormat.JSON,
+      layers: [lambdaNodeModuleLayer],
       environment: {
 
       },
