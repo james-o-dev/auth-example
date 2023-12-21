@@ -1,21 +1,4 @@
-
-/**
- * Helper to build a Lambda response object.
- *
- * @param {number} statusCode
- * @param {*} body
- * @param {*} [options]
- */
-const buildLambdaResponse = (statusCode, body, options = {}) => {
-  return {
-    statusCode,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    body: JSON.stringify(body)
-  }
-}
+import { buildLambdaResponse, buildValidationError } from './lib/common.mjs'
 
 // index.js
 export const handler = async (event) => {
@@ -38,12 +21,33 @@ export const handler = async (event) => {
       reqResourcePath,
     })
 
+    // Health route.
     if (reqPath === '/health' && reqMethod === 'GET') return buildLambdaResponse(200, 'I am healthy! ❤❤❤')
+
+    // Auth route.
+    if (reqPath === '/auth' && reqMethod === 'GET') {
+      // TODO
+      throw buildValidationError(501, 'Not yet implemented. Check back soon...')
+    }
+
+    // Sign Up route
+    if (reqPath === '/auth/sign-up' && reqMethod === 'POST') {
+      // TODO
+      throw buildValidationError(501, 'Not yet implemented. Check back soon...')
+    }
+
+    // Sign In route
+    if (reqPath === '/auth/sign-in' && reqMethod === 'POST') {
+      // TODO
+      throw buildValidationError(501, 'Not yet implemented. Check back soon...')
+    }
 
     // API not found or implemented.
     return buildLambdaResponse(404, 'API endpoint not found')
 
   } catch (error) {
+    if (error.validation) return buildLambdaResponse(error.code, error.message)
+
     console.error('Error:', error)
     return buildLambdaResponse(500, 'Internal Server Error')
   }
