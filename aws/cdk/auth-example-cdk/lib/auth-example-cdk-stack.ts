@@ -19,7 +19,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
       runtime: Runtime.NODEJS_20_X,
       architecture: Architecture.ARM_64,
       handler: 'index.handler',
-      code: Code.fromAsset('../../../lambda/auth-example-lambda'),
+      code: Code.fromAsset('../../lambda/auth-example-lambda'),
       timeout: cdk.Duration.seconds(29),
       memorySize: 128,
       retryAttempts: 0,
