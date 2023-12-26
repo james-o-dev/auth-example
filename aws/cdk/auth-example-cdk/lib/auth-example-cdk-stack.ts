@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto'
 import * as cdk from 'aws-cdk-lib'
 import { RemovalPolicy } from 'aws-cdk-lib'
-import { LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway'
+import { EndpointType, LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway'
 import { AttributeType, BillingMode, Table } from 'aws-cdk-lib/aws-dynamodb'
 import { Runtime, Architecture, Code, LogFormat, Function, LayerVersion } from 'aws-cdk-lib/aws-lambda'
 import { Construct } from 'constructs'
@@ -63,7 +63,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
 
     // Create API Gateway.
     // Note: Deploy manually after creation.
-    const api = new RestApi(this, apiName, { restApiName: apiName, deploy: false, })
+    const api = new RestApi(this, apiName, { restApiName: apiName, deploy: false, endpointTypes: [EndpointType.REGIONAL], })
     const integration = new LambdaIntegration(lambdaFunction)
 
     // Health resource.
