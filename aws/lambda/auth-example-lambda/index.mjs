@@ -1,10 +1,12 @@
 import { buildLambdaResponse, buildValidationError } from './lib/common.mjs'
-import { putCommand } from './lib/dynamodb.mjs'
+import { putCommand, queryCommand, } from './lib/dynamodb.mjs'
 
 import { randomUUID } from 'crypto'
 import jsonwebtoken from 'jsonwebtoken'
 import bcryptjs from 'bcryptjs'
 
+// Environment variables.
+const AUTH_INDEX_NAME = process.env.AUTH_INDEX_NAME
 const JWT_SECRET = process.env.JWT_SECRET
 const USERS_TABLE_NAME = process.env.USERS_TABLE_NAME
 
@@ -46,8 +48,14 @@ const signInValidation = (reqBody) => {
   return { email: reqBody.email, password: reqBody.password, }
 }
 
-const findUserViaEmail = async (email) => {
-
+/**
+ * Get the auth header.
+ * * Spread this in the options.header object in the response params.
+ *
+ * @param {string} token
+ */
+const getAuthHeader = (token) => {
+  return { Authorization: `Bearer ${token}` }
 }
 
 /**
@@ -67,11 +75,13 @@ const signUpEndpoint = async (reqBody) => {
   const { email, password } = signInValidation(reqBody)
 
   // Check that the email already exists.
-  // TODO do scan on email
-  if (false) {
-    // TODO
-    throw buildValidationError(409, 'Email already in use.')
-  }
+  const findEmail = await queryCommand(USERS_TABLE_NAME, {
+    indexName: AUTH_INDEX_NAME,
+    attributeValues: {
+      email,
+    }
+  })
+  if (findEmail.Count) throw buildValidationError(409, 'Email already in use.')
 
   // Hash the password.
   const hashedPassword = await hashPassword(password)
@@ -89,26 +99,56 @@ const signUpEndpoint = async (reqBody) => {
   const jwt = generateToken({ email, userId })
 
   // Respond.
-  return buildLambdaResponse(201, { jwt, message: 'User has been created.' })
+  return buildLambdaResponse(201, { message: 'User has been created.' }, {
+    headers: {
+      ...getAuthHeader(jwt)
+    }
+  })
 }
 
 /**
  * Handle the sign-in endpoint.
  *
- * @param {reqBody} reqBody
+ * @param {*} reqBody
  */
 const signInEndpoint = async (reqBody) => {
+  const INVALID_USER_MESSAGE = 'Invalid email or password'
+
   const { email, password } = signInValidation(reqBody)
 
-  // Find email and hashedPassword.
-  if(!'TODO If not found...') {
-    throw buildValidationError(401, 'Invalid email or password')
-  }
+  const findUser = await queryCommand(USERS_TABLE_NAME, {
+    indexName: AUTH_INDEX_NAME,
+    attributeValues: {
+      email,
+    }
+  })
+
+  // Email was not found.
+  if (!findUser.Count) throw buildValidationError(401, INVALID_USER_MESSAGE)
+
+  // User was found, here is the record.
+  const { hashedPassword, userId } = findUser.Items[0]
+
+  const doesPasswordsMatch = await bcryptjs.compare(password, hashedPassword);
+  if (!doesPasswordsMatch) throw buildValidationError(401, INVALID_USER_MESSAGE)
 
   // Else if found, we have the email and the userId.
 
-  // Generate token.
+  // Create JWT.
+  const jwt = generateToken({ email, userId, })
 
+  // Successful login.
+  return buildLambdaResponse(200, { message: 'Sign in successful.' }, {
+    headers: {
+      ...getAuthHeader(jwt)
+    }
+  })
+}
+
+/**
+ * Handle the auth endpoint.
+ */
+const signOutEndpoint = () => {
   // TODO
   throw buildValidationError(501, 'Not yet implemented. Check back soon...')
 }
@@ -147,7 +187,10 @@ export const handler = async (event) => {
     if (reqPath === '/auth/sign-up' && reqMethod === 'POST') response = await signUpEndpoint(reqBody)
 
     // Sign In route.
-    if (reqPath === '/auth/sign-in' && reqMethod === 'POST') response = await signInEndpoint()
+    if (reqPath === '/auth/sign-in' && reqMethod === 'POST') response = await signInEndpoint(reqBody)
+
+    // Sign Out route.
+    if (reqPath === '/auth/sign-out' && reqMethod === 'DELETE') response = await signOutEndpoint()
 
     // Respond.
     return response

@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto'
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
-import { DeleteCommand, GetCommand, PutCommand, DynamoDBDocumentClient, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb"
+import { DeleteCommand, GetCommand, PutCommand, DynamoDBDocumentClient, ScanCommand, UpdateCommand, QueryCommand } from "@aws-sdk/lib-dynamodb"
 
 // DynamoDB client.
 const dynamoDBClient = new DynamoDBClient({})
@@ -123,4 +123,73 @@ export const updateCommand = async (tableName, partitionKey, updateValue) => {
     ReturnValues: "UPDATED_NEW",
   })
   return docClient.send(newUpdateCommand)
+}
+
+
+/**
+ * Executes a query command on a specified table using the provided query options.
+ *
+ * @param {string} tableName - The name of the table to execute the query on.
+ * @param {QueryOptions} queryOptions - The options for the query. See {@link queryCommandBuilder} for details.
+ */
+export const queryCommand = async (tableName, queryOptions) => {
+  const queryParams = queryCommandBuilder(queryOptions)
+
+  const newQueryCommand = new QueryCommand({
+    TableName: tableName,
+    ...queryParams
+  })
+
+  return docClient.send(newQueryCommand)
+}
+
+/**
+ * Represents options for a query.
+ *
+ * @typedef {Object} QueryOptions
+ * @property {string} indexName - The name of the index.
+ * @property {Object} attributeValues - The attribute values for the query.
+ *   You can add more attributes as needed.
+ */
+
+/**
+ * Builds a query command based on the provided query options.
+ *
+ * @param {QueryOptions} queryOptions - The options for the query.
+ *
+ * @returns {Object} The query command with the following properties:
+ *   - IndexName: The name of the index.
+ *   - KeyConditionExpression: The key condition expression for the query.
+ *   - ExpressionAttributeNames: The expression attribute names for the query.
+ *   - ExpressionAttributeValues: The expression attribute values for the query.
+ */
+const queryCommandBuilder = (queryOptions) => {
+  const attributeValues = queryOptions.attributeValues
+
+  const keyConditionExpression = Object.keys(attributeValues)
+    .map((attributeName, index) => `#attr${index} = :val${index}`)
+    .join(' AND ');
+
+  const expressionAttributeNames = Object.keys(attributeValues).reduce(
+    (acc, attributeName, index) => ({
+      ...acc,
+      [`#attr${index}`]: attributeName,
+    }),
+    {}
+  );
+
+  const expressionAttributeValues = Object.keys(attributeValues).reduce(
+    (acc, attributeName, index) => ({
+      ...acc,
+      [`:val${index}`]: attributeValues[attributeName],
+    }),
+    {}
+  );
+
+  return {
+    IndexName: queryOptions.indexName,
+    KeyConditionExpression: keyConditionExpression,
+    ExpressionAttributeNames: expressionAttributeNames,
+    ExpressionAttributeValues: expressionAttributeValues,
+  }
 }
