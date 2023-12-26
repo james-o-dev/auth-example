@@ -59,11 +59,28 @@ const getAuthHeader = (token) => {
 }
 
 /**
- * Handle the auth endpoint.
+ * Helper: Authenticate and verify a user based on the provided request headers.
+ *
+ * @param {*} reqHeaders
  */
-const authEndpoint = async () => {
-  // TODO
-  throw buildValidationError(501, 'Not yet implemented. Check back soon...')
+const authEndpoint = async (reqHeaders) => {
+  const throwUnauth = () => {
+    throw buildValidationError(401, 'Unauthorized.')
+  }
+
+  const authHeader = reqHeaders.Authorization
+  if (!authHeader) throwUnauth()
+
+  const token = authHeader.split(' ')[1]
+  if (!token) throwUnauth()
+
+  try {
+    const verified = jsonwebtoken.verify(token, JWT_SECRET)
+
+    return buildLambdaResponse(200, verified)
+  } catch (_) {
+    throwUnauth()
+  }
 }
 
 /**
@@ -163,6 +180,7 @@ export const handler = async (event) => {
     const reqResourcePath = event.requestContext.resourcePath
     const reqPathParameters = event.pathParameters
     const reqQueryStringParameters = event.queryStringParameters
+    const reqHeaders = event.headers
 
     // Console log attributes.
     console.log({
@@ -181,7 +199,7 @@ export const handler = async (event) => {
     if (reqPath === '/health' && reqMethod === 'GET') response = buildLambdaResponse(200, 'I am healthy! ❤❤❤')
 
     // Auth route.
-    if (reqPath === '/auth' && reqMethod === 'GET') response = await authEndpoint()
+    if (reqPath === '/auth' && reqMethod === 'GET') response = await authEndpoint(reqHeaders)
 
     // Sign Up route.
     if (reqPath === '/auth/sign-up' && reqMethod === 'POST') response = await signUpEndpoint(reqBody)
