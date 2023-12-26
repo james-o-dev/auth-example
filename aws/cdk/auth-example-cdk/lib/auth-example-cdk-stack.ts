@@ -2,13 +2,14 @@ import { randomUUID } from 'crypto'
 import * as cdk from 'aws-cdk-lib'
 import { RemovalPolicy } from 'aws-cdk-lib'
 import { EndpointType, LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway'
-import { AttributeType, BillingMode, Table } from 'aws-cdk-lib/aws-dynamodb'
+import { AttributeType, BillingMode, ProjectionType, Table } from 'aws-cdk-lib/aws-dynamodb'
 import { Runtime, Architecture, Code, LogFormat, Function, LayerVersion } from 'aws-cdk-lib/aws-lambda'
 import { Construct } from 'constructs'
 
 const lambdaNodeModuleLayerName = 'auth-example-lambda-node-module-layer'
 const lambdaName = 'auth-example-lambda'
 const tableName = 'auth-example-users'
+const tableAuthIndexName = 'auth-index'
 const apiName = 'auth-example-api'
 
 export class AuthExampleCdkStack extends cdk.Stack {
@@ -35,6 +36,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
       logFormat: LogFormat.JSON,
       layers: [lambdaNodeModuleLayer],
       environment: {
+        AUTH_INDEX_NAME: tableAuthIndexName,
         USERS_TABLE_NAME: tableName,
         JWT_SECRET: randomUUID(),
       },
@@ -49,14 +51,17 @@ export class AuthExampleCdkStack extends cdk.Stack {
     })
     // Add global indexes.
     dynamoTable.addGlobalSecondaryIndex({
-      indexName: 'auth-index',
+      indexName: tableAuthIndexName,
       partitionKey: {
         name: 'email', type: AttributeType.STRING,
       },
-      sortKey: {
-        name: 'hashedPassword', type: AttributeType.STRING,
-      },
-      // projectionType: ProjectionType.KEYS_ONLY,
+      projectionType: ProjectionType.INCLUDE,
+      // projectionType: ProjectionType.ALL,
+      nonKeyAttributes: [
+        // Add other attributes.
+        'hashedPassword',
+        'userId',
+      ]
     })
     // Grant DB access to the lambda.
     dynamoTable.grantReadWriteData(lambdaFunction)
@@ -81,5 +86,9 @@ export class AuthExampleCdkStack extends cdk.Stack {
     // SignIn resource.
     const signInResource = authResource.addResource('sign-in')
     signInResource.addMethod('POST', integration)
+
+    // SignOut resource.
+    const signOutResource = authResource.addResource('sign-out')
+    signOutResource.addMethod('DELETE', integration)
   }
 }
