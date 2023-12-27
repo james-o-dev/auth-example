@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-import 'source-map-support/register';
-import * as cdk from 'aws-cdk-lib';
-import { AuthExampleCdkStack } from '../lib/auth-example-cdk-stack';
+import 'source-map-support/register'
+import * as cdk from 'aws-cdk-lib'
+import { AuthExampleCdkStack } from '../lib/auth-example-cdk-stack'
 
-const app = new cdk.App();
+const app = new cdk.App()
 new AuthExampleCdkStack(app, 'AuthExampleCdkStack', {
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
@@ -18,4 +18,4 @@ new AuthExampleCdkStack(app, 'AuthExampleCdkStack', {
   // env: { account: '123456789012', region: 'us-east-1' },
 
   /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
-});
+})

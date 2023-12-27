@@ -15,5 +15,15 @@
   "plugins": [
     "@typescript-eslint"
   ],
-  "rules": {}
+  "rules": {
+    "semi": [
+      "error",
+      "never"
+    ],
+    "no-extra-semi": "error",
+    "quotes": [
+      "error",
+      "single"
+    ]
+  }
 }
