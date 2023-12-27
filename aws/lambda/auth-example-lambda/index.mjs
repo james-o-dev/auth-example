@@ -190,6 +190,7 @@ export const handler = async (event) => {
       reqPathParameters,
       reqQueryStringParameters,
       reqResourcePath,
+      reqHeaders,
     })
 
     // By default, the API is not found or implemented.
