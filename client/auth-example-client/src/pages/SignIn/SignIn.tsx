@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { signIn } from '../../services/authService';
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { signIn } from '../../services/authService'
 
 const SignIn = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const navigate = useNavigate()
@@ -50,7 +50,7 @@ const SignIn = () => {
         <Link to='/'>Home</Link>
       </div>
     </div>
-  );
+  )
 }
 
-export default SignIn;
+export default SignIn

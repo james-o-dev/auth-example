@@ -1,8 +1,8 @@
 // Navbar.tsx
 
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { signOut } from '../../services/authService';
+import React from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { signOut } from '../../services/authService'
 
 export interface NavbarItem {
   to: string,
@@ -44,7 +44,7 @@ const Navbar: React.FC<NavbarProps> = ({ navItems = NAV_ITEMS }) => {
         </li>
       </ul>
     </nav>
-  );
-};
+  )
+}
 
-export default Navbar;
+export default Navbar

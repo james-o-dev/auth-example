@@ -1,19 +1,19 @@
 // Import React and required hooks
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { signUp } from '../../services/authService';
+import React, { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { signUp } from '../../services/authService'
 
 // Define the SignUp component
 const SignUp: React.FC = () => {
   // State to hold form input values
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [email, setEmail] = useState<string>('')
+  const [password, setPassword] = useState<string>('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
 
   // Function to handle form submission
   const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+    event.preventDefault()
 
     // You can make an API call or handle signup logic as per your application requirements
     // For simplicity, logging the input values to the console in this example
@@ -27,7 +27,7 @@ const SignUp: React.FC = () => {
     } finally {
       setIsSubmitting(false)
     }
-  };
+  }
 
   return (
     <div>
@@ -63,7 +63,7 @@ const SignUp: React.FC = () => {
         <Link to='/'>Home</Link>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default SignUp;
+export default SignUp
