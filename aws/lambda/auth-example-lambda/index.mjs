@@ -49,16 +49,6 @@ const signInValidation = (reqBody) => {
 }
 
 /**
- * Get the auth header.
- * * Spread this in the options.header object in the response params.
- *
- * @param {string} token
- */
-const getAuthHeader = (token) => {
-  return { Authorization: `Bearer ${token}` }
-}
-
-/**
  * Helper: Authenticate and verify a user based on the provided request headers.
  *
  * @param {*} reqHeaders
@@ -113,14 +103,10 @@ const signUpEndpoint = async (reqBody) => {
   })
 
   // Create JWT.
-  const jwt = generateToken({ email, userId })
+  const token = generateToken({ email, userId })
 
   // Respond.
-  return buildLambdaResponse(201, { message: 'User has been created.' }, {
-    headers: {
-      ...getAuthHeader(jwt)
-    }
-  })
+  return buildLambdaResponse(201, { message: 'User has been created.', token })
 }
 
 /**
@@ -152,14 +138,10 @@ const signInEndpoint = async (reqBody) => {
   // Else if found, we have the email and the userId.
 
   // Create JWT.
-  const jwt = generateToken({ email, userId, })
+  const token = generateToken({ email, userId, })
 
   // Successful login.
-  return buildLambdaResponse(200, { message: 'Sign in successful.' }, {
-    headers: {
-      ...getAuthHeader(jwt)
-    }
-  })
+  return buildLambdaResponse(200, { message: 'Sign in successful.', token })
 }
 
 /**
