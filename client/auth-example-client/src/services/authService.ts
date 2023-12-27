@@ -11,6 +11,7 @@ export const apiHealth = async () => {
 
     const response = await fetch(`${API_BASE}/health`)
     const healthResponse = await response.json()
+    if (!response.ok) throw new Error(typeof healthResponse === 'object' ? JSON.stringify(healthResponse) : healthResponse)
     return healthResponse
   } catch (error) {
     return 'Not good ☹'
