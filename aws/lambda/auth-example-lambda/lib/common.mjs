@@ -22,6 +22,8 @@ export const buildLambdaResponse = (statusCode, body, options = {}) => {
   return {
     statusCode,
     headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': true,
       'Content-Type': 'application/json',
       ...options.headers,
     },
