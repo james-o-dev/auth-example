@@ -9,6 +9,7 @@ import bcryptjs from 'bcryptjs'
 const AUTH_INDEX_NAME = process.env.AUTH_INDEX_NAME
 const JWT_SECRET = process.env.JWT_SECRET
 const USERS_TABLE_NAME = process.env.USERS_TABLE_NAME
+const ACCESS_TOKEN_COOKIE_NAME = 'access-token'
 
 /**
  * Helper: Has a password.
@@ -49,16 +50,6 @@ const signInValidation = (reqBody) => {
 }
 
 /**
- * Get the auth header.
- * * Spread this in the options.header object in the response params.
- *
- * @param {string} token
- */
-const getAuthHeader = (token) => {
-  return { Authorization: `Bearer ${token}` }
-}
-
-/**
  * Helper: Authenticate and verify a user based on the provided request headers.
  *
  * @param {*} reqHeaders
@@ -68,13 +59,12 @@ const authEndpoint = async (reqHeaders) => {
     throw buildValidationError(401, 'Unauthorized.')
   }
 
-  const authHeader = reqHeaders.Authorization
-  if (!authHeader) throwUnauth()
-
-  const token = authHeader.split(' ')[1]
-  if (!token) throwUnauth()
-
   try {
+    const cookieArray = reqHeaders.Cookie.split(';')
+
+    const cookieFound = cookieArray.find(cookie => cookie.includes(ACCESS_TOKEN_COOKIE_NAME + '='))
+    const [, token] = cookieFound.split('=')
+
     const verified = jsonwebtoken.verify(token, JWT_SECRET)
 
     return buildLambdaResponse(200, verified)
@@ -118,7 +108,7 @@ const signUpEndpoint = async (reqBody) => {
   // Respond.
   return buildLambdaResponse(201, { message: 'User has been created.' }, {
     headers: {
-      ...getAuthHeader(jwt)
+      'Set-Cookie': `${ACCESS_TOKEN_COOKIE_NAME}=${jwt}; Path=/; Max-Age=3600; Secure; HttpOnly`, // Adjust Max-Age as needed
     }
   })
 }
@@ -157,7 +147,7 @@ const signInEndpoint = async (reqBody) => {
   // Successful login.
   return buildLambdaResponse(200, { message: 'Sign in successful.' }, {
     headers: {
-      ...getAuthHeader(jwt)
+      'Set-Cookie': `${ACCESS_TOKEN_COOKIE_NAME}=${jwt}; Path=/; Max-Age=3600; Secure; HttpOnly`, // Adjust Max-Age as needed
     }
   })
 }
@@ -166,8 +156,11 @@ const signInEndpoint = async (reqBody) => {
  * Handle the auth endpoint.
  */
 const signOutEndpoint = () => {
-  // TODO
-  throw buildValidationError(501, 'Not yet implemented. Check back soon...')
+  return buildLambdaResponse(204, 'User has signed out.', {
+    headers: {
+      'Set-Cookie': `${ACCESS_TOKEN_COOKIE_NAME}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; HttpOnly`
+    }
+  })
 }
 
 // index.js
