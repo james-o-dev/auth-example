@@ -25,6 +25,7 @@ const Navbar: React.FC<NavbarProps> = ({ navItems = NAV_ITEMS }) => {
 
   const onSignOut = () => {
     signOut()
+    alert('You have been signed out.')
     navigate('/sign-in')
   }
 

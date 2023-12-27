@@ -8,6 +8,7 @@ const SignIn = () => {
   const [password, setPassword] = useState('')
   const navigate = useNavigate()
 
+  // Handle form submission.
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (isSubmitting) return
@@ -16,10 +17,10 @@ const SignIn = () => {
     setIsSubmitting(true)
     try {
       await signIn(email, password)
-      alert('Sign in successful.')
+      alert('Sign in successful; You will be redirected shortly.')
       navigate('/protected')
     } catch (error) {
-      alert('Sign in unsuccessful.')
+      alert('Sign in unsuccessful; Please try again.')
     } finally {
       setIsSubmitting(false)
     }

@@ -13,6 +13,7 @@ const isAuthenticatedLoader = async () => {
     return response
 
   } catch (error) {
+    alert('You are not authenticated; Please sign in.')
     return redirect('/sign-in')
   }
 }
