@@ -147,7 +147,7 @@ const signInEndpoint = async (reqBody) => {
   // User was found, here is the record.
   const { hashedPassword, userId } = findUser.Items[0]
 
-  const doesPasswordsMatch = await bcryptjs.compare(password, hashedPassword);
+  const doesPasswordsMatch = await bcryptjs.compare(password, hashedPassword)
   if (!doesPasswordsMatch) throw buildValidationError(401, INVALID_USER_MESSAGE)
 
   // Else if found, we have the email and the userId.

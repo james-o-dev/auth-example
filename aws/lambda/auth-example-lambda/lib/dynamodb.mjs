@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto'
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
-import { DeleteCommand, GetCommand, PutCommand, DynamoDBDocumentClient, ScanCommand, UpdateCommand, QueryCommand } from "@aws-sdk/lib-dynamodb"
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DeleteCommand, GetCommand, PutCommand, DynamoDBDocumentClient, ScanCommand, UpdateCommand, QueryCommand } from '@aws-sdk/lib-dynamodb'
 
 // DynamoDB client.
 const dynamoDBClient = new DynamoDBClient({})
@@ -118,9 +118,9 @@ export const updateCommand = async (tableName, partitionKey, updateValue) => {
     UpdateExpression: `set ${field} = :value`,
     ConditionExpression: `attribute_exists(${partitionKeyName})`, // Only update, do not create. @see https://stackoverflow.com/a/41874889
     ExpressionAttributeValues: {
-      ":value": value,
+      ':value': value,
     },
-    ReturnValues: "UPDATED_NEW",
+    ReturnValues: 'UPDATED_NEW',
   })
   return docClient.send(newUpdateCommand)
 }
@@ -168,7 +168,7 @@ const queryCommandBuilder = (queryOptions) => {
 
   const keyConditionExpression = Object.keys(attributeValues)
     .map((attributeName, index) => `#attr${index} = :val${index}`)
-    .join(' AND ');
+    .join(' AND ')
 
   const expressionAttributeNames = Object.keys(attributeValues).reduce(
     (acc, attributeName, index) => ({
@@ -176,7 +176,7 @@ const queryCommandBuilder = (queryOptions) => {
       [`#attr${index}`]: attributeName,
     }),
     {}
-  );
+  )
 
   const expressionAttributeValues = Object.keys(attributeValues).reduce(
     (acc, attributeName, index) => ({
@@ -184,7 +184,7 @@ const queryCommandBuilder = (queryOptions) => {
       [`:val${index}`]: attributeValues[attributeName],
     }),
     {}
-  );
+  )
 
   return {
     IndexName: queryOptions.indexName,
