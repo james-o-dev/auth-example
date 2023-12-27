@@ -9,8 +9,9 @@
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk",
-    "synth": "cdk synth",
-    "deploy": "cdk deploy"
+    "cdk:synth": "cdk synth && npm run clean-cdk.out",
+    "cdk:deploy": "cdk deploy && npm run clean-cdk.out",
+    "clean-cdk.out": "rimraf cdk.out/"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",
