@@ -1,6 +1,7 @@
 // authService.ts
 
 const API_BASE = '' // Add the API Gateway base URL here.
+if (!API_BASE) throw new Error('API_BASE is not set.')
 
 export const TOKEN_STORAGE_NAME = 'token'
 export const USER_STORAGE_NAME = 'user'
@@ -18,8 +19,6 @@ export const signOut = () => {
  */
 export const apiHealth = async () => {
   try {
-    if (!API_BASE) throw new Error('API_BASE is not set.')
-
     const response = await fetch(`${API_BASE}/health`)
     const healthResponse = await response.json()
     if (!response.ok) throw new Error(typeof healthResponse === 'object' ? JSON.stringify(healthResponse) : healthResponse)
@@ -34,8 +33,6 @@ export const apiHealth = async () => {
  */
 export const isAuthenticated = async () => {
   try {
-    if (!API_BASE) throw new Error('API_BASE is not set.')
-
     // Simulate an asynchronous operation, e.g., fetching user data from a server
     const response = await fetch(`${API_BASE}/auth`, {
       method: 'GET',
