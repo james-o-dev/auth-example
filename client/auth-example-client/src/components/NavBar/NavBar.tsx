@@ -1,7 +1,7 @@
 // Navbar.tsx
 
 import React from 'react';
-import { Link, redirect } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { signOut } from '../../services/authService';
 
 export interface NavbarItem {
@@ -21,9 +21,11 @@ const NAV_ITEMS: NavbarItem[] = [
 ]
 
 const Navbar: React.FC<NavbarProps> = ({ navItems = NAV_ITEMS }) => {
+  const navigate = useNavigate()
+
   const onSignOut = () => {
     signOut()
-    redirect('/sign-in')
+    navigate('/sign-in')
   }
 
   return (

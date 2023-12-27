@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Link, redirect } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { signIn } from '../../services/authService';
 
 const SignIn = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const navigate = useNavigate()
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -16,7 +17,7 @@ const SignIn = () => {
     try {
       await signIn(email, password)
       alert('Sign in successful.')
-      redirect('/protected')
+      navigate('/protected')
     } catch (error) {
       alert('Sign in unsuccessful.')
     } finally {
