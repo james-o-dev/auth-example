@@ -11,7 +11,17 @@ const JWT_SECRET = process.env.JWT_SECRET
 const USERS_TABLE_NAME = process.env.USERS_TABLE_NAME
 
 /**
- * Helper: Has a password.
+ * Helper: Returns a standardized object of the JWT payload.
+ *
+ * @param {string} email
+ * @param {string} userId
+ */
+const getJwtPayload = (email, userId) => {
+  return { email, userId }
+}
+
+/**
+ * Helper: Hash a password.
  *
  * @param {string} password
  */
@@ -61,13 +71,17 @@ const authEndpoint = async (reqHeaders) => {
   const authHeader = reqHeaders.Authorization
   if (!authHeader) throwUnauth()
 
-  const token = authHeader.split(' ')[1]
-  if (!token) throwUnauth()
+  const incomingToken = authHeader.split(' ')[1]
+  if (!incomingToken) throwUnauth()
 
   try {
-    const verified = jsonwebtoken.verify(token, JWT_SECRET)
+    const { email, userId } = jsonwebtoken.verify(incomingToken, JWT_SECRET)
 
-    return buildLambdaResponse(200, verified)
+    // Return a new extended token once verified.
+    const user = getJwtPayload(email, userId)
+    const token = generateToken(user)
+
+    return buildLambdaResponse(200, { message: 'Token verified.', user, token, })
   } catch (_) {
     throwUnauth()
   }
@@ -103,10 +117,11 @@ const signUpEndpoint = async (reqBody) => {
   })
 
   // Create JWT.
-  const token = generateToken({ email, userId })
+  const user = getJwtPayload(email, userId)
+  const token = generateToken(user)
 
   // Respond.
-  return buildLambdaResponse(201, { message: 'User has been created.', token })
+  return buildLambdaResponse(201, { message: 'User has been created.', user, token })
 }
 
 /**
@@ -138,10 +153,11 @@ const signInEndpoint = async (reqBody) => {
   // Else if found, we have the email and the userId.
 
   // Create JWT.
-  const token = generateToken({ email, userId, })
+  const user = getJwtPayload(email, userId)
+  const token = generateToken(user)
 
   // Successful login.
-  return buildLambdaResponse(200, { message: 'Sign in successful.', token })
+  return buildLambdaResponse(200, { message: 'Sign in successful.', user, token })
 }
 
 /**
