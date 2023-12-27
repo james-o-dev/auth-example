@@ -1,5 +1,5 @@
 const CORS_ORIGIN = process.env.CORS_ORIGIN
-if (!CORS_ORIGIN) throw new Error('CORS_ORIGIN environment variable has not been set.')
+if (!CORS_ORIGIN || CORS_ORIGIN === '*') throw new Error('CORS_ORIGIN environment variable has not been set; It can not be a wildcard (*) either.')
 
 /**
  * Returns an object used to throw validation errors.
