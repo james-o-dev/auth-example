@@ -69,8 +69,6 @@ export const isAuthenticated = async () => {
  * @param {string} password - User's password.
  */
 export const signIn = async (email: string, password: string) => {
-  // Ensure that API_BASE is set before making the request.
-  if (!API_BASE) throw new Error('API_BASE is not set.')
 
   try {
     // Send a POST request to the sign-in endpoint with user credentials.
@@ -97,7 +95,53 @@ export const signIn = async (email: string, password: string) => {
     // Handle and log any errors that occur during the sign-in process.
     console.error('Error during sign-in:', error)
 
-    // Clear existing token, if there is one.
+    // Clear existing tokens, if there are any.
+    signOut()
+
+    // Re-throw the error to indicate that sign-in was unsuccessful.
+    throw error
+  }
+}
+
+/**
+ * Signs up and authenticates the newly created user.
+ *
+ * This function is similar to signIn(), but it creates a new user in the database.
+ * It is recommended to use signIn() instead of signUp() if you already have a user account.
+ *
+ * This function also stores the authentication token in the local storage.
+ *
+ * @param {string} email - User's email address.
+ * @param {string} password - User's password.
+ */
+export const signUp = async (email: string, password: string) => {
+
+  try {
+    // Send a POST request to the sign-in endpoint with user credentials.
+    const response = await fetch(`${API_BASE}/auth/sign-up`, {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+
+    // Parse the JSON response from the server.
+    const successfulSignUp = await response.json()
+
+    if (!response.ok) throw new Error(successfulSignUp)
+
+    // Store the authentication token in the local storage.
+    localStorage.setItem(TOKEN_STORAGE_NAME, successfulSignUp.token)
+    localStorage.setItem(USER_STORAGE_NAME, JSON.stringify(successfulSignUp.user))
+
+    // Return the authentication result.
+    return successfulSignUp
+  } catch (error) {
+    // Handle and log any errors that occur during the sign-in process.
+    console.error('Error during sign-up:', error)
+
+    // Clear existing tokens, if there are any.
     signOut()
 
     // Re-throw the error to indicate that sign-in was unsuccessful.
