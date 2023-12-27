@@ -1,3 +1,5 @@
+const CORS_ORIGIN = process.env.CORS_ORIGIN
+if (!CORS_ORIGIN) throw new Error('CORS_ORIGIN environment variable has not been set.')
 
 /**
  * Returns an object used to throw validation errors.
@@ -22,7 +24,7 @@ export const buildLambdaResponse = (statusCode, body, options = {}) => {
   return {
     statusCode,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': CORS_ORIGIN,
       'Access-Control-Allow-Credentials': true,
       'Content-Type': 'application/json',
       ...options.headers,

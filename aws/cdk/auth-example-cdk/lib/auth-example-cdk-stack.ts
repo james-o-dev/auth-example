@@ -11,6 +11,7 @@ const lambdaName = 'auth-example-lambda'
 const tableName = 'auth-example-users'
 const tableAuthIndexName = 'auth-index'
 const apiName = 'auth-example-api'
+const corsOrigin = '' // Set this to the domain, depending on where the client is hosted.
 
 export class AuthExampleCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -37,6 +38,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
       layers: [lambdaNodeModuleLayer],
       environment: {
         AUTH_INDEX_NAME: tableAuthIndexName,
+        CORS_ORIGIN: corsOrigin,
         USERS_TABLE_NAME: tableName,
         JWT_SECRET: randomUUID(),
       },
