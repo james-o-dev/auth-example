@@ -15,6 +15,15 @@ export const signOut = () => {
 }
 
 /**
+ * Helper: Add the authentication token to the request headers.
+ */
+const authHeader = () => {
+  return {
+    Authorization: `Bearer ${localStorage.getItem(TOKEN_STORAGE_NAME)}`
+  }
+}
+
+/**
  * Fetches the health status from the API endpoint.
  */
 export const apiHealth = async () => {
@@ -37,8 +46,8 @@ export const isAuthenticated = async () => {
     const response = await fetch(`${API_BASE}/auth`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem(TOKEN_STORAGE_NAME)}`,
         'Content-Type': 'application/json',
+        ...authHeader(), // Add the authentication token to the request headers.
       },
       credentials: 'include',
     })
@@ -165,7 +174,7 @@ export const changePassword = async (oldPassword: string, newPassword: string, c
     body: JSON.stringify({ oldPassword, newPassword, confirmPassword }),
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem(TOKEN_STORAGE_NAME)}`,
+      ...authHeader(), // Add the authentication token to the request headers.
     },
     credentials: 'include',
   })
