@@ -113,14 +113,15 @@ export const signIn = async (email: string, password: string) => {
  *
  * @param {string} email - User's email address.
  * @param {string} password - User's password.
+ * @param {string} confirmPassword - User's password, re-confirmed.
  */
-export const signUp = async (email: string, password: string) => {
+export const signUp = async (email: string, password: string, confirmPassword: string) => {
 
   try {
     // Send a POST request to the sign-in endpoint with user credentials.
     const response = await fetch(`${API_BASE}/auth/sign-up`, {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, confirmPassword }),
       headers: {
         'Content-Type': 'application/json',
       },

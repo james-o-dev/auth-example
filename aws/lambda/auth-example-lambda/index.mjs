@@ -44,7 +44,7 @@ const generateToken = (payload, expiresIn = '1h') => {
 }
 
 /**
- * Helper: Do sign up and sign in validation.
+ * Helper: Do sign in validation.
  * * Throws a 400 error if they are invalid.
  * * TODO: Replace with API Gateway validation
  *
@@ -54,6 +54,20 @@ const signInValidation = (reqBody) => {
   if (!reqBody) throw buildValidationError(400, 'Invalid request body.')
   if (!reqBody.email) throw buildValidationError(400, 'Invalid email.')
   if (!reqBody.password) throw buildValidationError(400, 'Invalid password.')
+
+  return { email: reqBody.email, password: reqBody.password, }
+}
+
+/**
+ * Helper: Do sign up validation.
+ * * Throws a 400 error if they are invalid.
+ * * TODO: Replace with API Gateway validation
+ *
+ * @param {*} reqBody
+ */
+const signUpValidation = (reqBody) => {
+  if (!reqBody.confirmPassword) throw buildValidationError(400, 'Password not re-confirmed.')
+  if (reqBody.password !== reqBody.confirmPassword) throw buildValidationError(400, 'Passwords do not match.')
 
   return { email: reqBody.email, password: reqBody.password, }
 }
@@ -93,7 +107,8 @@ const authEndpoint = async (reqHeaders) => {
  * @param {*} reqBody
  */
 const signUpEndpoint = async (reqBody) => {
-  const { email, password } = signInValidation(reqBody)
+  signInValidation(reqBody)
+  const { email, password } = signUpValidation(reqBody)
 
   // Check that the email already exists.
   const findEmail = await queryCommand(USERS_TABLE_NAME, {

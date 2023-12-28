@@ -43,7 +43,7 @@ const SignUp: React.FC = () => {
     // For simplicity, logging the input values to the console in this example
     setIsSubmitting(true)
     try {
-      await signUp(email, password)
+      await signUp(email, password, confirmPassword)
       alert('Sign up successful; You will be redirected shortly.')
       navigate('/protected')
     } catch (error) {
