@@ -4,6 +4,7 @@ import { getCommand, putCommand, queryCommand, updateCommand, } from './lib/dyna
 import { randomUUID } from 'crypto'
 import jsonwebtoken from 'jsonwebtoken'
 import bcryptjs from 'bcryptjs'
+import { gmailSend } from './lib/mail.mjs'
 
 // Environment variables.
 const AUTH_INDEX_NAME = process.env.AUTH_INDEX_NAME
@@ -260,7 +261,7 @@ const resetPasswordEndpoint = async (reqBody) => {
   const { userId } = findUser.Items[0]
 
   // Generate a new password.
-  const newPassword = `${generateRandomString(4)} ${generateRandomString(4)}`
+  const newPassword = `${generateRandomString(4)}-${generateRandomString(4)}-${generateRandomString(4)}`
 
   // Hash the password.
   const hashedPassword = await hashPassword(newPassword)
@@ -269,10 +270,21 @@ const resetPasswordEndpoint = async (reqBody) => {
   await updateCommand(USERS_TABLE_NAME, { userId }, { hashedPassword })
 
   // Send the new password to the user.
-  // TODO
+  await gmailSend({
+    to: reqBody.email,
+    subject: 'auth-example: Password reset',
+    html: `
+      <div>Hi,</div>
+      <br>
+      <div>Your new password is:</div>
+      <div><strong>${newPassword}</strong></div>
+      <br>
+      <div>It is recommended to change this password to your own preference at your earliest convenience.</div>
+    `
+  })
 
   // Respond.
-  return buildLambdaResponse(200, { message: 'Password has been reset; Note: password sent in response while mailing is under development.', password: newPassword  })
+  return buildLambdaResponse(200, { message: 'An auto-generated password has been mailed to you.' })
 
   // return buildLambdaResponse(501, 'Not yet implemented. Check back soon...')
 }
