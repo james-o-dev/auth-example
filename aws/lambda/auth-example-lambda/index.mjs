@@ -1,4 +1,4 @@
-import { buildLambdaResponse, buildValidationError } from './lib/common.mjs'
+import { buildLambdaResponse, buildValidationError, generateRandomString } from './lib/common.mjs'
 import { getCommand, putCommand, queryCommand, updateCommand, } from './lib/dynamodb.mjs'
 
 import { randomUUID } from 'crypto'
@@ -95,6 +95,22 @@ const verifyAuth = (reqHeaders) => {
 }
 
 /**
+ * Helper: Find a user from the provided email.
+ * * Returns the Dyanamo DB response.
+ * * Throws an error if there is a DB error.
+ *
+ * @param {string} email
+ */
+const findUserFromEmailQuery = (email) => {
+  return queryCommand(USERS_TABLE_NAME, {
+    indexName: AUTH_INDEX_NAME,
+    attributeValues: {
+      email,
+    }
+  })
+}
+
+/**
  * Helper: Authenticate and verify a user based on the provided request headers.
  *
  * @param {*} reqHeaders
@@ -127,12 +143,7 @@ const signUpEndpoint = async (reqBody) => {
   const { email, password } = signUpValidation(reqBody)
 
   // Check that the email already exists.
-  const findEmail = await queryCommand(USERS_TABLE_NAME, {
-    indexName: AUTH_INDEX_NAME,
-    attributeValues: {
-      email,
-    }
-  })
+  const findEmail = await findUserFromEmailQuery(email)
   if (findEmail.Count) throw buildValidationError(409, 'Email already in use.')
 
   // Hash the password.
@@ -165,12 +176,7 @@ const signInEndpoint = async (reqBody) => {
 
   const { email, password } = signInValidation(reqBody)
 
-  const findUser = await queryCommand(USERS_TABLE_NAME, {
-    indexName: AUTH_INDEX_NAME,
-    attributeValues: {
-      email,
-    }
-  })
+  const findUser = await findUserFromEmailQuery(email)
 
   // Email was not found.
   if (!findUser.Count) throw buildValidationError(401, INVALID_USER_MESSAGE)
@@ -236,6 +242,41 @@ const changePasswordEndpoint = async (userId, reqBody) => {
   return buildLambdaResponse(200, { message: 'Password has been changed.' })
 }
 
+/**
+ * Reset password endpoint.
+ *
+ * @param {*} reqBody
+ */
+const resetPasswordEndpoint = async (reqBody) => {
+  if (!reqBody) throw buildValidationError(400, 'Invalid request body.')
+  if (!reqBody.email) throw buildValidationError(400, 'Invalid email.')
+
+  // Find email.
+  const findUser = await findUserFromEmailQuery(reqBody.email)
+
+  // If email not found, return with a 404.
+  if (!findUser.Count) throw buildValidationError(404, 'Email not found.')
+
+  const { userId } = findUser.Items[0]
+
+  // Generate a new password.
+  const newPassword = generateRandomString(8)
+
+  // Hash the password.
+  const hashedPassword = await hashPassword(newPassword)
+
+  // Update the password in the DB.
+  await updateCommand(USERS_TABLE_NAME, { userId }, { hashedPassword })
+
+  // Send the new password to the user.
+  // TODO
+
+  // Respond.
+  return buildLambdaResponse(200, { message: 'Password has been reset.', password: 'NOTE TEMP: ' + newPassword })
+
+  // return buildLambdaResponse(501, 'Not yet implemented. Check back soon...')
+}
+
 // index.js
 export const handler = async (event) => {
   try {
@@ -276,6 +317,9 @@ export const handler = async (event) => {
 
     // Sign Out route.
     if (reqPath === '/auth/sign-out' && reqMethod === 'DELETE') response = await signOutEndpoint()
+
+    // Reset route.
+    if (reqPath === '/auth/reset-password' && reqMethod === 'POST') response = await resetPasswordEndpoint(reqBody)
 
     // Change Password route.
     if (reqPath === '/auth/change-password' && reqMethod === 'POST') {

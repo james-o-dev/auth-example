@@ -1,3 +1,5 @@
+import { randomBytes } from 'crypto'
+
 const CORS_ORIGIN = process.env.CORS_ORIGIN
 if (!CORS_ORIGIN || CORS_ORIGIN === '*') throw new Error('CORS_ORIGIN environment variable has not been set; It can not be a wildcard (*) either.')
 
@@ -65,4 +67,15 @@ export const setCookieHeader = (cookies) => {
   return {
     'Set-Cookie': cookies
   }
+}
+
+/**
+ * Generates a random string of the specified length.
+ * * Only generates with lower case and numbers.
+ *
+ * @param {string} length
+ */
+export const generateRandomString = (length) => {
+  length = Math.ceil(length / 2)
+  return randomBytes(length).toString('hex')
 }
