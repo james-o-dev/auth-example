@@ -14,5 +14,13 @@
   "license": "ISC",
   "devDependencies": {
     "eslint": "^8.56.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.481.0",
+    "@aws-sdk/lib-dynamodb": "^3.481.0",
+    "bcryptjs": "^2.4.3",
+    "googleapis": "^129.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.9.7"
   }
 }
