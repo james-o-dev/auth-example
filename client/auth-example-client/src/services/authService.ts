@@ -1,40 +1,14 @@
 // authService.ts
 
-const API_BASE = '' // Add the API Gateway base URL here.
-if (!API_BASE) throw new Error('API_BASE is not set.')
-
-export const TOKEN_STORAGE_NAME = 'token'
-export const USER_STORAGE_NAME = 'user'
+import { ACCESS_TOKEN_STORAGE_NAME, REFRESH_TOKEN_STORAGE_NAME, USER_STORAGE_NAME, makeApiRequest } from './apiService'
 
 /**
  * Sign out procedure.
  */
 export const signOut = () => {
-  localStorage.removeItem(TOKEN_STORAGE_NAME)
+  localStorage.removeItem(ACCESS_TOKEN_STORAGE_NAME)
+  localStorage.removeItem(REFRESH_TOKEN_STORAGE_NAME)
   localStorage.removeItem(USER_STORAGE_NAME)
-}
-
-/**
- * Helper: Add the authentication token to the request headers.
- */
-const authHeader = () => {
-  return {
-    Authorization: `Bearer ${localStorage.getItem(TOKEN_STORAGE_NAME)}`
-  }
-}
-
-/**
- * Fetches the health status from the API endpoint.
- */
-export const apiHealth = async () => {
-  try {
-    const response = await fetch(`${API_BASE}/health`)
-    const healthResponse = await response.json()
-    if (!response.ok) throw new Error(typeof healthResponse === 'object' ? JSON.stringify(healthResponse) : healthResponse)
-    return healthResponse
-  } catch (error) {
-    return 'Not good ☹'
-  }
 }
 
 /**
@@ -43,21 +17,14 @@ export const apiHealth = async () => {
 export const isAuthenticated = async () => {
   try {
     // Simulate an asynchronous operation, e.g., fetching user data from a server
-    const response = await fetch(`${API_BASE}/auth`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...authHeader(), // Add the authentication token to the request headers.
-      },
-      credentials: 'include',
-    })
+    const response = await makeApiRequest({ endpoint: '/auth', method: 'GET', includeCredentials: true })
 
     if (response.ok) {
       // You can customize the success condition based on your server response
       const successfulAuth = await response.json()
 
       // Store the authentication token in the local storage.
-      localStorage.setItem(TOKEN_STORAGE_NAME, successfulAuth.token)
+      localStorage.setItem(ACCESS_TOKEN_STORAGE_NAME, successfulAuth.token)
       localStorage.setItem(USER_STORAGE_NAME, JSON.stringify(successfulAuth.user))
 
       return successfulAuth // Assuming the presence of user data indicates authentication
@@ -83,12 +50,10 @@ export const signIn = async (email: string, password: string) => {
 
   try {
     // Send a POST request to the sign-in endpoint with user credentials.
-    const response = await fetch(`${API_BASE}/auth/sign-in`, {
+    const response = await makeApiRequest({
+      endpoint: '/auth/sign-in',
       method: 'POST',
-      body: JSON.stringify({ email, password }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      body: { email, password },
     })
 
     // Parse the JSON response from the server.
@@ -97,7 +62,7 @@ export const signIn = async (email: string, password: string) => {
     if (!response.ok) throw new Error(successfulSignIn)
 
     // Store the authentication token in the local storage.
-    localStorage.setItem(TOKEN_STORAGE_NAME, successfulSignIn.token)
+    localStorage.setItem(ACCESS_TOKEN_STORAGE_NAME, successfulSignIn.token)
     localStorage.setItem(USER_STORAGE_NAME, JSON.stringify(successfulSignIn.user))
 
     // Return the authentication result.
@@ -127,12 +92,11 @@ export const signUp = async (email: string, password: string, confirmPassword: s
 
   try {
     // Send a POST request to the sign-in endpoint with user credentials.
-    const response = await fetch(`${API_BASE}/auth/sign-up`, {
+    const response = await makeApiRequest({
+      endpoint: '/auth/sign-up',
       method: 'POST',
-      body: JSON.stringify({ email, password, confirmPassword }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      body: { email, password, confirmPassword },
+      includeCredentials: false,
     })
 
     // Parse the JSON response from the server.
@@ -141,7 +105,7 @@ export const signUp = async (email: string, password: string, confirmPassword: s
     if (!response.ok) throw new Error(successfulSignUp)
 
     // Store the authentication token in the local storage.
-    localStorage.setItem(TOKEN_STORAGE_NAME, successfulSignUp.token)
+    localStorage.setItem(ACCESS_TOKEN_STORAGE_NAME, successfulSignUp.token)
     localStorage.setItem(USER_STORAGE_NAME, JSON.stringify(successfulSignUp.user))
 
     // Return the authentication result.
@@ -164,15 +128,11 @@ export const signUp = async (email: string, password: string, confirmPassword: s
  */
 export const changePassword = async (oldPassword: string, newPassword: string, confirmPassword: string) => {
 
-  // Send a POST request to the sign-in endpoint with user credentials.
-  const response = await fetch(`${API_BASE}/auth/change-password`, {
+  const response = await makeApiRequest({
+    endpoint: '/auth/change-password',
     method: 'POST',
-    body: JSON.stringify({ oldPassword, newPassword, confirmPassword }),
-    headers: {
-      'Content-Type': 'application/json',
-      ...authHeader(), // Add the authentication token to the request headers.
-    },
-    credentials: 'include',
+    body: { oldPassword, newPassword, confirmPassword },
+    includeCredentials: true
   })
 
   // Parse the JSON response from the server.
@@ -181,7 +141,7 @@ export const changePassword = async (oldPassword: string, newPassword: string, c
   if (!response.ok) throw new Error(successfulChangePassword)
 
   // Store the authentication token in the local storage.
-  localStorage.setItem(TOKEN_STORAGE_NAME, successfulChangePassword.token)
+  localStorage.setItem(ACCESS_TOKEN_STORAGE_NAME, successfulChangePassword.token)
   localStorage.setItem(USER_STORAGE_NAME, JSON.stringify(successfulChangePassword.user))
 
   // Return the authentication result.
@@ -195,12 +155,10 @@ export const changePassword = async (oldPassword: string, newPassword: string, c
  */
 export const resetPassword = async (email: string) => {
   // Send a POST request to the sign-in endpoint with user credentials.
-  const response = await fetch(`${API_BASE}/auth/reset-password`, {
+  const response = await makeApiRequest({
+    endpoint: '/auth/reset-password',
     method: 'POST',
-    body: JSON.stringify({ email }),
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    body: { email },
   })
 
   // Parse the JSON response from the server.

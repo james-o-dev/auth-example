@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import Navbar from '../../components/NavBar/NavBar'
-import { apiHealth } from '../../services/authService'
+import { apiHealth } from '../../services/apiService'
 
 const Home = () => {
   const [healthMessage, setHealthMessage] = useState('Loading...')
