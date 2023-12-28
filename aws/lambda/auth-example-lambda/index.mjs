@@ -260,7 +260,7 @@ const resetPasswordEndpoint = async (reqBody) => {
   const { userId } = findUser.Items[0]
 
   // Generate a new password.
-  const newPassword = generateRandomString(8)
+  const newPassword = `${generateRandomString(4)} ${generateRandomString(4)}`
 
   // Hash the password.
   const hashedPassword = await hashPassword(newPassword)
@@ -272,7 +272,7 @@ const resetPasswordEndpoint = async (reqBody) => {
   // TODO
 
   // Respond.
-  return buildLambdaResponse(200, { message: 'Password has been reset.', password: 'NOTE TEMP: ' + newPassword })
+  return buildLambdaResponse(200, { message: 'Password has been reset; Note: password sent in response while mailing is under development.', password: newPassword  })
 
   // return buildLambdaResponse(501, 'Not yet implemented. Check back soon...')
 }
