@@ -104,9 +104,6 @@ export const signIn = async (email: string, password: string) => {
     // Handle and log any errors that occur during the sign-in process.
     console.error('Error during sign-in:', error)
 
-    // Clear existing tokens, if there are any.
-    signOut()
-
     // Re-throw the error to indicate that sign-in was unsuccessful.
     throw error
   }
@@ -150,9 +147,6 @@ export const signUp = async (email: string, password: string, confirmPassword: s
   } catch (error) {
     // Handle and log any errors that occur during the sign-in process.
     console.error('Error during sign-up:', error)
-
-    // Clear existing tokens, if there are any.
-    signOut()
 
     // Re-throw the error to indicate that sign-in was unsuccessful.
     throw error
