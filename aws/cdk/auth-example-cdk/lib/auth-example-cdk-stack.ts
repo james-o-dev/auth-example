@@ -80,10 +80,13 @@ export class AuthExampleCdkStack extends cdk.Stack {
     dynamoTable.grantReadWriteData(lambdaFunction)
 
     // Create API Gateway.
-    // Note: Deploy manually after creation.
+    // Note: Also automatically deploys the API.
     const api = new RestApi(this, API_NAME, {
       restApiName: API_NAME,
-      deploy: false,
+      deploy: true,
+      deployOptions: {
+        stageName: 'dev',
+      },
       endpointTypes: [EndpointType.REGIONAL],
       defaultCorsPreflightOptions: {
         allowOrigins: [CORS_ORIGIN],
