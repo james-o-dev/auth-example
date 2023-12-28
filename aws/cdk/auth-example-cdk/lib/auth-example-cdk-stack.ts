@@ -12,6 +12,7 @@ const tableName = 'auth-example-users'
 const tableAuthIndexName = 'auth-index'
 const apiName = 'auth-example-api'
 const corsOrigin = '' // Set this to the domain, depending on where the client is hosted.
+const jwtSecret = '' || randomUUID() // Set the JWT secret here, to avoid invalidating existing tokens upon update; If empty, generate one.
 
 export class AuthExampleCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -40,7 +41,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
         AUTH_INDEX_NAME: tableAuthIndexName,
         CORS_ORIGIN: corsOrigin,
         USERS_TABLE_NAME: tableName,
-        JWT_SECRET: randomUUID(),
+        JWT_SECRET: jwtSecret,
       },
     })
 
