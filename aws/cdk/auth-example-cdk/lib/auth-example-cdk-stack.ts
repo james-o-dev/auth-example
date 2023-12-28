@@ -40,7 +40,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
       handler: 'index.handler',
       code: Code.fromAsset('../../lambda/auth-example-lambda'),
       timeout: cdk.Duration.seconds(29),
-      memorySize: 128,
+      memorySize: 256,
       retryAttempts: 0,
       logFormat: LogFormat.JSON,
       layers: [lambdaNodeModuleLayer],
