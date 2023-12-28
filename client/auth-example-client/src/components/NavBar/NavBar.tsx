@@ -7,6 +7,7 @@ import { signOut } from '../../services/authService'
 export interface NavbarItem {
   to: string,
   label: string,
+  type: 'all' | 'auth' | 'unauth',
 }
 
 export interface NavbarProps {
@@ -14,14 +15,15 @@ export interface NavbarProps {
 }
 
 const NAV_ITEMS: NavbarItem[] = [
-  { label: 'Home', to: '/' },
-  { label: 'Sign In', to: '/sign-in' },
-  { label: 'Sign Up', to: '/sign-up' },
-  { label: '⚠ Profile', to: '/profile' },
+  { label: 'Home', to: '/', type: 'all' },
+  { label: 'Sign In', to: '/sign-in', type: 'unauth', },
+  { label: 'Sign Up', to: '/sign-up', type: 'unauth', },
+  { label: '⚠ Profile', to: '/profile', type: 'auth' },
 ]
 
 const Navbar: React.FC<NavbarProps> = ({ navItems = NAV_ITEMS }) => {
   const navigate = useNavigate()
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
 
   const onSignOut = () => {
     signOut()
@@ -32,16 +34,16 @@ const Navbar: React.FC<NavbarProps> = ({ navItems = NAV_ITEMS }) => {
   return (
     <nav>
       <ul>
-        {navItems.map(({ to, label }, index) => {
-          return (
-            <li key={index}>
-              <Link to={to}>{label}</Link>
-            </li>
-          )
-        })}
-        <li>
-          <a href="" onClick={onSignOut}>Sign Out</a>
-        </li>
+        {navItems
+          .filter(({ type }) => (type === 'all') || (type === 'auth' && user) || (type === 'unauth' && !user))
+          .map(({ to, label }, index) => {
+            return (
+              <li key={index}>
+                <Link to={to}>{label}</Link>
+              </li>
+            )
+          })}
+        {user && <li><a href="" onClick={onSignOut}>Sign Out</a></li>}
       </ul>
     </nav>
   )
