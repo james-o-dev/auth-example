@@ -102,5 +102,9 @@ export class AuthExampleCdkStack extends cdk.Stack {
     // SignOut resource.
     const signOutResource = authResource.addResource('sign-out')
     signOutResource.addMethod('DELETE', integration)
+
+    // ChangePassword resource.
+    const changePassword = authResource.addResource('change-password')
+    changePassword.addMethod('POST', integration)
   }
 }

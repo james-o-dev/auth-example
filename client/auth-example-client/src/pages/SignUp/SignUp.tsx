@@ -45,7 +45,7 @@ const SignUp: React.FC = () => {
     try {
       await signUp(email, password, confirmPassword)
       alert('Sign up successful; You will be redirected shortly.')
-      navigate('/protected')
+      navigate('/profile')
     } catch (error) {
       alert((error as Error).message || 'Sign up unsuccessful; Please try again.')
     } finally {
