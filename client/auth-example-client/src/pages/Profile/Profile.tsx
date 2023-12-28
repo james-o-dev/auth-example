@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { signOut } from '../../services/authService'
-import { useNavigate } from 'react-router-dom'
+import { changePassword, signOut } from '../../services/authService'
+import { Link, useNavigate } from 'react-router-dom'
 
 const Profile = () => {
-  const [password, setPassword] = useState('')
+  const [oldPassword, setOldPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
 
   /**
@@ -16,33 +17,58 @@ const Profile = () => {
     navigate('/sign-in')
   }
 
-  const onFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  /**
+   * Change password.
+   *
+   * @param {React.FormEvent<HTMLFormElement>} event
+   */
+  const onChangePasswordFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (password !== confirmPassword) {
-      alert('Passwords do not match')
+    if (isSubmitting) return
+
+    if (newPassword !== confirmPassword) {
+      alert('New passwords do not match.')
       return
     }
 
-    setSubmitting(true)
+    if (newPassword === oldPassword) {
+      alert('New password must not match the old password.')
+      return
+    }
 
-    alert('TODO')
-
-    setSubmitting(false)
+    setIsSubmitting(true)
+    try {
+      await changePassword(oldPassword, newPassword, confirmPassword)
+      alert('Password changed successfull; You will be signed out shortly.')
+      signOut()
+      navigate('/sign-in')
+    } catch (error) {
+      alert((error as Error).message || 'Sign up unsuccessful; Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
     <>
       <h1>My Profile.</h1>
-      <button type="button" onClick={onSignOut}>Sign out</button>
+      <Link to="/">Home</Link>
+      <br />
+      <a href="" type="button" onClick={onSignOut}>Sign out</a>
 
       <hr />
       <h2>Change Password</h2>
       <p>Note: This will sign you out.</p>
-      <form onSubmit={onFormSubmit}>
+      <form onSubmit={onChangePasswordFormSubmit}>
         <label>
-          Change password:
-          <input type="password" name="password" value={password} required onChange={e => setPassword(e.target.value)} />
+          Old password:
+          <input type="password" name="oldPassword" value={oldPassword} required onChange={e => setOldPassword(e.target.value)} />
+        </label>
+        <br />
+        <label>
+          New password:
+          <input type="password" name="newPassword" value={newPassword} required onChange={e => setNewPassword(e.target.value)} />
         </label>
         <br />
         <label>
@@ -50,7 +76,8 @@ const Profile = () => {
           <input type="password" name="confirmPassword" value={confirmPassword} required onChange={e => setConfirmPassword(e.target.value)} />
         </label>
         <br />
-        <button disabled={submitting} type="submit">Change Password</button>
+        <button disabled={isSubmitting} type="submit">Change Password</button>
+        {isSubmitting && <span>Signing in...</span>}
       </form>
     </>
   )

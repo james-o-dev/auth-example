@@ -149,3 +149,36 @@ export const signUp = async (email: string, password: string, confirmPassword: s
     throw error
   }
 }
+
+/**
+ * Changes the user's password.
+ *
+ * @param {string} oldPassword
+ * @param {string} newPassword
+ * @param {string} confirmPassword
+ */
+export const changePassword = async (oldPassword: string, newPassword: string, confirmPassword: string) => {
+
+  // Send a POST request to the sign-in endpoint with user credentials.
+  const response = await fetch(`${API_BASE}/auth/change-password`, {
+    method: 'POST',
+    body: JSON.stringify({ oldPassword, newPassword, confirmPassword }),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem(TOKEN_STORAGE_NAME)}`,
+    },
+    credentials: 'include',
+  })
+
+  // Parse the JSON response from the server.
+  const successfulChangePassword = await response.json()
+
+  if (!response.ok) throw new Error(successfulChangePassword)
+
+  // Store the authentication token in the local storage.
+  localStorage.setItem(TOKEN_STORAGE_NAME, successfulChangePassword.token)
+  localStorage.setItem(USER_STORAGE_NAME, JSON.stringify(successfulChangePassword.user))
+
+  // Return the authentication result.
+  return successfulChangePassword
+}
