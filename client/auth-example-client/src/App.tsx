@@ -1,10 +1,10 @@
 import './App.css'
 import { createBrowserRouter, RouterProvider, redirect } from 'react-router-dom'
-import Protected from './pages/Protected/Protected'
 import SignUp from './pages/SignUp/SignUp'
 import SignIn from './pages/SignIn/SignIn'
 import Home from './pages/Home/Home'
 import { isAuthenticated } from './services/authService'
+import Profile from './pages/Profile/Profile'
 
 const isAuthenticatedLoader = async () => {
   try {
@@ -28,8 +28,8 @@ const router = createBrowserRouter([
     Component: SignIn,
   },
   {
-    path: '/protected',
-    Component: Protected,
+    path: '/profile',
+    Component: Profile,
     loader: isAuthenticatedLoader
   },
   {

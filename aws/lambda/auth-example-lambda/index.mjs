@@ -1,5 +1,5 @@
 import { buildLambdaResponse, buildValidationError } from './lib/common.mjs'
-import { putCommand, queryCommand, } from './lib/dynamodb.mjs'
+import { getCommand, putCommand, queryCommand, updateCommand, } from './lib/dynamodb.mjs'
 
 import { randomUUID } from 'crypto'
 import jsonwebtoken from 'jsonwebtoken'
@@ -9,6 +9,7 @@ import bcryptjs from 'bcryptjs'
 const AUTH_INDEX_NAME = process.env.AUTH_INDEX_NAME
 const JWT_SECRET = process.env.JWT_SECRET
 const USERS_TABLE_NAME = process.env.USERS_TABLE_NAME
+const JWT_EXPIRY = '1h'
 
 /**
  * Helper: Returns a standardized object of the JWT payload.
@@ -35,9 +36,9 @@ const hashPassword = async (password) => {
  * Helper: Generate JWT token
  *
  * @param {*} payload
- * @param {string} expiresIn
+ * @param {string} [expiresIn]
  */
-const generateToken = (payload, expiresIn = '1h') => {
+const generateToken = (payload, expiresIn = JWT_EXPIRY) => {
   const options = { expiresIn } // Set expiration time as needed.
 
   return jsonwebtoken.sign(payload, JWT_SECRET, options)
@@ -73,6 +74,27 @@ const signUpValidation = (reqBody) => {
 }
 
 /**
+ * Helper: Verify the provided JWT token.
+ *
+ * @param {*} reqHeaders
+ * @returns
+ */
+const verifyAuth = (reqHeaders) => {
+  try {
+    const authHeader = reqHeaders.Authorization
+    if (!authHeader) return null
+
+    const incomingToken = authHeader.split(' ')[1]
+    if (!incomingToken) return null
+
+    return jsonwebtoken.verify(incomingToken, JWT_SECRET)
+  } catch (_) {
+    // Return null if the token could not be verified
+    return null
+  }
+}
+
+/**
  * Helper: Authenticate and verify a user based on the provided request headers.
  *
  * @param {*} reqHeaders
@@ -82,14 +104,8 @@ const authEndpoint = async (reqHeaders) => {
     throw buildValidationError(401, 'Unauthorized.')
   }
 
-  const authHeader = reqHeaders.Authorization
-  if (!authHeader) throwUnauth()
-
-  const incomingToken = authHeader.split(' ')[1]
-  if (!incomingToken) throwUnauth()
-
   try {
-    const { email, userId } = jsonwebtoken.verify(incomingToken, JWT_SECRET)
+    const { email, userId } = verifyAuth(reqHeaders)
 
     // Return a new extended token once verified.
     const user = getJwtPayload(email, userId)
@@ -177,10 +193,47 @@ const signInEndpoint = async (reqBody) => {
 
 /**
  * Handle the auth endpoint.
+ * * Note: Only used if using httpOnly cookies for token storage.
  */
 const signOutEndpoint = () => {
   // TODO
   throw buildValidationError(501, 'Not yet implemented. Check back soon...')
+}
+
+/**
+ * Change password endpoint.
+ *
+ * @param {string} userId
+ * @param {*} reqBody
+ */
+const changePasswordEndpoint = async (userId, reqBody) => {
+  if (!userId) throw buildValidationError(401, 'Unauthorized.')
+  if (!reqBody) throw buildValidationError(400, 'Invalid request body.')
+  if (!reqBody.oldPassword) throw buildValidationError(400, 'Invalid old password.')
+  if (!reqBody.newPassword) throw buildValidationError(400, 'Invalid new password.')
+  if (!reqBody.confirmPassword) throw buildValidationError(400, 'Password not re-confirmed.')
+
+  const { oldPassword, newPassword, confirmPassword } = reqBody
+
+  if (newPassword !== confirmPassword) throw buildValidationError(400, 'Passwords do not match.')
+  if (oldPassword === newPassword) throw buildValidationError(400, 'New password must not match the old one.')
+
+  // Get old hashedPassword.
+  const getUser = await getCommand(USERS_TABLE_NAME, { userId })
+  const { hashedPassword: oldHashedPassword } = getUser.Item
+
+  // Verify old password.
+  const doesOldPasswordMatch = await bcryptjs.compare(oldPassword, oldHashedPassword)
+  if (!doesOldPasswordMatch) throw buildValidationError(401, 'Unauthorized.')
+
+  // Hash new password.
+  const hashedPassword = await hashPassword(newPassword)
+
+  // Update new password in DB.
+  await updateCommand(USERS_TABLE_NAME, { userId }, { hashedPassword })
+
+  // Respond.
+  return buildLambdaResponse(200, { message: 'Password has been changed.' })
 }
 
 // index.js
@@ -223,6 +276,14 @@ export const handler = async (event) => {
 
     // Sign Out route.
     if (reqPath === '/auth/sign-out' && reqMethod === 'DELETE') response = await signOutEndpoint()
+
+    // Change Password route.
+    if (reqPath === '/auth/change-password' && reqMethod === 'POST') {
+      const verified = verifyAuth(reqHeaders)
+      if (!verified) throw buildValidationError(401, 'Unauthorized.')
+
+      response = await changePasswordEndpoint(verified.userId, reqBody)
+    }
 
     // Respond.
     return response

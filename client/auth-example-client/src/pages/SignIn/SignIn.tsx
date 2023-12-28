@@ -18,7 +18,7 @@ const SignIn = () => {
     try {
       await signIn(email, password)
       alert('Sign in successful; You will be redirected shortly.')
-      navigate('/protected')
+      navigate('/profile')
     } catch (error) {
       alert('Sign in unsuccessful; Please try again.')
     } finally {

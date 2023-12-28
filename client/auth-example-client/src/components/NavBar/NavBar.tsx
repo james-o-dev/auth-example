@@ -17,7 +17,7 @@ const NAV_ITEMS: NavbarItem[] = [
   { label: 'Home', to: '/' },
   { label: 'Sign In', to: '/sign-in' },
   { label: 'Sign Up', to: '/sign-up' },
-  { label: '⚠ Protected', to: '/protected' },
+  { label: '⚠ Profile', to: '/profile' },
 ]
 
 const Navbar: React.FC<NavbarProps> = ({ navItems = NAV_ITEMS }) => {
