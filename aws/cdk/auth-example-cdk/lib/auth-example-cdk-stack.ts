@@ -107,5 +107,9 @@ export class AuthExampleCdkStack extends cdk.Stack {
     // ChangePassword resource.
     const changePassword = authResource.addResource('change-password')
     changePassword.addMethod('POST', integration)
+
+    // ResetPassword resource.
+    const resetPassword = authResource.addResource('reset-password')
+    resetPassword.addMethod('POST', integration)
   }
 }
