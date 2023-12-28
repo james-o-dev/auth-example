@@ -63,9 +63,11 @@ export const isAuthenticated = async () => {
       return successfulAuth // Assuming the presence of user data indicates authentication
     } else {
       // Handle non-OK response (e.g., unauthorized)
+      signOut()
       return false
     }
   } catch (error) {
+    signOut()
     console.error('Error checking authentication:', error)
     return false
   }
