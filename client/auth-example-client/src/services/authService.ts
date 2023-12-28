@@ -63,9 +63,11 @@ export const isAuthenticated = async () => {
       return successfulAuth // Assuming the presence of user data indicates authentication
     } else {
       // Handle non-OK response (e.g., unauthorized)
+      signOut()
       return false
     }
   } catch (error) {
+    signOut()
     console.error('Error checking authentication:', error)
     return false
   }
@@ -184,4 +186,28 @@ export const changePassword = async (oldPassword: string, newPassword: string, c
 
   // Return the authentication result.
   return successfulChangePassword
+}
+
+/**
+ * Resets the user's password.
+ *
+ * @param {string} email - User's email address.
+ */
+export const resetPassword = async (email: string) => {
+  // Send a POST request to the sign-in endpoint with user credentials.
+  const response = await fetch(`${API_BASE}/auth/reset-password`, {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+
+  // Parse the JSON response from the server.
+  const resetPasswordResponse = await response.json()
+
+  if (!response.ok) throw new Error(resetPasswordResponse)
+
+  // Return the authentication result.
+  return resetPasswordResponse
 }
