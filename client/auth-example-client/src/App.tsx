@@ -5,6 +5,7 @@ import SignIn from './pages/SignIn/SignIn'
 import Home from './pages/Home/Home'
 import { isAuthenticated } from './services/authService'
 import Profile from './pages/Profile/Profile'
+import ResetPassword from './pages/ResetPassword/ResetPassword'
 
 const isAuthenticatedLoader = async () => {
   try {
@@ -31,6 +32,10 @@ const router = createBrowserRouter([
     path: '/profile',
     Component: Profile,
     loader: isAuthenticatedLoader
+  },
+  {
+    path: '/reset-password',
+    Component: ResetPassword,
   },
   {
     path: '/',

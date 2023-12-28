@@ -47,6 +47,8 @@ const SignIn = () => {
       <div>
         <Link to='/sign-up'>Sign up instead</Link>
         <br />
+        <Link to='/reset-password'>Reset password</Link>
+        <br />
         <Link to='/'>Home</Link>
       </div>
     </div>
