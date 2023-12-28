@@ -11,9 +11,13 @@ const AUTH_INDEX_NAME = process.env.AUTH_INDEX_NAME
 if (!AUTH_INDEX_NAME) throw new Error('Missing AUTH_INDEX_NAME environment variable')
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET
 if (!ACCESS_TOKEN_SECRET) throw new Error('Missing ACCESS_TOKEN_SECRET environment variable')
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET
+if (!REFRESH_TOKEN_SECRET) throw new Error('Missing REFRESH_TOKEN_SECRET environment variable')
 const USERS_TABLE_NAME = process.env.USERS_TABLE_NAME
 if (!USERS_TABLE_NAME) throw new Error('Missing USERS_TABLE_NAME environment variable')
-const JWT_EXPIRY = '1h'
+
+const ACCESS_TOKEN_EXPIRY = '10m'
+const REFRESH_TOKEN_EXPIRY = '7d'
 
 /**
  * Helper: Returns a standardized object of the JWT payload.
@@ -37,16 +41,46 @@ const hashPassword = async (password) => {
 }
 
 /**
- * Helper: Generate JWT token
+ * Generate an access token.
  *
  * @param {*} payload
- * @param {string} [expiresIn]
  */
-const generateToken = (payload, expiresIn = JWT_EXPIRY) => {
-  const options = { expiresIn } // Set expiration time as needed.
+const generateAccessToken = (payload) => jsonwebtoken.sign(payload, ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY })
 
-  return jsonwebtoken.sign(payload, ACCESS_TOKEN_SECRET, options)
-}
+/**
+ * Generate a refresh token.
+ *
+ * @param {*} payload
+ */
+const generateRefreshToken = (payload) => jsonwebtoken.sign(payload, REFRESH_TOKEN_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY, })
+
+/**
+ * Verify an access token.
+ *
+ * @param {*} payload
+ */
+const verifyAccessToken = (token) => jsonwebtoken.verify(token, ACCESS_TOKEN_SECRET)
+
+/**
+ * Verify a refresh token.
+ *
+ * @param {*} payload
+ */
+const verifyRefreshToken = (token) => jsonwebtoken.verify(token, REFRESH_TOKEN_SECRET)
+
+/**
+ * Helper: Get an 'iat' value for this current time.
+ */
+const getIATNow = () => Math.round(Date.now() / 1000)
+
+/**
+ * Helper: Update the iat value for a user in the database.
+ * * If the refresh token is issued before this iat, it is not valid.
+ * * Should be called before a new refresh token is issued, to avoid new refresh tokens being immedtiately invalid.
+ *
+ * @param {string} userId
+ */
+const updateUserIAT = (userId) => updateCommand(USERS_TABLE_NAME, { userId }, { iat: getIATNow() })
 
 /**
  * Helper: Do sign in validation.
@@ -78,20 +112,32 @@ const signUpValidation = (reqBody) => {
 }
 
 /**
+ * Helper: Get the token from the auth header.
+ *
+ * @param {*} reqHeaders
+ */
+const getAuthHeaderToken = (reqHeaders) => {
+  const authHeader = reqHeaders.Authorization
+  if (!authHeader) return null
+
+  const incomingToken = authHeader.split(' ')[1]
+  if (!incomingToken) return null
+
+  return incomingToken
+}
+
+/**
  * Helper: Verify the provided JWT token.
  *
  * @param {*} reqHeaders
- * @returns
+ * @param {boolean} [isRefreshToken=false]
  */
-const verifyAuth = (reqHeaders) => {
+const verifyAuth = (reqHeaders, isRefreshToken = false) => {
   try {
-    const authHeader = reqHeaders.Authorization
-    if (!authHeader) return null
-
-    const incomingToken = authHeader.split(' ')[1]
+    const incomingToken = getAuthHeaderToken(reqHeaders)
     if (!incomingToken) return null
 
-    return jsonwebtoken.verify(incomingToken, ACCESS_TOKEN_SECRET)
+    return isRefreshToken ? verifyRefreshToken(incomingToken) : verifyAccessToken(incomingToken)
   } catch (_) {
     // Return null if the token could not be verified
     return null
@@ -120,18 +166,40 @@ const findUserFromEmailQuery = (email) => {
  * @param {*} reqHeaders
  */
 const authEndpoint = async (reqHeaders) => {
-  const throwUnauth = () => {
+  try {
+    const verified = verifyAuth(reqHeaders)
+    if (!verified) throw buildValidationError(401, 'Unauthorized.')
+    return buildLambdaResponse(200, { message: 'Token verified.', })
+  } catch (_) {
     throw buildValidationError(401, 'Unauthorized.')
+  }
+}
+
+/**
+ * Endpoint to refresh access token.
+ *
+ * @param {*} reqHeaders
+ */
+const refreshTokenEndpoint = async (reqHeaders) => {
+  const throwUnauth = (message = 'Unauthorized.') => {
+    throw buildValidationError(401, message)
   }
 
   try {
-    const { email, userId } = verifyAuth(reqHeaders)
+    const { email, userId, iat } = verifyAuth(reqHeaders, true)
 
-    // Return a new extended token once verified.
+    // Check database that the user is authentic and is allowed access.
+    const getUser = await getCommand(USERS_TABLE_NAME, { userId })
+    if (getUser.Item.email !== email) throwUnauth()
+    if (getUser.Item.iat && parseInt(iat) < parseInt(getUser.Item.iat)) throw throwUnauth('Refresh token has expired; Please sign in again.')
+
+    // Generate new jwts.
     const user = getJwtPayload(email, userId)
-    const token = generateToken(user)
+    const accessToken = generateAccessToken(user)
+    const refreshToken = generateRefreshToken(user)
 
-    return buildLambdaResponse(200, { message: 'Token verified.', user, token, })
+    // Respond.
+    return buildLambdaResponse(200, { message: 'New access and refresh tokens issued.', accessToken, refreshToken, })
   } catch (_) {
     throwUnauth()
   }
@@ -164,10 +232,13 @@ const signUpEndpoint = async (reqBody) => {
 
   // Create JWT.
   const user = getJwtPayload(email, userId)
-  const token = generateToken(user)
+  const accessToken = generateAccessToken(user)
+
+  // Uncomment below to generate and send new refresh token if using rolling/extending refresh tokens; Else the user must always sign in again to get a new refresh token.
+  // const refreshToken = generateRefreshToken(user)
 
   // Respond.
-  return buildLambdaResponse(201, { message: 'User has been created.', user, token })
+  return buildLambdaResponse(201, { message: 'User has been created.', accessToken, })
 }
 
 /**
@@ -193,21 +264,29 @@ const signInEndpoint = async (reqBody) => {
 
   // Else if found, we have the email and the userId.
 
-  // Create JWT.
+  // Create JWTs.
   const user = getJwtPayload(email, userId)
-  const token = generateToken(user)
+  const accessToken = generateAccessToken(user)
+  const refreshToken = generateRefreshToken(user)
 
   // Successful login.
-  return buildLambdaResponse(200, { message: 'Sign in successful.', user, token })
+  return buildLambdaResponse(200, { message: 'Sign in successful.', accessToken, refreshToken })
 }
 
 /**
- * Handle the auth endpoint.
- * * Note: Only used if using httpOnly cookies for token storage.
+ * Invalidating all the refresh tokens for the user
+ *
+ * @param {*} reqHeaders
  */
-const signOutEndpoint = () => {
-  // TODO
-  throw buildValidationError(501, 'Not yet implemented. Check back soon...')
+const signOutEndpoint = async (reqHeaders) => {
+  try {
+    const { userId } = verifyAuth(reqHeaders)
+    await updateUserIAT(userId)
+    return buildLambdaResponse(204, { message: 'Sign out successful.' })
+
+  } catch (_) {
+    throw buildValidationError(401, 'Unauthorized')
+  }
 }
 
 /**
@@ -240,7 +319,8 @@ const changePasswordEndpoint = async (userId, reqBody) => {
   const hashedPassword = await hashPassword(newPassword)
 
   // Update new password in DB.
-  await updateCommand(USERS_TABLE_NAME, { userId }, { hashedPassword })
+  // Invalidate existing refresh tokens.
+  await updateCommand(USERS_TABLE_NAME, { userId }, { hashedPassword, iat: getIATNow() })
 
   // Respond.
   return buildLambdaResponse(200, { message: 'Password has been changed.' })
@@ -270,7 +350,7 @@ const resetPasswordEndpoint = async (reqBody) => {
   const hashedPassword = await hashPassword(newPassword)
 
   // Update the password in the DB.
-  await updateCommand(USERS_TABLE_NAME, { userId }, { hashedPassword })
+  await updateCommand(USERS_TABLE_NAME, { userId }, { hashedPassword, iat: getIATNow() })
 
   // Send the new password to the user.
   await gmailSend({
@@ -324,6 +404,9 @@ export const handler = async (event) => {
     // Auth route.
     if (reqPath === '/auth' && reqMethod === 'GET') response = await authEndpoint(reqHeaders)
 
+    // Refresh token route.
+    if (reqPath === '/auth/refresh-token' && reqMethod === 'GET') response = await refreshTokenEndpoint(reqHeaders)
+
     // Sign Up route.
     if (reqPath === '/auth/sign-up' && reqMethod === 'POST') response = await signUpEndpoint(reqBody)
 
@@ -331,7 +414,7 @@ export const handler = async (event) => {
     if (reqPath === '/auth/sign-in' && reqMethod === 'POST') response = await signInEndpoint(reqBody)
 
     // Sign Out route.
-    if (reqPath === '/auth/sign-out' && reqMethod === 'DELETE') response = await signOutEndpoint()
+    if (reqPath === '/auth/sign-out' && reqMethod === 'DELETE') response = await signOutEndpoint(reqHeaders)
 
     // Reset route.
     if (reqPath === '/auth/reset-password' && reqMethod === 'POST') response = await resetPasswordEndpoint(reqBody)
