@@ -33,12 +33,12 @@ const SignIn = () => {
         <br />
         <label>
           Email:
-          <input type="email" name="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input required type="email" name="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
         <br />
         <label>
           Password:
-          <input type="password" name="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <input required type="password" name="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </label>
         <br />
         <button disabled={isSubmitting} type="submit">Sign In</button>
