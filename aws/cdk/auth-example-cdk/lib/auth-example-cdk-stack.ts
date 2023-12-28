@@ -6,35 +6,33 @@ import { AttributeType, BillingMode, ProjectionType, Table } from 'aws-cdk-lib/a
 import { Runtime, Architecture, Code, LogFormat, Function, LayerVersion } from 'aws-cdk-lib/aws-lambda'
 import { Construct } from 'constructs'
 
-const lambdaNodeModuleLayerName = 'auth-example-lambda-node-module-layer'
-const lambdaName = 'auth-example-lambda'
-const tableName = 'auth-example-users'
-const tableAuthIndexName = 'auth-index'
-const apiName = 'auth-example-api'
-const corsOrigin = '' // Set this to the domain, depending on where the client is hosted.
-const jwtSecret = '' || randomUUID() // Set the JWT secret here, to avoid invalidating existing tokens upon update; If empty, generate one.
-
-const nodemailerAuth = JSON.stringify({
-  CLIENT_ID: '', // Set this.
-  CLIENT_SECRET: '', // Set this.
-  REFRESH_TOKEN: '', // Set this.
-  USER_EMAIL: '', // Set this.
-})
+const LAMBDA_NODE_MODULE_LAYER_NAME = 'auth-example-lambda-node-module-layer'
+const LAMBDA_NAME = 'auth-example-lambda'
+const API_NAME = 'auth-example-api'
+const USERS_TABLE_NAME = 'auth-example-users'
+const AUTH_INDEX_NAME = 'auth-index'
+const CORS_ORIGIN = '' // Set this to the domain, depending on where the client is hosted.
+const ACCESS_TOKEN_SECRET = '' || randomUUID() // Set the JWT secret here, to avoid invalidating existing tokens upon update; If empty, generate one.
+const REFRESH_TOKEN_SECRET = '' || randomUUID() // Set the JWT secret here, to avoid invalidating existing tokens upon update; If empty, generate one.
+const GMAIL_CLIENT_ID = '' // Set this.
+const GMAIL_CLIENT_SECRET = '' // Set this.
+const GMAIL_REFRESH_TOKEN = '' // Set this.
+const GMAIL_USER_EMAIL = '' // Set this.
 
 export class AuthExampleCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props)
 
     // Create Lambda layer/s.
-    const lambdaNodeModuleLayer = new LayerVersion(this, lambdaNodeModuleLayerName, {
-      layerVersionName: lambdaNodeModuleLayerName,
+    const lambdaNodeModuleLayer = new LayerVersion(this, LAMBDA_NODE_MODULE_LAYER_NAME, {
+      layerVersionName: LAMBDA_NODE_MODULE_LAYER_NAME,
       code: Code.fromAsset('../../lambda/auth-example-lambda-node-module-layer'), // Replace with the actual path
       compatibleRuntimes: [Runtime.NODEJS_20_X], // Choose the appropriate runtime
     })
 
     // Create Lambda.
-    const lambdaFunction = new Function(this, lambdaName, {
-      functionName: lambdaName,
+    const lambdaFunction = new Function(this, LAMBDA_NAME, {
+      functionName: LAMBDA_NAME,
       runtime: Runtime.NODEJS_20_X,
       architecture: Architecture.ARM_64,
       handler: 'index.handler',
@@ -45,24 +43,28 @@ export class AuthExampleCdkStack extends cdk.Stack {
       logFormat: LogFormat.JSON,
       layers: [lambdaNodeModuleLayer],
       environment: {
-        AUTH_INDEX_NAME: tableAuthIndexName,
-        CORS_ORIGIN: corsOrigin,
-        NODEMAILER_AUTH: nodemailerAuth,
-        USERS_TABLE_NAME: tableName,
-        JWT_SECRET: jwtSecret,
+        ACCESS_TOKEN_SECRET,
+        AUTH_INDEX_NAME,
+        CORS_ORIGIN,
+        GMAIL_CLIENT_ID,
+        GMAIL_CLIENT_SECRET,
+        GMAIL_REFRESH_TOKEN,
+        GMAIL_USER_EMAIL,
+        REFRESH_TOKEN_SECRET,
+        USERS_TABLE_NAME,
       },
     })
 
     // Create DynamoDB.
-    const dynamoTable = new Table(this, tableName, {
-      tableName: tableName,
+    const dynamoTable = new Table(this, USERS_TABLE_NAME, {
+      tableName: USERS_TABLE_NAME,
       billingMode: BillingMode.PAY_PER_REQUEST,
       partitionKey: { name: 'userId', type: AttributeType.STRING },
       removalPolicy: RemovalPolicy.DESTROY, // WARNING: This will delete the table and its data on stack deletion
     })
     // Add global indexes.
     dynamoTable.addGlobalSecondaryIndex({
-      indexName: tableAuthIndexName,
+      indexName: AUTH_INDEX_NAME,
       partitionKey: {
         name: 'email', type: AttributeType.STRING,
       },
@@ -79,12 +81,12 @@ export class AuthExampleCdkStack extends cdk.Stack {
 
     // Create API Gateway.
     // Note: Deploy manually after creation.
-    const api = new RestApi(this, apiName, {
-      restApiName: apiName,
+    const api = new RestApi(this, API_NAME, {
+      restApiName: API_NAME,
       deploy: false,
       endpointTypes: [EndpointType.REGIONAL],
       defaultCorsPreflightOptions: {
-        allowOrigins: [corsOrigin],
+        allowOrigins: [CORS_ORIGIN],
         allowCredentials: true,
         allowHeaders: Cors.DEFAULT_HEADERS,
         allowMethods: Cors.ALL_METHODS,

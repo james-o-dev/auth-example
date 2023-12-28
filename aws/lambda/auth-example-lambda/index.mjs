@@ -8,8 +8,11 @@ import { gmailSend } from './lib/mail.mjs'
 
 // Environment variables.
 const AUTH_INDEX_NAME = process.env.AUTH_INDEX_NAME
-const JWT_SECRET = process.env.JWT_SECRET
+if (!AUTH_INDEX_NAME) throw new Error('Missing AUTH_INDEX_NAME environment variable')
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET
+if (!ACCESS_TOKEN_SECRET) throw new Error('Missing ACCESS_TOKEN_SECRET environment variable')
 const USERS_TABLE_NAME = process.env.USERS_TABLE_NAME
+if (!USERS_TABLE_NAME) throw new Error('Missing USERS_TABLE_NAME environment variable')
 const JWT_EXPIRY = '1h'
 
 /**
@@ -42,7 +45,7 @@ const hashPassword = async (password) => {
 const generateToken = (payload, expiresIn = JWT_EXPIRY) => {
   const options = { expiresIn } // Set expiration time as needed.
 
-  return jsonwebtoken.sign(payload, JWT_SECRET, options)
+  return jsonwebtoken.sign(payload, ACCESS_TOKEN_SECRET, options)
 }
 
 /**
@@ -88,7 +91,7 @@ const verifyAuth = (reqHeaders) => {
     const incomingToken = authHeader.split(' ')[1]
     if (!incomingToken) return null
 
-    return jsonwebtoken.verify(incomingToken, JWT_SECRET)
+    return jsonwebtoken.verify(incomingToken, ACCESS_TOKEN_SECRET)
   } catch (_) {
     // Return null if the token could not be verified
     return null
