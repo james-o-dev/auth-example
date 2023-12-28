@@ -5,12 +5,23 @@ export const ACCESS_TOKEN_STORAGE_NAME = 'accessToken'
 export const REFRESH_TOKEN_STORAGE_NAME = 'refreshToken'
 export const USER_STORAGE_NAME = 'user'
 
+import { isExpired } from 'react-jwt'
+
+/**
+ * Helper: Get the access token from local storage.
+ */
 const getAccessToken = async () => {
   // TODO
   // Once access/refresh tokens are implemented server-side, determine if expired.
   // If so, get a new access token from the server, using the refresh token
 
-  return localStorage.getItem(ACCESS_TOKEN_STORAGE_NAME)
+   const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_NAME) || ''
+
+   const expired = isExpired(accessToken)
+
+   if (expired) return
+
+   return accessToken
 }
 
 /**
