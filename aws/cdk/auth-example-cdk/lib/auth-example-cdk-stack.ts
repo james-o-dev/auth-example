@@ -14,6 +14,13 @@ const apiName = 'auth-example-api'
 const corsOrigin = '' // Set this to the domain, depending on where the client is hosted.
 const jwtSecret = '' || randomUUID() // Set the JWT secret here, to avoid invalidating existing tokens upon update; If empty, generate one.
 
+const nodemailerAuth = JSON.stringify({
+  CLIENT_ID: '', // Set this.
+  CLIENT_SECRET: '', // Set this.
+  REFRESH_TOKEN: '', // Set this.
+  USER_EMAIL: '', // Set this.
+})
+
 export class AuthExampleCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props)
@@ -40,6 +47,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
       environment: {
         AUTH_INDEX_NAME: tableAuthIndexName,
         CORS_ORIGIN: corsOrigin,
+        NODEMAILER_AUTH: nodemailerAuth,
         USERS_TABLE_NAME: tableName,
         JWT_SECRET: jwtSecret,
       },
