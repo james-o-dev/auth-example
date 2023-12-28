@@ -11,6 +11,7 @@
     "cdk": "cdk",
     "cdk:synth": "cdk synth && npm run clean-cdk.out",
     "cdk:deploy": "cdk deploy && npm run clean-cdk.out",
+    "cdk:destroy": "cdk destroy",
     "clean-cdk.out": "rimraf cdk.out/",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
