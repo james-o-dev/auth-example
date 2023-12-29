@@ -1,6 +1,6 @@
 // authService.ts
 
-import { ACCESS_TOKEN_STORAGE_NAME, REFRESH_TOKEN_STORAGE_NAME, USER_STORAGE_NAME, makeApiRequest } from './apiService'
+import { ACCESS_TOKEN_STORAGE_NAME, REFRESH_TOKEN_STORAGE_NAME, USER_STORAGE_NAME, makeApiRequest, refreshAccessToken } from './apiService'
 
 /**
  * Sign out procedure.
@@ -15,21 +15,35 @@ export const signOut = () => {
  * Fetch the API whether the user is authenticated.
  */
 export const isAuthenticated = async () => {
-  try {
-    // Simulate an asynchronous operation, e.g., fetching user data from a server
-    const response = await makeApiRequest({ endpoint: '/auth', method: 'GET', includeCredentials: true })
+  /**
+   * Request to verify access token.
+   */
+  const accessTokenRequest = makeApiRequest({ endpoint: '/auth', method: 'GET', includeCredentials: true })
 
-    if (response.ok) {
+  /**
+   * Attempt to refresh the access token, then try again.
+   */
+  const retryAuth = async () => {
+    await refreshAccessToken()
+    const response = await accessTokenRequest
+    return response.ok
+  }
+
+  try {
+    const response = await accessTokenRequest
+
+    if (response.ok) return true
+    throw new Error('Not authenticated initially - try refreshing the token.')
+
+  } catch (error) {
+    // Attempt to refresh the token, then try again.
+    if (await retryAuth()) {
       return true
     } else {
-      // Handle non-OK response (e.g., unauthorized)
+      // Could not refresh to get a new token; Handle non-OK response (e.g., unauthorized).
       signOut()
       return false
     }
-  } catch (error) {
-    signOut()
-    console.error('Error checking authentication:', error)
-    return false
   }
 }
 
