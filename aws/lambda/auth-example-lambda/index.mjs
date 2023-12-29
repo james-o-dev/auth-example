@@ -89,8 +89,8 @@ const getIATNow = () => Math.round(Date.now() / 1000)
 
 /**
  * Helper: Update the iat value for a user in the database.
- * * If the refresh token is issued before this iat, it is not valid.
- * * Should be called before a new refresh token is issued, to avoid new refresh tokens being immedtiately invalid.
+ * * If JWT tokens are issued before this iat, it is not valid.
+ * * Should be called before a new refresh token is issued, to avoid new refresh tokens being immediately invalid.
  *
  * @param {string} userId
  */
@@ -181,6 +181,25 @@ const findUserFromEmailQuery = (email) => {
 }
 
 /**
+ * Helper: Validate a JWT token against a user in the database.
+ *
+ * @param {string} decodedToken
+ * @param {string} [expiredMessage]
+ */
+const checkTokenAgainstDb = async (decodedToken, expiredMessage = 'Unauthorized.') => {
+  const userId = decodedToken.userId
+  const getUser = await getCommand(USERS_TABLE_NAME, { userId })
+
+  const userNotFound = !getUser.Item
+  const emailsDoNotMatch = getUser.Item.email !== decodedToken.email
+  const tokenHasExpired = getUser.Item.iat && parseInt(decodedToken.iat) < parseInt(getUser.Item.iat)
+
+  if (userNotFound || emailsDoNotMatch || tokenHasExpired) throw buildValidationError(401, expiredMessage)
+
+  return true
+}
+
+/**
  * Helper: Authenticate and verify a user based on the provided request headers.
  *
  * @param {*} reqHeaders
@@ -189,6 +208,10 @@ const authEndpoint = async (reqHeaders) => {
   try {
     const verified = verifyAuth(reqHeaders)
     if (!verified) throw buildValidationError(401, 'Unauthorized.')
+
+    // Check the user record if existing records should be invalidated.
+    await checkTokenAgainstDb(verified)
+
     return buildLambdaResponse(200, { message: 'Token verified.', })
   } catch (_) {
     throw buildValidationError(401, 'Unauthorized.')
@@ -206,12 +229,11 @@ const refreshTokenEndpoint = async (reqHeaders) => {
   }
 
   try {
-    const { email, userId, iat } = verifyAuth(reqHeaders, true)
+    const verifiedToken = verifyAuth(reqHeaders, true)
+    const { email, userId } = verifiedToken
 
     // Check database that the user is authentic and is allowed access.
-    const getUser = await getCommand(USERS_TABLE_NAME, { userId })
-    if (getUser.Item.email !== email) throwUnauth()
-    if (getUser.Item.iat && parseInt(iat) < parseInt(getUser.Item.iat)) throw throwUnauth('Refresh token has expired; Please sign in again.')
+    await checkTokenAgainstDb(verifiedToken, 'Refresh token is no longer valid; Please sign in again.')
 
     // Generate new jwts.
     const user = getJwtPayload(email, userId)
