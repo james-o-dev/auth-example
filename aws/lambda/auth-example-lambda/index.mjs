@@ -97,6 +97,11 @@ const getIATNow = () => Math.round(Date.now() / 1000)
 const updateUserIAT = (userId) => updateCommand(USERS_TABLE_NAME, { userId }, { iat: getIATNow() })
 
 /**
+ * Helper: Generate a string that can be remembered by a human (somewhat).
+ */
+const generateRandomHumanString = () => `${generateRandomString(4)}-${generateRandomString(4)}-${generateRandomString(4)}`
+
+/**
  * Helper: Do sign in validation.
  * * Throws a 400 error if they are invalid.
  * * TODO: Replace with API Gateway validation
@@ -358,7 +363,7 @@ const resetPasswordEndpoint = async (reqBody) => {
   const { userId } = findUser.Items[0]
 
   // Generate a new password.
-  const newPassword = `${generateRandomString(4)}-${generateRandomString(4)}-${generateRandomString(4)}`
+  const newPassword = generateRandomHumanString()
 
   // Hash the password.
   const hashedPassword = await hashPassword(newPassword)
@@ -372,7 +377,7 @@ const resetPasswordEndpoint = async (reqBody) => {
     to: reqBody.email,
     subject: 'auth-example: Password reset',
     html: `
-      <div>Hi,</div>
+      <div>Hi ${reqBody.email},</div>
       <br>
       <div>Your new password is:</div>
       <div><strong>${newPassword}</strong></div>
@@ -383,8 +388,73 @@ const resetPasswordEndpoint = async (reqBody) => {
 
   // Respond.
   return buildLambdaResponse(200, { message: 'An auto-generated password has been mailed to you.' })
+}
 
-  // return buildLambdaResponse(501, 'Not yet implemented. Check back soon...')
+/**
+ * Verify email request
+ * * Generate a code and expiry, save it to the database against the user
+ * * Sends the code to the email
+ *
+ * @param {string} userId
+ * @param {string} email
+ */
+const verifyEmailRequest = async (userId, email) => {
+  // Details for email verification.
+  const verifyEmail = {
+    // User must input this to confirm.
+    code: generateRandomHumanString(),
+    // Expires five minutes from now.
+    expiry: Date.now() + 300000,
+  }
+
+  // Update the user with email verification data.
+  await updateCommand(USERS_TABLE_NAME, { userId }, {
+    verifyEmail: JSON.stringify(verifyEmail),
+    emailVerified: false,
+  })
+
+  // Send code to this email address.
+  await gmailSend({
+    to: email,
+    subject: 'auth-example: Email verification',
+    html: `
+      <div>Hi ${email},</div>
+      <br>
+      <div>Please input the following code in the email verification:</div>
+      <div><strong>${verifyEmail.code}</strong></div>
+      <br>
+      <div>This code will be valid for around 5 minutes.</div>
+    `
+  })
+
+  return buildLambdaResponse(200, { message: 'An email has been sent to you.' })
+}
+
+/**
+ * Verify email endpoint.
+ * * Takes the code that was sent to the user, via `verifyEmailRequest()`
+ *
+ * @param {string} userId
+ * @param {*} reqBody
+ */
+const verifyEmailConfirm = async (userId, reqBody) => {
+  if (!reqBody.code) throw buildValidationError(400, 'Invalid code.')
+
+  const getUser = await getCommand(USERS_TABLE_NAME, { userId })
+
+  const { verifyEmail, emailVerified } = getUser.Item
+  if (emailVerified) throw buildValidationError(400, 'Email already verified.')
+
+  const { code, expiry } = JSON.parse(verifyEmail)
+  if (!reqBody.code) throw buildValidationError(400, 'Invalid code.')
+
+  if (code !== reqBody.code) throw buildValidationError(400, 'Code does not match.')
+  if (Date.now() > expiry) throw buildValidationError(400, 'Code has expired; Please request for a new code to be sent to your email address.')
+
+  // Update the user with email verification data.
+  await updateCommand(USERS_TABLE_NAME, { userId }, { verifyEmail: null, emailVerified: true })
+
+  return buildLambdaResponse(200, { message: 'Email verified.' })
 }
 
 // index.js
@@ -440,6 +510,22 @@ export const handler = async (event) => {
       if (!verified) throw buildValidationError(401, 'Unauthorized.')
 
       response = await changePasswordEndpoint(verified.userId, reqBody)
+    }
+
+    // Verify email request route.
+    if (reqPath === '/auth/verify-email-request' && reqMethod === 'GET') {
+      const verified = verifyAuth(reqHeaders)
+      if (!verified) throw buildValidationError(401, 'Unauthorized.')
+
+      response = await verifyEmailRequest(verified.userId, verified.email)
+    }
+
+    // Verify email confirm route.
+    if (reqPath === '/auth/verify-email-confirm' && reqMethod === 'POST') {
+      const verified = verifyAuth(reqHeaders)
+      if (!verified) throw buildValidationError(401, 'Unauthorized.')
+
+      response = await verifyEmailConfirm(verified.userId, reqBody)
     }
 
     // Respond.
