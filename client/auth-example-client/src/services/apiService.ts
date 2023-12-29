@@ -20,7 +20,7 @@ export const hasRefreshToken = () => !!getRefreshToken()
 /**
  * Helper: Refresh the access token.
  */
-const refreshAccessToken = async () => {
+export const refreshAccessToken = async () => {
   const refreshToken = getRefreshToken()
 
   if (!refreshToken) return ''
