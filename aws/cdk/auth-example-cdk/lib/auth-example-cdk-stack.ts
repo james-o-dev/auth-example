@@ -136,12 +136,16 @@ export class AuthExampleCdkStack extends cdk.Stack {
     const resetPassword = authResource.addResource('reset-password')
     resetPassword.addMethod('POST', integration)
 
+    // VerifyEmail resource
+    const verifyEmail = authResource.addResource('verify-email')
+    verifyEmail.addMethod('GET', integration)
+
     // VerifyEmailRequest resource
-    const verifyEmailRequest = authResource.addResource('verify-email-request')
+    const verifyEmailRequest = verifyEmail.addResource('request')
     verifyEmailRequest.addMethod('GET', integration)
 
     // VerifyEmailConfirm resource
-    const verifyEmailConfirm = authResource.addResource('verify-email-confirm')
+    const verifyEmailConfirm = verifyEmail.addResource('confirm')
     verifyEmailConfirm.addMethod('POST', integration)
   }
 }
