@@ -96,6 +96,13 @@ export class AuthExampleCdkStack extends cdk.Stack {
       }
     })
     const integration = new LambdaIntegration(lambdaFunction)
+    const apiUrl = api.url
+
+    // Output the API Gateway endpoint URL
+    new cdk.CfnOutput(this, 'ApiGatewayUrl', {
+      value: apiUrl,
+      description: 'API Gateway URL',
+    })
 
     // Health resource.
     const healthResource = api.root.addResource('health')
