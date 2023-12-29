@@ -40,7 +40,7 @@ const Profile = () => {
     setIsSubmitting(true)
     try {
       await changePassword(oldPassword, newPassword, confirmPassword)
-      alert('Password changed successfull; You will be signed out shortly.')
+      alert('Password changed successful; You will be signed out shortly.')
       signOut()
       navigate('/sign-in')
     } catch (error) {
