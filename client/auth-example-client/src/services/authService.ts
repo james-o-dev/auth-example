@@ -20,14 +20,7 @@ export const isAuthenticated = async () => {
     const response = await makeApiRequest({ endpoint: '/auth', method: 'GET', includeCredentials: true })
 
     if (response.ok) {
-      // You can customize the success condition based on your server response
-      const successfulAuth = await response.json()
-
-      // Store the authentication token in the local storage.
-      localStorage.setItem(ACCESS_TOKEN_STORAGE_NAME, successfulAuth.token)
-      localStorage.setItem(USER_STORAGE_NAME, JSON.stringify(successfulAuth.user))
-
-      return successfulAuth // Assuming the presence of user data indicates authentication
+      return true
     } else {
       // Handle non-OK response (e.g., unauthorized)
       signOut()
@@ -62,8 +55,8 @@ export const signIn = async (email: string, password: string) => {
     if (!response.ok) throw new Error(successfulSignIn)
 
     // Store the authentication token in the local storage.
-    localStorage.setItem(ACCESS_TOKEN_STORAGE_NAME, successfulSignIn.token)
-    localStorage.setItem(USER_STORAGE_NAME, JSON.stringify(successfulSignIn.user))
+    localStorage.setItem(ACCESS_TOKEN_STORAGE_NAME, successfulSignIn.accessToken)
+    localStorage.setItem(REFRESH_TOKEN_STORAGE_NAME, successfulSignIn.refreshToken)
 
     // Return the authentication result.
     return successfulSignIn
@@ -105,8 +98,8 @@ export const signUp = async (email: string, password: string, confirmPassword: s
     if (!response.ok) throw new Error(successfulSignUp)
 
     // Store the authentication token in the local storage.
-    localStorage.setItem(ACCESS_TOKEN_STORAGE_NAME, successfulSignUp.token)
-    localStorage.setItem(USER_STORAGE_NAME, JSON.stringify(successfulSignUp.user))
+    localStorage.setItem(ACCESS_TOKEN_STORAGE_NAME, successfulSignUp.accessToken)
+    localStorage.setItem(REFRESH_TOKEN_STORAGE_NAME, successfulSignUp.refreshToken)
 
     // Return the authentication result.
     return successfulSignUp
@@ -139,10 +132,6 @@ export const changePassword = async (oldPassword: string, newPassword: string, c
   const successfulChangePassword = await response.json()
 
   if (!response.ok) throw new Error(successfulChangePassword)
-
-  // Store the authentication token in the local storage.
-  localStorage.setItem(ACCESS_TOKEN_STORAGE_NAME, successfulChangePassword.token)
-  localStorage.setItem(USER_STORAGE_NAME, JSON.stringify(successfulChangePassword.user))
 
   // Return the authentication result.
   return successfulChangePassword

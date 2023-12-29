@@ -1,4 +1,4 @@
-const API_BASE = '' // Set the API Gateway base URL here.
+const API_BASE = 'https://q8m1g81qp3.execute-api.ap-southeast-2.amazonaws.com/dev' // Set the API Gateway base URL here.
 if (!API_BASE) throw new Error('API_BASE is not set.')
 
 export const ACCESS_TOKEN_STORAGE_NAME = 'accessToken'
@@ -8,20 +8,66 @@ export const USER_STORAGE_NAME = 'user'
 import { isExpired } from 'react-jwt'
 
 /**
+ * Helper: Get the user's refresh token
+ */
+const getRefreshToken = () => localStorage.getItem(REFRESH_TOKEN_STORAGE_NAME) || ''
+
+/**
+ * Returns if the user has a refresh token.
+ */
+export const hasRefreshToken = () => !!getRefreshToken()
+
+/**
+ * Helper: Refresh the access token.
+ */
+const refreshAccessToken = async () => {
+  const refreshToken = getRefreshToken()
+
+  if (!refreshToken) return ''
+
+  try {
+    // Note: Do not use the `makeApiRequest()` helper function here, or you will be stuck in an infinite loop!.
+    const response = await fetch(`${API_BASE}/auth/refresh-token`, {
+      credentials: 'include',
+      headers: {
+        Authorization: `Bearer ${refreshToken}`
+      }
+    })
+
+    // It could not refresh the access token.
+    if (!response.ok) return ''
+
+    // Succesfully returned an acccess token.
+    const refreshTokenResponse = await response.json()
+
+    // Set the new access token to be returned.
+    const accessToken = refreshTokenResponse.accessToken
+
+    // Set the new access token in storage.
+    localStorage.setItem(ACCESS_TOKEN_STORAGE_NAME, accessToken)
+
+    // Return the access token
+    return accessToken
+
+  } catch (error) {
+    // It could not refresh the access token.
+    return ''
+  }
+}
+
+/**
  * Helper: Get the access token from local storage.
  */
 const getAccessToken = async () => {
-  // TODO
-  // Once access/refresh tokens are implemented server-side, determine if expired.
-  // If so, get a new access token from the server, using the refresh token
 
-   const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_NAME) || ''
+  // Get access token.
+  let accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_NAME) || ''
 
-   const expired = isExpired(accessToken)
+  if (!accessToken || isExpired(accessToken)) {
+    accessToken = await refreshAccessToken()
+  }
 
-   if (expired) return
-
-   return accessToken
+  return accessToken
 }
 
 /**
@@ -64,7 +110,12 @@ export const makeApiRequest = async (
     { endpoint: string; method: string; body?: object; headers?: HeadersInit; includeCredentials?: boolean }
 ): Promise<Response> => {
 
-  const authHeader = includeCredentials ? await getAuthHeader() : {}
+  let authHeader = {}
+  let credentials: RequestCredentials = 'omit'
+  if (includeCredentials) {
+    authHeader = await getAuthHeader()
+    credentials = 'include'
+  }
 
   return fetch(API_BASE + endpoint, {
     method,
@@ -73,5 +124,6 @@ export const makeApiRequest = async (
       ...authHeader,
       ...headers,
     },
+    credentials,
   })
 }
