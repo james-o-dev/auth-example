@@ -196,10 +196,10 @@ const refreshTokenEndpoint = async (reqHeaders) => {
     // Generate new jwts.
     const user = getJwtPayload(email, userId)
     const accessToken = generateAccessToken(user)
-    const refreshToken = generateRefreshToken(user)
+    // const refreshToken = generateRefreshToken(user)
 
     // Respond.
-    return buildLambdaResponse(200, { message: 'New access and refresh tokens issued.', accessToken, refreshToken, })
+    return buildLambdaResponse(200, { message: 'New access and refresh tokens issued.', accessToken, })
   } catch (_) {
     throwUnauth()
   }
@@ -350,6 +350,7 @@ const resetPasswordEndpoint = async (reqBody) => {
   const hashedPassword = await hashPassword(newPassword)
 
   // Update the password in the DB.
+  // Invalidate existing refresh tokens.
   await updateCommand(USERS_TABLE_NAME, { userId }, { hashedPassword, iat: getIATNow() })
 
   // Send the new password to the user.
