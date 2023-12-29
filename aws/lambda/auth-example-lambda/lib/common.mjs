@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto'
 
-const CORS_ORIGIN = process.env.CORS_ORIGIN
-if (!CORS_ORIGIN || CORS_ORIGIN === '*') throw new Error('CORS_ORIGIN environment variable has not been set; It can not be a wildcard (*) either.')
+const CLIENT_HOST = process.env.CLIENT_HOST
+if (!CLIENT_HOST || CLIENT_HOST === '*') throw new Error('CLIENT_HOST environment variable has not been set; It can not be a wildcard (*) either.')
 
 /**
  * Returns an object used to throw validation errors.
@@ -26,7 +26,7 @@ export const buildLambdaResponse = (statusCode, body, options = {}) => {
   return {
     statusCode,
     headers: {
-      'Access-Control-Allow-Origin': CORS_ORIGIN,
+      'Access-Control-Allow-Origin': CLIENT_HOST,
       'Access-Control-Allow-Credentials': true,
       'Content-Type': 'application/json',
       ...options.headers,

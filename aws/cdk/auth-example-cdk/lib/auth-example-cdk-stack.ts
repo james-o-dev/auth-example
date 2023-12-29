@@ -11,7 +11,7 @@ const LAMBDA_NAME = 'auth-example-lambda'
 const API_NAME = 'auth-example-api'
 const USERS_TABLE_NAME = 'auth-example-users'
 const AUTH_INDEX_NAME = 'auth-index'
-const CORS_ORIGIN = '' // Set this to the domain, depending on where the client is hosted.
+const CLIENT_HOST = '' // Set this to the domain, depending on where the client is hosted.
 const ACCESS_TOKEN_SECRET = '' || randomUUID() // Set the JWT secret here, to avoid invalidating existing tokens upon update; If empty, generate one.
 const REFRESH_TOKEN_SECRET = '' || randomUUID() // Set the JWT secret here, to avoid invalidating existing tokens upon update; If empty, generate one.
 const GMAIL_CLIENT_ID = '' // Set this.
@@ -45,7 +45,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
       environment: {
         ACCESS_TOKEN_SECRET,
         AUTH_INDEX_NAME,
-        CORS_ORIGIN,
+        CLIENT_HOST,
         GMAIL_CLIENT_ID,
         GMAIL_CLIENT_SECRET,
         GMAIL_REFRESH_TOKEN,
@@ -89,7 +89,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
       },
       endpointTypes: [EndpointType.REGIONAL],
       defaultCorsPreflightOptions: {
-        allowOrigins: [CORS_ORIGIN],
+        allowOrigins: [CLIENT_HOST],
         allowCredentials: true,
         allowHeaders: Cors.DEFAULT_HEADERS,
         allowMethods: Cors.ALL_METHODS,
