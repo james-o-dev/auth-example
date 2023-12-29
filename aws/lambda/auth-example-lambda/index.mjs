@@ -196,10 +196,10 @@ const refreshTokenEndpoint = async (reqHeaders) => {
     // Generate new jwts.
     const user = getJwtPayload(email, userId)
     const accessToken = generateAccessToken(user)
-    // const refreshToken = generateRefreshToken(user)
+    // const refreshToken = generateRefreshToken(user) // Can generate a new refresh token here, if we want to use 'rolling' refresh tokens.
 
     // Respond.
-    return buildLambdaResponse(200, { message: 'New access and refresh tokens issued.', accessToken, })
+    return buildLambdaResponse(200, { message: 'New access token issued.', accessToken, })
   } catch (_) {
     throwUnauth()
   }
@@ -233,12 +233,10 @@ const signUpEndpoint = async (reqBody) => {
   // Create JWT.
   const user = getJwtPayload(email, userId)
   const accessToken = generateAccessToken(user)
-
-  // Uncomment below to generate and send new refresh token if using rolling/extending refresh tokens; Else the user must always sign in again to get a new refresh token.
-  // const refreshToken = generateRefreshToken(user)
+  const refreshToken = generateRefreshToken(user)
 
   // Respond.
-  return buildLambdaResponse(201, { message: 'User has been created.', accessToken, })
+  return buildLambdaResponse(201, { message: 'User has been created.', accessToken, refreshToken, })
 }
 
 /**
