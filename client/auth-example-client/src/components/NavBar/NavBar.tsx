@@ -3,6 +3,7 @@
 import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { signOut } from '../../services/authService'
+import { hasRefreshToken } from '../../services/apiService'
 
 export interface NavbarItem {
   to: string,
@@ -23,7 +24,14 @@ const NAV_ITEMS: NavbarItem[] = [
 
 const Navbar: React.FC<NavbarProps> = ({ navItems = NAV_ITEMS }) => {
   const navigate = useNavigate()
-  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  const authenticated = hasRefreshToken()
+
+  const filteredNavItems = navItems.filter(({ type }) => {
+    if (type === 'all') return true
+    else if (type === 'auth' && authenticated) return true
+    else if (type === 'unauth' && !authenticated) return true
+    else return false
+  })
 
   const onSignOut = () => {
     signOut()
@@ -34,8 +42,7 @@ const Navbar: React.FC<NavbarProps> = ({ navItems = NAV_ITEMS }) => {
   return (
     <nav>
       <ul>
-        {navItems
-          .filter(({ type }) => (type === 'all') || (type === 'auth' && user) || (type === 'unauth' && !user))
+        {filteredNavItems
           .map(({ to, label }, index) => {
             return (
               <li key={index}>
@@ -43,7 +50,7 @@ const Navbar: React.FC<NavbarProps> = ({ navItems = NAV_ITEMS }) => {
               </li>
             )
           })}
-        {user && <li><a href="" onClick={onSignOut}>Sign Out</a></li>}
+        {authenticated && <li><a href="" onClick={onSignOut}>Sign Out</a></li>}
       </ul>
     </nav>
   )

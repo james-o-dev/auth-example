@@ -105,6 +105,10 @@ export class AuthExampleCdkStack extends cdk.Stack {
     const authResource = api.root.addResource('auth')
     authResource.addMethod('GET', integration)
 
+    // RefreshToken resource.
+    const refreshTokenResource = authResource.addResource('refresh-token')
+    refreshTokenResource.addMethod('GET', integration)
+
     // SignUp resource.
     const signUpResource = authResource.addResource('sign-up')
     signUpResource.addMethod('POST', integration)

@@ -99,32 +99,43 @@ export const deleteCommand = async (tableName, partitionKey) => {
 }
 
 /**
- * Execute an update command on the DynamoDB table to update/patch a single value of an existing item, via its partition key
- * * It will throw an error 'ConditionalCheckFailedException' if the item was not found
+ * Execute an update command on the DynamoDB table to update/patch values of an existing record, via its partition key
+ * * It will throw an error 'ConditionalCheckFailedException' if the item was not found (it only updats, it does not create)
  *
  * @param {string} tableName
  * @param {*} partitionKey Take an object with a single property; The key is the partition key and the value is the value of the partition key.
- * @param {*} updateValue Take an object with a single property; The key is the field name and the value is the value of the field to update.
+ * @param {*} updateValues Take an object with properties; The keys are the field names and the values are the values of the field to update.
  */
-export const updateCommand = async (tableName, partitionKey, updateValue) => {
+export const updateCommand = async (tableName, partitionKey, updateValues) => {
   const [partitionKeyName, partitionKeyValue] = getObjectFirstKeyValue(partitionKey)
-  const [field, value] = getObjectFirstKeyValue(updateValue)
+
+  const updateExpression = []
+  const expressionAttributeNames = {}
+  const expressionAttributeValues = {}
+
+  // Build the update expression and attribute values
+  Object.keys(updateValues).forEach((key, index) => {
+    const attributeName = `#attr${index}`
+    const attributeValue = `:value${index}`
+
+    updateExpression.push(`${attributeName} = ${attributeValue}`)
+    expressionAttributeNames[attributeName] = key
+    expressionAttributeValues[attributeValue] = updateValues[key]
+  })
 
   const newUpdateCommand = new UpdateCommand({
     TableName: tableName,
     Key: {
       [partitionKeyName]: partitionKeyValue,
     },
-    UpdateExpression: `set ${field} = :value`,
+    UpdateExpression: `set ${updateExpression.join(', ')}`,
+    ExpressionAttributeNames: expressionAttributeNames,
+    ExpressionAttributeValues: expressionAttributeValues,
     ConditionExpression: `attribute_exists(${partitionKeyName})`, // Only update, do not create. @see https://stackoverflow.com/a/41874889
-    ExpressionAttributeValues: {
-      ':value': value,
-    },
     ReturnValues: 'UPDATED_NEW',
   })
   return docClient.send(newUpdateCommand)
 }
-
 
 /**
  * Executes a query command on a specified table using the provided query options.
