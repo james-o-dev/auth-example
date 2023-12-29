@@ -2,6 +2,9 @@
 
 import { ACCESS_TOKEN_STORAGE_NAME, REFRESH_TOKEN_STORAGE_NAME, USER_STORAGE_NAME, makeApiRequest, refreshAccessToken } from './apiService'
 
+// Require at least one lowercase letter, one uppercase letter, one number, and one special character, with a minimum length of 8 characters.
+const PASSWORD_REGEXP = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+
 /**
  * Sign out procedure.
  */
@@ -9,6 +12,17 @@ export const signOut = () => {
   localStorage.removeItem(ACCESS_TOKEN_STORAGE_NAME)
   localStorage.removeItem(REFRESH_TOKEN_STORAGE_NAME)
   localStorage.removeItem(USER_STORAGE_NAME)
+}
+
+/**
+ * Validate password strength; Returns true if valid, throws validation error if not.
+ *
+ * @param {string} password
+ */
+export const validatePasswordStrength = (password: string) => {
+  const passed = PASSWORD_REGEXP.test(password)
+  if (passed) return { valid: true, message: 'Password strength is strong enough.' }
+  return { valid: false, message: 'Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character, with a minimum length of 8 characters.'  }
 }
 
 /**

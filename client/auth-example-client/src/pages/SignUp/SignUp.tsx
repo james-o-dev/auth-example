@@ -1,7 +1,7 @@
 // Import React and required hooks
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { signUp } from '../../services/authService'
+import { signUp, validatePasswordStrength } from '../../services/authService'
 
 // Define the SignUp component
 const SignUp: React.FC = () => {
@@ -18,6 +18,9 @@ const SignUp: React.FC = () => {
     const newMessages: string[] = []
 
     if (password !== confirmPassword) newMessages.push('Passwords do not match')
+
+    const validateThePassword = validatePasswordStrength(password)
+    if (!validateThePassword.valid) newMessages.push(validateThePassword.message)
 
     setValidationMessages(newMessages)
 
