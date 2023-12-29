@@ -18,6 +18,7 @@ if (!USERS_TABLE_NAME) throw new Error('Missing USERS_TABLE_NAME environment var
 
 const ACCESS_TOKEN_EXPIRY = '10m'
 const REFRESH_TOKEN_EXPIRY = '7d'
+const INVALID_TOKEN_MESSAGE = 'Unauthorized.'
 
 // Require at least one lowercase letter, one uppercase letter, one number, and one special character, with a minimum length of 8 characters.
 const PASSWORD_REGEXP = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
@@ -102,6 +103,13 @@ const updateUserIAT = (userId) => updateCommand(USERS_TABLE_NAME, { userId }, { 
 const generateRandomHumanString = () => `${generateRandomString(4)}-${generateRandomString(4)}-${generateRandomString(4)}`
 
 /**
+ * Helper: Throw an error for being Unauthorized.
+ */
+const throwUnauthError = () => {
+  throw buildValidationError(401, INVALID_TOKEN_MESSAGE)
+}
+
+/**
  * Helper: Do sign in validation.
  * * Throws a 400 error if they are invalid.
  * * TODO: Replace with API Gateway validation
@@ -152,7 +160,7 @@ const getAuthHeaderToken = (reqHeaders) => {
  * @param {*} reqHeaders
  * @param {boolean} [isRefreshToken=false]
  */
-const verifyAuth = (reqHeaders, isRefreshToken = false) => {
+const verifyJWT = (reqHeaders, isRefreshToken = false) => {
   try {
     const incomingToken = getAuthHeaderToken(reqHeaders)
     if (!incomingToken) return null
@@ -182,59 +190,32 @@ const findUserFromEmailQuery = (email) => {
 
 /**
  * Helper: Validate a JWT token against a user in the database.
+ * * Throws Unauthorized if the token is not valid against the user
  *
  * @param {string} decodedToken
- * @param {string} [expiredMessage]
+ * @param {string} [invalidMessage]
  */
-const checkTokenAgainstDb = async (decodedToken, expiredMessage = 'Unauthorized.') => {
-  const userId = decodedToken.userId
-  const getUser = await getCommand(USERS_TABLE_NAME, { userId })
+const checkTokenAgainstDb = async (decodedToken) => {
+  if (!decodedToken || !decodedToken.userId) throwUnauthError()
 
-  const userNotFound = !getUser.Item
+  const getUser = await getCommand(USERS_TABLE_NAME, { userId: decodedToken.userId })
+  if (!getUser.Item) throwUnauthError()
+
   const emailsDoNotMatch = getUser.Item.email !== decodedToken.email
   const tokenHasExpired = getUser.Item.iat && parseInt(decodedToken.iat) < parseInt(getUser.Item.iat)
-
-  if (userNotFound || emailsDoNotMatch || tokenHasExpired) throw buildValidationError(401, expiredMessage)
+  if (emailsDoNotMatch || tokenHasExpired) throwUnauthError()
 
   return true
 }
 
 /**
- * Helper: Authenticate and verify a user based on the provided request headers.
- *
- * @param {*} reqHeaders
- */
-const authEndpoint = async (reqHeaders) => {
-  try {
-    const verified = verifyAuth(reqHeaders)
-    if (!verified) throw buildValidationError(401, 'Unauthorized.')
-
-    // Check the user record if existing records should be invalidated.
-    await checkTokenAgainstDb(verified)
-
-    return buildLambdaResponse(200, { message: 'Token verified.', })
-  } catch (_) {
-    throw buildValidationError(401, 'Unauthorized.')
-  }
-}
-
-/**
  * Endpoint to refresh access token.
  *
- * @param {*} reqHeaders
+ * @param {*} decodedRefreshToken
  */
-const refreshTokenEndpoint = async (reqHeaders) => {
-  const throwUnauth = (message = 'Unauthorized.') => {
-    throw buildValidationError(401, message)
-  }
-
+const refreshTokenEndpoint = async (decodedRefreshToken) => {
   try {
-    const verifiedToken = verifyAuth(reqHeaders, true)
-    const { email, userId } = verifiedToken
-
-    // Check database that the user is authentic and is allowed access.
-    await checkTokenAgainstDb(verifiedToken, 'Refresh token is no longer valid; Please sign in again.')
-
+    const { email, userId } = decodedRefreshToken
     // Generate new jwts.
     const user = getJwtPayload(email, userId)
     const accessToken = generateAccessToken(user)
@@ -243,7 +224,7 @@ const refreshTokenEndpoint = async (reqHeaders) => {
     // Respond.
     return buildLambdaResponse(200, { message: 'New access token issued.', accessToken, })
   } catch (_) {
-    throwUnauth()
+    throwUnauthError()
   }
 }
 
@@ -316,16 +297,15 @@ const signInEndpoint = async (reqBody) => {
 /**
  * Invalidating all the refresh tokens for the user
  *
- * @param {*} reqHeaders
+ * @param {string} userId
  */
-const signOutEndpoint = async (reqHeaders) => {
+const signOutEndpoint = async (userId) => {
   try {
-    const { userId } = verifyAuth(reqHeaders)
     await updateUserIAT(userId)
-    return buildLambdaResponse(204, { message: 'Sign out successful.' })
+    return buildLambdaResponse(204, 'Sign out successful.')
 
   } catch (_) {
-    throw buildValidationError(401, 'Unauthorized')
+    throwUnauthError()
   }
 }
 
@@ -336,7 +316,6 @@ const signOutEndpoint = async (reqHeaders) => {
  * @param {*} reqBody
  */
 const changePasswordEndpoint = async (userId, reqBody) => {
-  if (!userId) throw buildValidationError(401, 'Unauthorized.')
   if (!reqBody) throw buildValidationError(400, 'Invalid request body.')
   if (!reqBody.oldPassword) throw buildValidationError(400, 'Invalid old password.')
   if (!reqBody.newPassword) throw buildValidationError(400, 'Invalid new password.')
@@ -354,7 +333,7 @@ const changePasswordEndpoint = async (userId, reqBody) => {
 
   // Verify old password.
   const doesOldPasswordMatch = await bcryptjs.compare(oldPassword, oldHashedPassword)
-  if (!doesOldPasswordMatch) throw buildValidationError(401, 'Unauthorized.')
+  if (!doesOldPasswordMatch) throwUnauthError()
 
   // Hash new password.
   const hashedPassword = await hashPassword(newPassword)
@@ -364,7 +343,7 @@ const changePasswordEndpoint = async (userId, reqBody) => {
   await updateCommand(USERS_TABLE_NAME, { userId }, { hashedPassword, iat: getIATNow() })
 
   // Respond.
-  return buildLambdaResponse(200, { message: 'Password has been changed.' })
+  return buildLambdaResponse(200, 'Password has been changed.')
 }
 
 /**
@@ -409,7 +388,7 @@ const resetPasswordEndpoint = async (reqBody) => {
   })
 
   // Respond.
-  return buildLambdaResponse(200, { message: 'An auto-generated password has been mailed to you.' })
+  return buildLambdaResponse(200, 'An auto-generated password has been mailed to you.')
 }
 
 /**
@@ -449,7 +428,20 @@ const verifyEmailRequest = async (userId, email) => {
     `
   })
 
-  return buildLambdaResponse(200, { message: 'An email has been sent to you.' })
+  return buildLambdaResponse(200, 'An email has been sent to you.')
+}
+
+/**
+ * Get a JWT; Returns the decoded token; Throws validation error if not valid.
+ *
+ * @param {*} reqHeaders
+ * @param {boolean} [isRefreshToken]
+ */
+const getJWT = async (reqHeaders, isRefreshToken = false) => {
+  const verified = verifyJWT(reqHeaders, isRefreshToken)
+  if (!verified) throwUnauthError()
+  await checkTokenAgainstDb(verified)
+  return verified
 }
 
 /**
@@ -476,7 +468,17 @@ const verifyEmailConfirm = async (userId, reqBody) => {
   // Update the user with email verification data.
   await updateCommand(USERS_TABLE_NAME, { userId }, { verifyEmail: null, emailVerified: true })
 
-  return buildLambdaResponse(200, { message: 'Email verified.' })
+  return buildLambdaResponse(200, 'Email verified.')
+}
+
+/**
+ * Return if the user's email has been verified.
+ *
+ * @param {string} userId
+ */
+const getVerifiedEmailEndpoint = async (userId) => {
+  const getUser = await getCommand(USERS_TABLE_NAME, { userId })
+  return buildLambdaResponse(200, { emailVerified: getUser.Item.emailVerified || false })
 }
 
 // index.js
@@ -509,10 +511,16 @@ export const handler = async (event) => {
     if (reqPath === '/health' && reqMethod === 'GET') response = buildLambdaResponse(200, 'I am healthy! ❤❤❤')
 
     // Auth route.
-    if (reqPath === '/auth' && reqMethod === 'GET') response = await authEndpoint(reqHeaders)
+    if (reqPath === '/auth' && reqMethod === 'GET') {
+      await getJWT(reqHeaders)
+      response = await buildLambdaResponse(200, 'Token verified.')
+    }
 
     // Refresh token route.
-    if (reqPath === '/auth/refresh-token' && reqMethod === 'GET') response = await refreshTokenEndpoint(reqHeaders)
+    if (reqPath === '/auth/refresh-token' && reqMethod === 'GET') {
+      const refreshToken = await getJWT(reqHeaders, true)
+      response = await refreshTokenEndpoint(refreshToken)
+    }
 
     // Sign Up route.
     if (reqPath === '/auth/sign-up' && reqMethod === 'POST') response = await signUpEndpoint(reqBody)
@@ -521,33 +529,36 @@ export const handler = async (event) => {
     if (reqPath === '/auth/sign-in' && reqMethod === 'POST') response = await signInEndpoint(reqBody)
 
     // Sign Out route.
-    if (reqPath === '/auth/sign-out' && reqMethod === 'DELETE') response = await signOutEndpoint(reqHeaders)
+    if (reqPath === '/auth/sign-out' && reqMethod === 'DELETE') {
+      const accessToken = await getJWT(reqHeaders)
+      response = await signOutEndpoint(accessToken.userId)
+    }
 
     // Reset route.
     if (reqPath === '/auth/reset-password' && reqMethod === 'POST') response = await resetPasswordEndpoint(reqBody)
 
     // Change Password route.
     if (reqPath === '/auth/change-password' && reqMethod === 'POST') {
-      const verified = verifyAuth(reqHeaders)
-      if (!verified) throw buildValidationError(401, 'Unauthorized.')
+      const accessToken = await getJWT(reqHeaders)
+      response = await changePasswordEndpoint(accessToken.userId, reqBody)
+    }
 
-      response = await changePasswordEndpoint(verified.userId, reqBody)
+    // Verify email route.
+    if (reqPath === '/auth/verify-email' && reqMethod === 'GET') {
+      const accessToken = await getJWT(reqHeaders)
+      response = await getVerifiedEmailEndpoint(accessToken.userId)
     }
 
     // Verify email request route.
-    if (reqPath === '/auth/verify-email-request' && reqMethod === 'GET') {
-      const verified = verifyAuth(reqHeaders)
-      if (!verified) throw buildValidationError(401, 'Unauthorized.')
-
-      response = await verifyEmailRequest(verified.userId, verified.email)
+    if (reqPath === '/auth/verify-email/request' && reqMethod === 'GET') {
+      const accessToken = await getJWT(reqHeaders)
+      response = await verifyEmailRequest(accessToken.userId, accessToken.email)
     }
 
     // Verify email confirm route.
-    if (reqPath === '/auth/verify-email-confirm' && reqMethod === 'POST') {
-      const verified = verifyAuth(reqHeaders)
-      if (!verified) throw buildValidationError(401, 'Unauthorized.')
-
-      response = await verifyEmailConfirm(verified.userId, reqBody)
+    if (reqPath === '/auth/verify-email/confirm' && reqMethod === 'POST') {
+      const accessToken = await getJWT(reqHeaders)
+      response = await verifyEmailConfirm(accessToken.userId, reqBody)
     }
 
     // Respond.
