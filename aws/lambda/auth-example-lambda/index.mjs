@@ -19,6 +19,20 @@ if (!USERS_TABLE_NAME) throw new Error('Missing USERS_TABLE_NAME environment var
 const ACCESS_TOKEN_EXPIRY = '10m'
 const REFRESH_TOKEN_EXPIRY = '7d'
 
+// Require at least one lowercase letter, one uppercase letter, one number, and one special character, with a minimum length of 8 characters.
+const PASSWORD_REGEXP = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+
+/**
+ * Validate password strength; Returns true if valid, throws validation error if not.
+ *
+ * @param {string} password
+ */
+const validatePasswordStrength = (password) => {
+  const passed = PASSWORD_REGEXP.test(password)
+  if (passed) return true
+  throw buildValidationError(400, 'Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character, with a minimum length of 8 characters.')
+}
+
 /**
  * Helper: Returns a standardized object of the JWT payload.
  *
@@ -107,6 +121,7 @@ const signInValidation = (reqBody) => {
 const signUpValidation = (reqBody) => {
   if (!reqBody.confirmPassword) throw buildValidationError(400, 'Password not re-confirmed.')
   if (reqBody.password !== reqBody.confirmPassword) throw buildValidationError(400, 'Passwords do not match.')
+  validatePasswordStrength(reqBody.password)
 
   return { email: reqBody.email, password: reqBody.password, }
 }
@@ -304,6 +319,7 @@ const changePasswordEndpoint = async (userId, reqBody) => {
 
   if (newPassword !== confirmPassword) throw buildValidationError(400, 'Passwords do not match.')
   if (oldPassword === newPassword) throw buildValidationError(400, 'New password must not match the old one.')
+  validatePasswordStrength(newPassword)
 
   // Get old hashedPassword.
   const getUser = await getCommand(USERS_TABLE_NAME, { userId })
