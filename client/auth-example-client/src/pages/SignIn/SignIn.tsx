@@ -33,15 +33,15 @@ const SignIn = () => {
         <br />
         <label>
           Email:
-          <input required type="email" name="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input required type='email' name='email' autoComplete='username' value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
         <br />
         <label>
           Password:
-          <input required type="password" name="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <input required type='password' name='password' autoComplete='current-password' value={password} onChange={(e) => setPassword(e.target.value)} />
         </label>
         <br />
-        <button disabled={isSubmitting} type="submit">Sign In</button>
+        <button disabled={isSubmitting} type='submit'>Sign In</button>
         {isSubmitting && <span>Signing in...</span>}
       </form>
       <div>

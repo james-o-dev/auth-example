@@ -53,7 +53,7 @@ const Navbar: React.FC<NavbarProps> = ({ navItems = NAV_ITEMS }) => {
               </li>
             )
           })}
-        {authenticated && <li><a href="" onClick={onSignOut}>Sign out</a></li>}
+        {authenticated && <li><a href='' onClick={onSignOut}>Sign out</a></li>}
       </ul>
     </nav>
   )

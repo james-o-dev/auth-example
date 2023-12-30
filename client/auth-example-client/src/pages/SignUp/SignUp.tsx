@@ -75,9 +75,9 @@ const SignUp: React.FC = () => {
         <label>
           Email:
           <input
-            type="email"
-            name="email"
-            autoComplete="username"
+            type='email'
+            name='email'
+            autoComplete='username'
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -87,9 +87,9 @@ const SignUp: React.FC = () => {
         <label>
           Password:
           <input
-            type="password"
-            name="password"
-            autoComplete="new-password"
+            type='password'
+            name='password'
+            autoComplete='new-password'
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -99,9 +99,9 @@ const SignUp: React.FC = () => {
         <label>
           Confirm password:
           <input
-            type="password"
-            name="confirmPassword"
-            autoComplete="new-password"
+            type='password'
+            name='confirmPassword'
+            autoComplete='new-password'
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
@@ -118,8 +118,8 @@ const SignUp: React.FC = () => {
             </ul>
           </div>
         )}
-        <button type="submit">SIGN UP</button>
-        <button type="button" onClick={resetForm}>reset</button>
+        <button type='submit'>SIGN UP</button>
+        <button type='button' onClick={resetForm}>reset</button>
         {isSubmitting && <span>Signing up...</span>}
       </form>
       <div>
