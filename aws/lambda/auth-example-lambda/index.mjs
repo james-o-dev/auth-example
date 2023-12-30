@@ -1,10 +1,11 @@
 import { buildLambdaResponse, buildValidationError, generateRandomString } from './lib/common.mjs'
 import { getCommand, putCommand, queryCommand, updateCommand, } from './lib/dynamodb.mjs'
+import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs'
+const sqsClient = new SQSClient({})
 
 import { randomUUID } from 'crypto'
 import jsonwebtoken from 'jsonwebtoken'
 import bcryptjs from 'bcryptjs'
-import { gmailSend } from './lib/mail.mjs'
 
 // Environment variables.
 const AUTH_INDEX_NAME = process.env.AUTH_INDEX_NAME
@@ -15,6 +16,8 @@ const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET
 if (!REFRESH_TOKEN_SECRET) throw new Error('Missing REFRESH_TOKEN_SECRET environment variable')
 const USERS_TABLE_NAME = process.env.USERS_TABLE_NAME
 if (!USERS_TABLE_NAME) throw new Error('Missing USERS_TABLE_NAME environment variable')
+const NODEMAILER_SQS = process.env.NODEMAILER_SQS
+if (!NODEMAILER_SQS) throw new Error('Missing NODEMAILER_SQS environment variable')
 
 const ACCESS_TOKEN_EXPIRY = '10m'
 const REFRESH_TOKEN_EXPIRY = '7d'
@@ -22,6 +25,24 @@ const INVALID_TOKEN_MESSAGE = 'Unauthorized.'
 
 // Require at least one lowercase letter, one uppercase letter, one number, and one special character, with a minimum length of 8 characters.
 const PASSWORD_REGEXP = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+
+/**
+ * Send message to the Nodemailer SQS queue, to queue sending an email
+ *
+ * @param {string} to
+ * @param {string} subject
+ * @param {string} text
+ * @param {string} html
+ */
+const pushNodemailerSQSMessage = async ({ to, subject, text, html }) => {
+  const sendMessageCommand = new SendMessageCommand({
+    QueueUrl: NODEMAILER_SQS,
+    MessageBody: JSON.stringify({
+      to, subject, text, html
+    })
+  })
+  return sqsClient.send(sendMessageCommand)
+}
 
 /**
  * Validate password strength; Returns true if valid, throws validation error if not.
@@ -374,7 +395,7 @@ const resetPasswordEndpoint = async (reqBody) => {
   await updateCommand(USERS_TABLE_NAME, { userId }, { hashedPassword, iat: getIATNow() })
 
   // Send the new password to the user.
-  await gmailSend({
+  await pushNodemailerSQSMessage({
     to: reqBody.email,
     subject: 'auth-example: Password reset',
     html: `
@@ -415,7 +436,7 @@ const verifyEmailRequest = async (userId, email) => {
   })
 
   // Send code to this email address.
-  await gmailSend({
+  await pushNodemailerSQSMessage({
     to: email,
     subject: 'auth-example: Email verification',
     html: `

@@ -1,16 +1,19 @@
 const GMAIL_CLIENT_ID = process.env.GMAIL_CLIENT_ID
-const GMAIL_CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET
-const GMAIL_REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN
-const GMAIL_USER_EMAIL = process.env.GMAIL_USER_EMAIL
-
 if (!GMAIL_CLIENT_ID) throw new Error('Missing GMAIL_CLIENT_ID environment variable')
+const GMAIL_CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET
 if (!GMAIL_CLIENT_SECRET) throw new Error('Missing GMAIL_CLIENT_SECRET environment variable')
+const GMAIL_REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN
 if (!GMAIL_REFRESH_TOKEN) throw new Error('Missing GMAIL_REFRESH_TOKEN environment variable')
+const GMAIL_USER_EMAIL = process.env.GMAIL_USER_EMAIL
 if (!GMAIL_USER_EMAIL) throw new Error('Missing GMAIL_USER_EMAIL environment variable')
+const NODEMAILER_SQS = process.env.NODEMAILER_SQS
+if (!NODEMAILER_SQS) throw new Error('Missing NODEMAILER_SQS environment variable')
 
 import { createTransport } from 'nodemailer'
 import { google } from 'googleapis'
 const OAuth2 = google.auth.OAuth2
+import { SQSClient, DeleteMessageCommand } from '@aws-sdk/client-sqs'
+const sqsClient = new SQSClient()
 
 /**
  * Returns an access token for the Gmail API.
@@ -65,4 +68,25 @@ export const gmailSend = async ({ to, subject, text, html }) => {
     text,
     html,
   })
+}
+
+export const handler = async (event) => {
+  for(let record of event.Records) {
+    // Process each SQS message
+    const message = JSON.parse(record.body)
+    // console.log('Message received: ', message)
+
+    // Custom processing here
+    await gmailSend(message)
+
+    // Delete message from queue
+    const deleteMessageCommand = new DeleteMessageCommand({
+      QueueUrl: NODEMAILER_SQS,
+      ReceiptHandle: record.receiptHandle,
+    })
+    await sqsClient.send(deleteMessageCommand)
+
+    // Optional - delay timeout.
+    // await new Promise(resolve => setTimeout(resolve, 1000))
+  }
 }
