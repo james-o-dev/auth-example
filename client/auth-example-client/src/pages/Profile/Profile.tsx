@@ -1,21 +1,16 @@
 import { useState } from 'react'
-import { changePassword, signOut } from '../../services/authService'
+import { changePassword, signOut, signOutAllDevices } from '../../services/authService'
 import { Link, useNavigate } from 'react-router-dom'
 
-const Profile = () => {
+/**
+ * Form to change passwords, child component.
+ */
+const ChangePasswordForm = () => {
+  const navigate = useNavigate()
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const navigate = useNavigate()
-
-  /**
-   * Sign out.
-   */
-  const onSignOut = () => {
-    signOut()
-    navigate('/sign-in')
-  }
 
   /**
    * Change password.
@@ -51,6 +46,71 @@ const Profile = () => {
   }
 
   return (
+    <form onSubmit={onChangePasswordFormSubmit}>
+      <div>
+        <label htmlFor="oldPassword">Old Password</label>
+        <input type="password" id="oldPassword" value={oldPassword} onChange={(event) => setOldPassword(event.target.value)} />
+      </div>
+      <div>
+        <label htmlFor="newPassword">New Password</label>
+        <input type="password" id="newPassword" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} />
+      </div>
+      <div>
+        <label htmlFor="confirmPassword">Confirm Password</label>
+        <input type="password" id="confirmPassword" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} />
+      </div>
+      <button type="submit">Change Password</button>
+    </form>
+  )
+}
+
+/**
+ * Component: Sign out of all devices, child component.
+ */
+const SignOutAllDevices = () => {
+  const navigate = useNavigate()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const onSignOutAllDevices = async () => {
+    if (!confirm('Are you sure you want to sign out of all devices?')) return
+
+    setIsSubmitting(true)
+    try {
+      await signOutAllDevices()
+      alert('Sign out of all devices successfully; You will be redirected shortly')
+      signOut()
+      navigate('/sign-in')
+    } catch (_) {
+      alert('Could not complete at this time.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <>
+      <p>This will sign-out of all your devices.</p>
+      <button disabled={isSubmitting} type="button" onClick={onSignOutAllDevices}>Sign out of all devices</button>
+      {isSubmitting && <span>Signing out...</span>}
+    </>
+  )
+}
+
+/**
+ * Component: User's profile, parent component
+ */
+const Profile = () => {
+  const navigate = useNavigate()
+
+  /**
+   * Sign out.
+   */
+  const onSignOut = () => {
+    signOut()
+    navigate('/sign-in')
+  }
+
+  return (
     <>
       <h1>My Profile.</h1>
       <Link to="/">Home</Link>
@@ -60,25 +120,15 @@ const Profile = () => {
       <hr />
       <h2>Change Password</h2>
       <p>Note: This will sign you out.</p>
-      <form onSubmit={onChangePasswordFormSubmit}>
-        <label>
-          Old password:
-          <input type="password" name="oldPassword" value={oldPassword} required onChange={e => setOldPassword(e.target.value)} />
-        </label>
-        <br />
-        <label>
-          New password:
-          <input type="password" name="newPassword" value={newPassword} required onChange={e => setNewPassword(e.target.value)} />
-        </label>
-        <br />
-        <label>
-          Confirm new password:
-          <input type="password" name="confirmPassword" value={confirmPassword} required onChange={e => setConfirmPassword(e.target.value)} />
-        </label>
-        <br />
-        <button disabled={isSubmitting} type="submit">Change Password</button>
-        {isSubmitting && <span>Signing in...</span>}
-      </form>
+      <ChangePasswordForm />
+
+      <hr />
+      <h2>Verify Email</h2>
+      <pre>TODO</pre>
+
+      <hr />
+      <h2>Sign out of all devices</h2>
+      <SignOutAllDevices />
     </>
   )
 }

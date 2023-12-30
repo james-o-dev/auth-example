@@ -186,3 +186,22 @@ export const resetPassword = async (email: string) => {
   // Return the authentication result.
   return resetPasswordResponse
 }
+
+/**
+ * Signs out all devices.
+ */
+export const signOutAllDevices = async () => {
+  const response = await makeApiRequest({
+    endpoint: '/auth/sign-out',
+    method: 'DELETE',
+    includeCredentials: true,
+  })
+
+  // Parse the JSON response from the server.
+  const resetPasswordResponse = await response.text()
+
+  if (!response.ok) throw new Error(resetPasswordResponse)
+
+  // Return the authentication result.
+  return resetPasswordResponse
+}
