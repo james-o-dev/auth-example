@@ -20,7 +20,7 @@ const SignIn = () => {
       alert('Sign in successful; You will be redirected shortly.')
       navigate('/profile')
     } catch (error) {
-      alert('Sign in unsuccessful; Please try again.')
+      alert((error as Error).message || 'Sign in unsuccessful; Please try again.')
     } finally {
       setIsSubmitting(false)
     }
