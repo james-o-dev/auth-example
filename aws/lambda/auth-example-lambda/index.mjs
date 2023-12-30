@@ -491,7 +491,6 @@ const resetPasswordConfirmEndpoint = async (reqBody) => {
       emailVerified: true,
       iat: getIATNow(),
       resetPassword: null,
-      totp: null,
     })
 
     // Respond.

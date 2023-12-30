@@ -305,8 +305,7 @@ const TotpSection = () => {
   return (
     <>
       <p>Two-factor authentication accomplished with 'Timed One Time Passwords' (TOTP), which can be generated with popular OTP generators like 'Google Authenticator' or 'Authy'.</p>
-      <p>Note that TOTP will be removed when resetting/recovering your password.</p>
-      <p>Is TOTP enabled: {totpEnabled ? '✅' : '❌'}</p>
+      <p>Is TOTP enabled?: {totpEnabled ? '✅' : '❌'}</p>
       {totpEnabled && <button disabled={loadingTotp} type='button' onClick={onRemoveTotp}>Remove TOTP</button>}
       {!totpEnabled && <button disabled={loadingTotp} type='button' onClick={onAddTotp}>Add TOTP</button>}
       {qrcode && backup.length && totpContent}
