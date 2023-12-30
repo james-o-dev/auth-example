@@ -22,6 +22,7 @@
     "bcryptjs": "^2.4.3",
     "googleapis": "^129.0.0",
     "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^6.9.7"
+    "nodemailer": "^6.9.7",
+    "qrcode": "^1.5.3"
   }
 }
