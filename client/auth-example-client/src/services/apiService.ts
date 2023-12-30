@@ -1,5 +1,6 @@
-const API_BASE = '' // Set the API Gateway base URL here.
-if (!API_BASE) throw new Error('API_BASE is not set.')
+// Process env in Vite https://vitejs.dev/guide/env-and-mode
+const API_HOST = import.meta.env.VITE_API_HOST
+if (!API_HOST) throw new Error('API_HOST is not defined')
 
 export const ACCESS_TOKEN_STORAGE_NAME = 'accessToken'
 export const REFRESH_TOKEN_STORAGE_NAME = 'refreshToken'
@@ -27,7 +28,7 @@ export const refreshAccessToken = async () => {
 
   try {
     // Note: Do not use the `makeApiRequest()` helper function here, or you will be stuck in an infinite loop!.
-    const response = await fetch(`${API_BASE}/auth/refresh-token`, {
+    const response = await fetch(`${API_HOST}/auth/refresh-token`, {
       credentials: 'include',
       headers: {
         Authorization: `Bearer ${refreshToken}`
@@ -117,7 +118,7 @@ export const makeApiRequest = async (
     credentials = 'include'
   }
 
-  return fetch(API_BASE + endpoint, {
+  return fetch(API_HOST + endpoint, {
     method,
     body: JSON.stringify(body),
     headers: {
