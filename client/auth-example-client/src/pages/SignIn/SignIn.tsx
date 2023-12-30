@@ -6,6 +6,8 @@ const SignIn = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [totp, setTotp] = useState('')
+  const [requireTotp, setRequireTotp] = useState(false)
   const navigate = useNavigate()
 
   // Handle form submission.
@@ -16,15 +18,34 @@ const SignIn = () => {
     // Sign In.
     setIsSubmitting(true)
     try {
-      await signIn(email, password)
-      alert('Sign in successful; You will be redirected shortly.')
-      navigate('/profile')
+      const response = await signIn(email, password, totp)
+
+      if (response.totpRequired) {
+        setRequireTotp(true)
+        return
+      } else {
+        alert(response.message)
+        navigate('/profile')
+      }
     } catch (error) {
       alert((error as Error).message || 'Sign in unsuccessful; Please try again.')
     } finally {
       setIsSubmitting(false)
     }
   }
+
+  /**
+   * Additional input for TOTP.
+   */
+  const totpInput = (
+    <>
+      <label>
+        TOTP required:
+        <input required type='text' name='totp' value={totp} onChange={(e) => setTotp(e.target.value)} />
+      </label>
+      <br />
+    </>
+  )
 
   return (
     <div>
@@ -41,6 +62,7 @@ const SignIn = () => {
           <input required type='password' name='password' autoComplete='current-password' value={password} onChange={(e) => setPassword(e.target.value)} />
         </label>
         <br />
+        {requireTotp && totpInput}
         <button disabled={isSubmitting} type='submit'>Sign In</button>
         {isSubmitting && <span>Signing in...</span>}
       </form>

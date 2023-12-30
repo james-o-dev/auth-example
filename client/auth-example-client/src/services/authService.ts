@@ -66,15 +66,16 @@ export const isAuthenticated = async () => {
  *
  * @param {string} email - User's email address.
  * @param {string} password - User's password.
+ * @param {string} [totp] - Two-factor authentication code.
  */
-export const signIn = async (email: string, password: string) => {
+export const signIn = async (email: string, password: string, totp?: string) => {
 
   try {
     // Send a POST request to the sign-in endpoint with user credentials.
     const successfulSignIn = await makeCommonApiRequest({
       endpoint: '/auth/sign-in',
       method: 'POST',
-      body: { email, password },
+      body: { email, password, totp },
       responseType: 'json',
     })
 
@@ -219,6 +220,42 @@ export const verifyEmailConfirm = (code: string) => {
     method: 'POST',
     body: { code },
     responseType: 'text',
+    includeCredentials: true,
+  })
+}
+
+/**
+ * Checks if the current user has TOTP enabled.
+ */
+export const hasTotp = () => {
+  return makeCommonApiRequest({
+    endpoint: '/auth/totp',
+    method: 'GET',
+    responseType: 'json',
+    includeCredentials: true,
+  })
+}
+
+/**
+ * Removes TOTP from the user's account.
+ */
+export const removeTotp = () => {
+  return makeCommonApiRequest({
+    endpoint: '/auth/totp/remove',
+    method: 'DELETE',
+    responseType: 'text',
+    includeCredentials: true,
+  })
+}
+
+/**
+ * Adds TOTP to the user's account.
+ */
+export const addTotp = () => {
+  return makeCommonApiRequest({
+    endpoint: '/auth/totp/add',
+    method: 'PUT',
+    responseType: 'json',
     includeCredentials: true,
   })
 }

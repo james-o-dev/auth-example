@@ -6,6 +6,8 @@ const sqsClient = new SQSClient({})
 import { randomUUID } from 'crypto'
 import jsonwebtoken from 'jsonwebtoken'
 import bcryptjs from 'bcryptjs'
+import { Totp, generateBackupCodes } from 'time2fa'
+import QRCode from 'qrcode'
 
 // Environment variables.
 const AUTH_INDEX_NAME = process.env.AUTH_INDEX_NAME
@@ -142,7 +144,7 @@ const signInValidation = (reqBody) => {
   if (!reqBody.email) throw buildValidationError(400, 'Invalid email.')
   if (!reqBody.password) throw buildValidationError(400, 'Invalid password.')
 
-  return { email: reqBody.email, password: reqBody.password, }
+  return { email: reqBody.email, password: reqBody.password, totp: reqBody.totp }
 }
 
 /**
@@ -290,8 +292,9 @@ const signUpEndpoint = async (reqBody) => {
  */
 const signInEndpoint = async (reqBody) => {
   const INVALID_USER_MESSAGE = 'Invalid email or password'
+  let backupCodesMessage = ''
 
-  const { email, password } = signInValidation(reqBody)
+  const { email, password, totp: totpInput } = signInValidation(reqBody)
 
   const findUser = await findUserFromEmailQuery(email)
 
@@ -299,12 +302,38 @@ const signInEndpoint = async (reqBody) => {
   if (!findUser.Count) throw buildValidationError(401, INVALID_USER_MESSAGE)
 
   // User was found, here is the record.
-  const { hashedPassword, userId } = findUser.Items[0]
+  const { hashedPassword, userId, totp } = findUser.Items[0]
 
   const doesPasswordsMatch = await bcryptjs.compare(password, hashedPassword)
   if (!doesPasswordsMatch) throw buildValidationError(401, INVALID_USER_MESSAGE)
 
   // Else if found, we have the email and the userId.
+
+  // If totpSettings exists, totp must also exist.
+  if (totp) {
+    if (!totpInput) return buildLambdaResponse(200, { message: 'TOTP required.', totpRequired: true })
+
+    const totpSettings = JSON.parse(totp)
+
+    // A backup code is used, remove it from the list and save it back to the database.
+    if (totpSettings.backup.includes(totpInput)) {
+      // Remove the backup code from the list of existing codes.
+      totpSettings.backup = totpSettings.backup.filter(code => code !== totpInput)
+      // Save the updated list back to the database.
+      await updateCommand(USERS_TABLE_NAME, { userId }, { totp: JSON.stringify(totpSettings) })
+      // Update the message to the user.
+      backupCodesMessage = `A backup TOTP code was used. You have ${totpSettings.backup.length} remaining codes left. To replenish, remove and re-add TOTP.`
+    } else {
+      // TOTP was used.
+      // Match totp with the settings.
+      try {
+        const valid = Totp.validate({ passcode: totpInput, secret: totpSettings.secret })
+        if (!valid) throw new Error()
+      } catch (error) {
+        throw buildValidationError(401, 'Invalid TOTP.')
+      }
+    }
+  }
 
   // Create JWTs.
   const user = getJwtPayload(email, userId)
@@ -312,7 +341,7 @@ const signInEndpoint = async (reqBody) => {
   const refreshToken = generateRefreshToken(user)
 
   // Successful login.
-  return buildLambdaResponse(200, { message: 'Sign in successful.', accessToken, refreshToken })
+  return buildLambdaResponse(200, { message: `Sign in successful. ${backupCodesMessage}`.trim(), accessToken, refreshToken })
 }
 
 /**
@@ -392,7 +421,7 @@ const resetPasswordEndpoint = async (reqBody) => {
 
   // Update the password in the DB.
   // Invalidate existing refresh tokens.
-  await updateCommand(USERS_TABLE_NAME, { userId }, { hashedPassword, iat: getIATNow() })
+  await updateCommand(USERS_TABLE_NAME, { userId }, { hashedPassword, iat: getIATNow(), totp: null })
 
   // Send the new password to the user.
   await pushNodemailerSQSMessage({
@@ -409,7 +438,7 @@ const resetPasswordEndpoint = async (reqBody) => {
   })
 
   // Respond.
-  return buildLambdaResponse(200, 'An auto-generated password has been mailed to you.')
+  return buildLambdaResponse(200, 'An auto-generated password has been mailed to you. Note: TOTP has been removed.')
 }
 
 /**
@@ -502,6 +531,44 @@ const getVerifiedEmailEndpoint = async (userId) => {
   return buildLambdaResponse(200, { emailVerified: getUser.Item.emailVerified || false })
 }
 
+/**
+ * Return if the user has TOTP enabled.
+ *
+ * @param {string} userId
+ */
+const hasTotpEndpoint = async (userId) => {
+  const getUser = await getCommand(USERS_TABLE_NAME, { userId })
+  return buildLambdaResponse(200, { totp: !!getUser.Item.totp })
+}
+
+/**
+ * Add TOTP to the user.
+ *
+ * @param {string} userId
+ * @param {string} email
+ */
+const addTotpEndpoint = async (userId, email) => {
+  const { secret, url } = Totp.generateKey({ issuer: 'auth-example', user: email })
+  const backup = generateBackupCodes()
+  const totp = JSON.stringify({ secret, url, backup })
+
+  await updateCommand(USERS_TABLE_NAME, { userId }, { totp, iat: getIATNow() })
+
+  const qrcode = await QRCode.toDataURL(url)
+
+  return buildLambdaResponse(200, { message: 'TOTP added. Note: Previous access/refresh tokens have been revoked.', backup, qrcode })
+}
+
+/**
+ * Remove TOTP from the user.
+ *
+ * @param {string} userId
+ */
+const removeTotpEndpoint = async (userId) => {
+  await updateCommand(USERS_TABLE_NAME, { userId }, { totp: null })
+  return buildLambdaResponse(200, 'TOTP removed.')
+}
+
 // index.js
 export const handler = async (event) => {
   try {
@@ -580,6 +647,24 @@ export const handler = async (event) => {
     if (reqPath === '/auth/verify-email/confirm' && reqMethod === 'POST') {
       const accessToken = await getJWT(reqHeaders)
       response = await verifyEmailConfirm(accessToken.userId, reqBody)
+    }
+
+    // Has TOTP.
+    if (reqPath === '/auth/totp' && reqMethod === 'GET') {
+      const accessToken = await getJWT(reqHeaders)
+      response = await hasTotpEndpoint(accessToken.userId)
+    }
+
+    // Add TOTP.
+    if (reqPath === '/auth/totp/add' && reqMethod === 'PUT') {
+      const accessToken = await getJWT(reqHeaders)
+      response = await addTotpEndpoint(accessToken.userId, accessToken.email)
+    }
+
+    // Remove TOTP.
+    if (reqPath === '/auth/totp/remove' && reqMethod === 'DELETE') {
+      const accessToken = await getJWT(reqHeaders)
+      response = await removeTotpEndpoint(accessToken.userId)
     }
 
     // Respond.

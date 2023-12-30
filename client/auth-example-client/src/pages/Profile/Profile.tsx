@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { changePassword, getVerifiedEmailStatus, signOut, signOutAllDevices, verifyEmailConfirm, verifyEmailRequest } from '../../services/authService'
+import { addTotp, changePassword, getVerifiedEmailStatus, hasTotp, removeTotp, signOut, signOutAllDevices, verifyEmailConfirm, verifyEmailRequest } from '../../services/authService'
 import { Link, useNavigate } from 'react-router-dom'
 
 /**
@@ -200,13 +200,110 @@ const VerifyEmail = () => {
    */
   const alreadyVerified = (
     <>
-      <p>✅ Your email has been verified.</p>
+      <p>Your email has been verified. ✅</p>
       <button disabled={disableActions} type='button' onClick={onSendVerificationEmail}>Re-verify</button>
       {sendingVerificationEmail && <span>Sending verification email...</span>}
     </>
   )
 
   return emailVerified ? alreadyVerified : verifyEmailForm()
+}
+
+/**
+ * Component: Handle TOTP, child component.
+ * * Check whether the account has TOTP
+ * * Remove TOTP if it exists
+ * * Add TOTP if it does not exist
+ */
+const TotpSection = () => {
+  const [loadingTotp, setLoadingTotp] = useState(false)
+  const [totpEnabled, setTotpEnabled] = useState(false)
+  const [qrcode, setQrcode] = useState('')
+  const [backup, setBackup] = useState([])
+
+  useEffect(() => {
+    // Check if TOTP is enabled initially.
+    const request = async () => {
+      setLoadingTotp(true)
+      const hasTotpResponse = await hasTotp()
+      setTotpEnabled(hasTotpResponse.totp)
+      setLoadingTotp(false)
+    }
+    request()
+  }, [])
+
+  /**
+   * Request to remove TOTP.
+   */
+  const onRemoveTotp = async () => {
+    if (loadingTotp) return
+
+    setLoadingTotp(true)
+    try {
+      const message = await removeTotp()
+      alert(message)
+      setTotpEnabled(false)
+    } catch (error) {
+      alert('TOTP could not be removed at this time.')
+    } finally {
+      setLoadingTotp(false)
+    }
+  }
+
+  /**
+   * Request to add TOTP.
+   * * Will then display QR code and backup codes.
+   */
+  const onAddTotp = async () => {
+    if (loadingTotp) return
+
+    setLoadingTotp(true)
+    try {
+      const response = await addTotp()
+
+      alert([
+        'TOTP has been added and authentication tokens have been revoked.',
+        'Please capture the QR code in your OTP generator app and securely store the backup codes.',
+        'Afterwards, refresh this page to be redirected to the sign-in page.'
+      ].join('\n'))
+
+      setQrcode(response.qrcode)
+      setBackup(response.backup)
+      setTotpEnabled(true)
+    } catch (error) {
+      alert('TOTP could not be added at this time.')
+    } finally {
+      setLoadingTotp(false)
+    }
+  }
+
+  /**
+   * Display QR code and backup codes.
+   */
+  const totpContent = (
+    <>
+      <h3>TOTP added</h3>
+      <p><strong>WARNING:</strong> The QR image and backup codes will be lost once you navigate away or sign out.</p>
+      <div>
+        <img src={qrcode} />
+      </div>
+      <div>
+        <p>Backup codes:</p>
+        <p>{backup.join(', ')}</p>\
+      </div>
+    </>
+  )
+
+  return (
+    <>
+      <p>Two-factor authentication accomplished with 'Timed One Time Passwords' (TOTP), which can be generated with popular OTP generators like 'Google Authenticator' or 'Authy'.</p>
+      <p>Note that TOTP will be removed when resetting/recovering your password.</p>
+      <p>Is TOTP enabled: {totpEnabled ? '✅' : '❌'}</p>
+      {totpEnabled && <button disabled={loadingTotp} type='button' onClick={onRemoveTotp}>Remove TOTP</button>}
+      {!totpEnabled && <button disabled={loadingTotp} type='button' onClick={onAddTotp}>Add TOTP</button>}
+      {qrcode && backup.length && totpContent}
+    </>
+  )
 }
 
 /**
@@ -237,6 +334,10 @@ const Profile = () => {
       <hr />
       <h2>Verify email</h2>
       <VerifyEmail />
+
+      <hr />
+      <h2>Two-factor authentication</h2>
+      <TotpSection />
 
       <hr />
       <h2>Sign out of all devices</h2>
