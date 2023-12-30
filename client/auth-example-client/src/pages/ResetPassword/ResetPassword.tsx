@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { resetPassword, signOut } from '../../services/authService'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 const ResetPassword = () => {
   const [email, setEmail] = useState('')
@@ -37,9 +37,11 @@ const ResetPassword = () => {
           Email:
           <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
-        <button disabled={isSubmitting} type="submit">Reset Password</button>
+        <button disabled={isSubmitting} type="submit">Reset password</button>
         {isSubmitting && <span>Resetting...</span>}
       </form>
+      <br />
+      <Link to='/sign-in'>Sign in instead</Link>
     </div>
   )
 }
