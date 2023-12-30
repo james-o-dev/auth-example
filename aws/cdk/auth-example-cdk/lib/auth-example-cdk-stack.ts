@@ -74,6 +74,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
         // Add other attributes.
         'hashedPassword',
         'userId',
+        'totp',
       ]
     })
     // Grant DB access to the lambda.
@@ -147,6 +148,16 @@ export class AuthExampleCdkStack extends cdk.Stack {
     // VerifyEmailConfirm resource
     const verifyEmailConfirm = verifyEmail.addResource('confirm')
     verifyEmailConfirm.addMethod('POST', integration)
+
+    // TOTP resource
+    const totp = authResource.addResource('totp')
+    totp.addMethod('GET', integration)
+
+    const addTotp = totp.addResource('add')
+    addTotp.addMethod('PUT', integration)
+
+    const removeTotp = totp.addResource('remove')
+    removeTotp.addMethod('DELETE', integration)
 
     // Now handle the SQS + Lambda for nodemailer.
 
