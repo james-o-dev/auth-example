@@ -22,7 +22,7 @@ export const signOut = () => {
 export const validatePasswordStrength = (password: string) => {
   const passed = PASSWORD_REGEXP.test(password)
   if (passed) return { valid: true, message: 'Password strength is strong enough.' }
-  return { valid: false, message: 'Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character, with a minimum length of 8 characters.'  }
+  return { valid: false, message: 'Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character, with a minimum length of 8 characters.' }
 }
 
 /**
@@ -204,4 +204,66 @@ export const signOutAllDevices = async () => {
 
   // Return the authentication result.
   return resetPasswordResponse
+}
+
+/**
+ * Fetches the user's email verification status.
+ * * If there was an error, it will return false since it was unable to verify.
+ */
+export const getVerifiedEmailStatus = async () => {
+  try {
+    const response = await makeApiRequest({
+      endpoint: '/auth/verify-email',
+      method: 'GET',
+      includeCredentials: true,
+    })
+
+    // Parse the JSON response from the server.
+    const emailVerifiedResponse = await response.json()
+
+    if (!response.ok) throw new Error(emailVerifiedResponse)
+
+    // Return the authentication result.
+    return emailVerifiedResponse.emailVerified
+  } catch (error) {
+    return false
+  }
+}
+
+/**
+ * Sends a request to the server to verify the user's email address.
+ * * It will email the user with a verification code.
+ */
+export const verifyEmailRequest = async () => {
+  const response = await makeApiRequest({
+    endpoint: '/auth/verify-email/request',
+    method: 'GET',
+    includeCredentials: true,
+  })
+  const textResponse = await response.text()
+
+  if (!response.ok) throw new Error(textResponse)
+
+  // Return the authentication result.
+  return textResponse
+}
+
+/**
+ * Verifies the user's email address with the code.
+ *
+ * @param {string} code
+ */
+export const verifyEmailConfirm = async (code: string) => {
+  const response = await makeApiRequest({
+    endpoint: '/auth/verify-email/confirm',
+    method: 'POST',
+    body: { code },
+    includeCredentials: true,
+  })
+  const textResponse = await response.text()
+
+  if (!response.ok) throw new Error(textResponse)
+
+  // Return the authentication result.
+  return textResponse
 }

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { changePassword, signOut, signOutAllDevices } from '../../services/authService'
+import { useEffect, useState } from 'react'
+import { changePassword, getVerifiedEmailStatus, signOut, signOutAllDevices, verifyEmailConfirm, verifyEmailRequest } from '../../services/authService'
 import { Link, useNavigate } from 'react-router-dom'
 
 /**
@@ -46,21 +46,26 @@ const ChangePasswordForm = () => {
   }
 
   return (
-    <form onSubmit={onChangePasswordFormSubmit}>
-      <div>
-        <label htmlFor="oldPassword">Old Password</label>
-        <input type="password" id="oldPassword" value={oldPassword} onChange={(event) => setOldPassword(event.target.value)} />
-      </div>
-      <div>
-        <label htmlFor="newPassword">New Password</label>
-        <input type="password" id="newPassword" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} />
-      </div>
-      <div>
-        <label htmlFor="confirmPassword">Confirm Password</label>
-        <input type="password" id="confirmPassword" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} />
-      </div>
-      <button type="submit">Change Password</button>
-    </form>
+    <>
+      <p>Note: This will sign you out.</p>
+
+      <form onSubmit={onChangePasswordFormSubmit}>
+        <div>
+          <label htmlFor="oldPassword">Old password:</label>
+          <input type="password" id="oldPassword" value={oldPassword} onChange={(event) => setOldPassword(event.target.value)} />
+        </div>
+        <div>
+          <label htmlFor="newPassword">New password:</label>
+          <input type="password" id="newPassword" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} />
+        </div>
+        <div>
+          <label htmlFor="confirmPassword">Confirm password:</label>
+          <input type="password" id="confirmPassword" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} />
+        </div>
+        <br />
+        <button type="submit">Change password</button>
+      </form>
+    </>
   )
 }
 
@@ -71,6 +76,9 @@ const SignOutAllDevices = () => {
   const navigate = useNavigate()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  /**
+   * Make request to sign out of all devices.
+   */
   const onSignOutAllDevices = async () => {
     if (!confirm('Are you sure you want to sign out of all devices?')) return
 
@@ -89,11 +97,114 @@ const SignOutAllDevices = () => {
 
   return (
     <>
-      <p>This will sign-out of all your devices.</p>
+      <p>This will sign out of all your devices.</p>
       <button disabled={isSubmitting} type="button" onClick={onSignOutAllDevices}>Sign out of all devices</button>
       {isSubmitting && <span>Signing out...</span>}
     </>
   )
+}
+
+/**
+ * Component: Handle email verification, child component.
+ */
+const VerifyEmail = () => {
+  const [emailVerified, setEmailVerified] = useState(false)
+  const [verifying, setVerifying] = useState(false)
+  const [sendingVerificationEmail, setSendingVerificationEmail] = useState(false)
+  const [verificationCode, setVerificationCode] = useState('')
+
+  const disableActions = verifying || sendingVerificationEmail
+
+  // Check if email is verified initially..
+  useEffect(() => {
+    const request = async () => {
+      const emailVerifiedRequest = await getVerifiedEmailStatus()
+      setEmailVerified(emailVerifiedRequest)
+    }
+    request()
+  }, [])
+
+  /**
+   * Form submit to send email verification code.
+   *
+   * @param {React.FormEvent<HTMLFormElement>} event
+   */
+  const onVerifyEmailFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    if (disableActions) return
+
+    setVerifying(true)
+    try {
+      const verifyEmailConfirmResponse = await verifyEmailConfirm(verificationCode)
+      alert(verifyEmailConfirmResponse)
+      setEmailVerified(true)
+    } catch (error) {
+      alert((error as Error).message || 'Verification unsuccessful; Please try again.')
+    } finally {
+      setVerifying(false)
+    }
+  }
+
+  /**
+   * Request to send the verification email.
+   */
+  const onSendVerificationEmail = async () => {
+    if (disableActions) return
+
+    const confirmMessage = [
+      'This will send an email to your email address, containing a verification code.',
+      'Copy this code, paste it in the input and submit in order to verify your email address.',
+    ].join('\n')
+    if (!confirm(confirmMessage)) return
+
+    setSendingVerificationEmail(true)
+    try {
+      const verifyEmailConfirmResponse = await verifyEmailRequest()
+      alert(verifyEmailConfirmResponse)
+      setEmailVerified(false)
+    } catch (error) {
+      alert((error as Error).message || 'Unable to send verification email; Please try again.')
+    } finally {
+      setSendingVerificationEmail(false)
+    }
+  }
+
+  /**
+   * Verify email form.
+   */
+  const verifyEmailForm = () => {
+    return (
+      <>
+        <p>Please verify your email address.</p>
+        <form onSubmit={onVerifyEmailFormSubmit}>
+          <button disabled={disableActions} type='button' onClick={onSendVerificationEmail}>Send verification email</button>
+          {sendingVerificationEmail && <span>Sending verification email...</span>}
+          <br />
+          <br />
+          <label>
+            Verification code:
+            <input type="text" required value={verificationCode} onChange={e => setVerificationCode(e.target.value)} />
+          </label>
+          <button disabled={disableActions} type='submit'>Verify email</button>
+          {verifying && <span>Verifying...</span>}
+        </form>
+      </>
+    )
+  }
+
+  /**
+   * Display if already verified.
+   */
+  const alreadyVerified = (
+    <>
+      <p>✅ Your email has been verified.</p>
+      <button disabled={disableActions} type='button' onClick={onSendVerificationEmail}>Re-verify</button>
+      {sendingVerificationEmail && <span>Sending verification email...</span>}
+    </>
+  )
+
+  return emailVerified ? alreadyVerified : verifyEmailForm()
 }
 
 /**
@@ -112,19 +223,18 @@ const Profile = () => {
 
   return (
     <>
-      <h1>My Profile.</h1>
+      <h1>My Profile</h1>
       <Link to="/">Home</Link>
       <br />
       <a href="" type="button" onClick={onSignOut}>Sign out</a>
 
       <hr />
-      <h2>Change Password</h2>
-      <p>Note: This will sign you out.</p>
+      <h2>Change password</h2>
       <ChangePasswordForm />
 
       <hr />
-      <h2>Verify Email</h2>
-      <pre>TODO</pre>
+      <h2>Verify email</h2>
+      <VerifyEmail />
 
       <hr />
       <h2>Sign out of all devices</h2>
