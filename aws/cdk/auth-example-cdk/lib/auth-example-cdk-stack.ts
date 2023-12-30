@@ -22,6 +22,13 @@ const NODEMAILER = {
   LAMBDA_NAME: 'nodemailer-lambda',
   LAYER_NAME: 'nodemailer-lambda-layer',
 }
+const CLIENT_HOST = '' // Set this to the domain, depending on where the client is hosted.
+const ACCESS_TOKEN_SECRET = '' || randomUUID() // Set the JWT secret here, to avoid invalidating existing tokens upon update; If empty, generate one.
+const REFRESH_TOKEN_SECRET = '' || randomUUID() // Set the JWT secret here, to avoid invalidating existing tokens upon update; If empty, generate one.
+const GMAIL_CLIENT_ID = '' // Set this.
+const GMAIL_CLIENT_SECRET = '' // Set this.
+const GMAIL_REFRESH_TOKEN = '' // Set this.
+const GMAIL_USER_EMAIL = '' // Set this.
 
 export class AuthExampleCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
