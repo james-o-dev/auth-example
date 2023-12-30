@@ -223,3 +223,39 @@ export const verifyEmailConfirm = (code: string) => {
     includeCredentials: true,
   })
 }
+
+/**
+ * Checks if the current user has TOTP enabled.
+ */
+export const hasTotp = () => {
+  return makeCommonApiRequest({
+    endpoint: '/auth/totp',
+    method: 'GET',
+    responseType: 'json',
+    includeCredentials: true,
+  })
+}
+
+/**
+ * Removes TOTP from the user's account.
+ */
+export const removeTotp = () => {
+  return makeCommonApiRequest({
+    endpoint: '/auth/totp/remove',
+    method: 'DELETE',
+    responseType: 'text',
+    includeCredentials: true,
+  })
+}
+
+/**
+ * Adds TOTP to the user's account.
+ */
+export const addTotp = () => {
+  return makeCommonApiRequest({
+    endpoint: '/auth/totp/add',
+    method: 'PUT',
+    responseType: 'json',
+    includeCredentials: true,
+  })
+}
