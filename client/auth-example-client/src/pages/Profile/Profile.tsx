@@ -10,7 +10,7 @@ const ChangePasswordForm = () => {
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
 
   /**
    * Change password.
@@ -20,7 +20,7 @@ const ChangePasswordForm = () => {
   const onChangePasswordFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (isSubmitting) return
+    if (changingPassword) return
 
     if (newPassword !== confirmPassword) {
       alert('New passwords do not match.')
@@ -32,7 +32,7 @@ const ChangePasswordForm = () => {
       return
     }
 
-    setIsSubmitting(true)
+    setChangingPassword(true)
     try {
       await changePassword(oldPassword, newPassword, confirmPassword)
       alert('Password changed successful; You will be signed out shortly.')
@@ -41,7 +41,7 @@ const ChangePasswordForm = () => {
     } catch (error) {
       alert((error as Error).message || 'Sign up unsuccessful; Please try again.')
     } finally {
-      setIsSubmitting(false)
+      setChangingPassword(false)
     }
   }
 
@@ -63,7 +63,8 @@ const ChangePasswordForm = () => {
           <input type="password" id="confirmPassword" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} />
         </div>
         <br />
-        <button type="submit">Change password</button>
+        <button disabled={changingPassword} type="submit">Change password</button>
+        {changingPassword && <span>Changing password...</span>}
       </form>
     </>
   )
@@ -74,7 +75,7 @@ const ChangePasswordForm = () => {
  */
 const SignOutAllDevices = () => {
   const navigate = useNavigate()
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
 
   /**
    * Make request to sign out of all devices.
@@ -82,7 +83,7 @@ const SignOutAllDevices = () => {
   const onSignOutAllDevices = async () => {
     if (!confirm('Are you sure you want to sign out of all devices?')) return
 
-    setIsSubmitting(true)
+    setSigningOut(true)
     try {
       await signOutAllDevices()
       alert('Sign out of all devices successfully; You will be redirected shortly')
@@ -91,15 +92,15 @@ const SignOutAllDevices = () => {
     } catch (_) {
       alert('Could not complete at this time.')
     } finally {
-      setIsSubmitting(false)
+      setSigningOut(false)
     }
   }
 
   return (
     <>
       <p>This will sign out of all your devices.</p>
-      <button disabled={isSubmitting} type="button" onClick={onSignOutAllDevices}>Sign out of all devices</button>
-      {isSubmitting && <span>Signing out...</span>}
+      <button disabled={signingOut} type="button" onClick={onSignOutAllDevices}>Sign out of all devices</button>
+      {signingOut && <span>Signing out...</span>}
     </>
   )
 }
