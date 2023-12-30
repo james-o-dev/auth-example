@@ -683,7 +683,7 @@ export const handler = async (event) => {
     }
 
     // Reset password routes.
-    if (reqPath === '/auth/reset-password/request' && reqMethod === 'GET') response = await resetPasswordRequestEndpoint(reqBody)
+    if (reqPath === '/auth/reset-password/request' && reqMethod === 'POST') response = await resetPasswordRequestEndpoint(reqBody)
     if (reqPath === '/auth/reset-password/confirm' && reqMethod === 'POST') response = await resetPasswordConfirmEndpoint(reqBody)
 
     // Change Password route.
