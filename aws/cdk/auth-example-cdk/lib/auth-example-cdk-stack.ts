@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto'
 import * as cdk from 'aws-cdk-lib'
 import { RemovalPolicy } from 'aws-cdk-lib'
 import { Cors, EndpointType, LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway'
@@ -8,6 +7,27 @@ import { Construct } from 'constructs'
 import { Queue } from 'aws-cdk-lib/aws-sqs'
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
 
+// Environment variables.
+// Read from .env file.
+import 'dotenv/config'
+const CLIENT_HOST = process.env.CLIENT_HOST || ''
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || ''
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || ''
+const GMAIL_CLIENT_ID = process.env.GMAIL_CLIENT_ID || ''
+const GMAIL_CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET || ''
+const GMAIL_REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN || ''
+const GMAIL_USER_EMAIL = process.env.GMAIL_USER_EMAIL || ''
+if (
+  !CLIENT_HOST
+  || !ACCESS_TOKEN_SECRET
+  || !REFRESH_TOKEN_SECRET
+  || !GMAIL_CLIENT_ID
+  || !GMAIL_CLIENT_SECRET
+  || !GMAIL_REFRESH_TOKEN
+  || !GMAIL_USER_EMAIL
+) throw new Error('Missing environment variables')
+
+// Other settings.
 const LAMBDA_NODE_MODULE_LAYER_NAME = 'auth-example-lambda-layer'
 const LAMBDA_NAME = 'auth-example-lambda'
 const API_NAME = 'auth-example-api'
@@ -22,13 +42,6 @@ const NODEMAILER = {
   LAMBDA_NAME: 'nodemailer-lambda',
   LAYER_NAME: 'nodemailer-lambda-layer',
 }
-const CLIENT_HOST = '' // Set this to the domain, depending on where the client is hosted.
-const ACCESS_TOKEN_SECRET = '' || randomUUID() // Set the JWT secret here, to avoid invalidating existing tokens upon update; If empty, generate one.
-const REFRESH_TOKEN_SECRET = '' || randomUUID() // Set the JWT secret here, to avoid invalidating existing tokens upon update; If empty, generate one.
-const GMAIL_CLIENT_ID = '' // Set this.
-const GMAIL_CLIENT_SECRET = '' // Set this.
-const GMAIL_REFRESH_TOKEN = '' // Set this.
-const GMAIL_USER_EMAIL = '' // Set this.
 
 export class AuthExampleCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
