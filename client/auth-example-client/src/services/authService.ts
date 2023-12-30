@@ -1,17 +1,16 @@
 // authService.ts
 
-import { ACCESS_TOKEN_STORAGE_NAME, REFRESH_TOKEN_STORAGE_NAME, USER_STORAGE_NAME, makeApiRequest, makeCommonApiRequest, refreshAccessToken } from './apiService'
+import { ACCESS_TOKEN_STORAGE_NAME, REFRESH_TOKEN_STORAGE_NAME, makeApiRequest, makeCommonApiRequest, refreshAccessToken } from './apiService'
 
 // Require at least one lowercase letter, one uppercase letter, one number, and one special character, with a minimum length of 8 characters.
 const PASSWORD_REGEXP = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
 
 /**
- * Sign out procedure.
+ * Clear JWTs.
  */
-export const signOut = () => {
+export const clearJwt = () => {
   localStorage.removeItem(ACCESS_TOKEN_STORAGE_NAME)
   localStorage.removeItem(REFRESH_TOKEN_STORAGE_NAME)
-  localStorage.removeItem(USER_STORAGE_NAME)
 }
 
 /**
@@ -55,7 +54,7 @@ export const isAuthenticated = async () => {
       return true
     } else {
       // Could not refresh to get a new token; Handle non-OK response (e.g., unauthorized).
-      signOut()
+      clearJwt()
       return false
     }
   }

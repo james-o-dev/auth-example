@@ -4,7 +4,6 @@ if (!API_HOST) throw new Error('API_HOST is not defined')
 
 export const ACCESS_TOKEN_STORAGE_NAME = 'accessToken'
 export const REFRESH_TOKEN_STORAGE_NAME = 'refreshToken'
-export const USER_STORAGE_NAME = 'user'
 
 import { isExpired } from 'react-jwt'
 

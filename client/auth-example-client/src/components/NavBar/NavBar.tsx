@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { signOut } from '../../services/authService'
+import { clearJwt } from '../../services/authService'
 import { hasRefreshToken } from '../../services/apiService'
 
 export interface NavbarItem {
@@ -37,7 +37,7 @@ const Navbar: React.FC<NavbarProps> = ({ navItems = NAV_ITEMS }) => {
    * Sign the user out.
    */
   const onSignOut = () => {
-    signOut()
+    clearJwt()
     alert('You have been signed out.')
     navigate('/sign-in')
   }

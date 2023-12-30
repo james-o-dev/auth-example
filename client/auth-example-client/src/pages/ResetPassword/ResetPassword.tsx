@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { resetPassword, signOut } from '../../services/authService'
+import { resetPassword, clearJwt } from '../../services/authService'
 import { Link, useNavigate } from 'react-router-dom'
 
 const ResetPassword = () => {
@@ -19,7 +19,7 @@ const ResetPassword = () => {
       await resetPassword(email)
 
       alert('A new password has been sent to you; You will be redirected to the sign-in page shortly.')
-      signOut()
+      clearJwt()
       navigate('/sign-in')
 
     } catch (error) {

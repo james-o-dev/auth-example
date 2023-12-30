@@ -3,7 +3,7 @@ import { createBrowserRouter, RouterProvider, redirect } from 'react-router-dom'
 import SignUp from './pages/SignUp/SignUp'
 import SignIn from './pages/SignIn/SignIn'
 import Home from './pages/Home/Home'
-import { isAuthenticated, signOut } from './services/authService'
+import { isAuthenticated, clearJwt } from './services/authService'
 import Profile from './pages/Profile/Profile'
 import ResetPassword from './pages/ResetPassword/ResetPassword'
 
@@ -16,7 +16,7 @@ const getIsAuthenticatedShared = async () => {
     const response = await isAuthenticated()
     if (!response) throw 'Not Authenticated'
   } catch (error) {
-    signOut()
+    clearJwt()
     throw error
   }
 }

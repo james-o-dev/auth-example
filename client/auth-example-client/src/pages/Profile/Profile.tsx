@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { addTotp, changePassword, getVerifiedEmailStatus, hasTotp, removeTotp, signOut, signOutAllDevices, verifyEmailConfirm, verifyEmailRequest } from '../../services/authService'
+import { addTotp, changePassword, getVerifiedEmailStatus, hasTotp, removeTotp, clearJwt, signOutAllDevices, verifyEmailConfirm, verifyEmailRequest } from '../../services/authService'
 import { Link, useNavigate } from 'react-router-dom'
 
 /**
@@ -36,7 +36,7 @@ const ChangePasswordForm = () => {
     try {
       await changePassword(oldPassword, newPassword, confirmPassword)
       alert('Password changed successful; You will be signed out shortly.')
-      signOut()
+      clearJwt()
       navigate('/sign-in')
     } catch (error) {
       alert((error as Error).message || 'Sign up unsuccessful; Please try again.')
@@ -88,7 +88,7 @@ const SignOutAllDevices = () => {
     try {
       await signOutAllDevices()
       alert('Sign out of all devices successfully; You will be redirected shortly')
-      signOut()
+      clearJwt()
       navigate('/sign-in')
     } catch (_) {
       alert('Could not complete at this time.')
@@ -316,7 +316,7 @@ const Profile = () => {
    * Sign out.
    */
   const onSignOut = () => {
-    signOut()
+    clearJwt()
     navigate('/sign-in')
   }
 
