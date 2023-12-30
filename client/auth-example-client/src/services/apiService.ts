@@ -1,4 +1,4 @@
-const API_BASE = 'https://q8m1g81qp3.execute-api.ap-southeast-2.amazonaws.com/dev' // Set the API Gateway base URL here.
+const API_BASE = '' // Set the API Gateway base URL here.
 if (!API_BASE) throw new Error('API_BASE is not set.')
 
 export const ACCESS_TOKEN_STORAGE_NAME = 'accessToken'
