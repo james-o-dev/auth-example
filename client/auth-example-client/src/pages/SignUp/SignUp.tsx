@@ -1,7 +1,7 @@
 // Import React and required hooks
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { signUp, validatePasswordStrength } from '../../services/authService'
+import { signUp, validateNewPassword } from '../../services/authService'
 
 // Define the SignUp component
 const SignUp: React.FC = () => {
@@ -12,20 +12,6 @@ const SignUp: React.FC = () => {
   const [validationMessages, setValidationMessages] = useState([] as string[])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
-
-  // Function to validate form input values before submission.
-  const validateForm = () => {
-    const newMessages: string[] = []
-
-    if (password !== confirmPassword) newMessages.push('Passwords do not match')
-
-    const validateThePassword = validatePasswordStrength(password)
-    if (!validateThePassword.valid) newMessages.push(validateThePassword.message)
-
-    setValidationMessages(newMessages)
-
-    return newMessages.length === 0
-  }
 
   /**
    * Function to handle form submission.
@@ -40,7 +26,12 @@ const SignUp: React.FC = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
 
-    if (!validateForm()) return
+    setValidationMessages([])
+    const validationErrors = validateNewPassword(password, confirmPassword)
+    if (validationErrors.length > 0) {
+      setValidationMessages(validationErrors)
+      return
+    }
 
     // You can make an API call or handle signup logic as per your application requirements
     // For simplicity, logging the input values to the console in this example
@@ -110,7 +101,7 @@ const SignUp: React.FC = () => {
         <br />
         {validationMessages.length > 0 && (
           <div>
-            <h3>Validation errors:</h3>
+            <p><b>Issues:</b></p>
             <ul>
               {validationMessages.map((message, index) => (
                 <li key={index}>{message}</li>
