@@ -5,19 +5,23 @@ import { Cors, EndpointType, LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-
 import { AttributeType, BillingMode, ProjectionType, Table } from 'aws-cdk-lib/aws-dynamodb'
 import { Runtime, Architecture, Code, LogFormat, Function, LayerVersion } from 'aws-cdk-lib/aws-lambda'
 import { Construct } from 'constructs'
+import { Queue } from 'aws-cdk-lib/aws-sqs'
+import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
 
 const LAMBDA_NODE_MODULE_LAYER_NAME = 'auth-example-lambda-layer'
 const LAMBDA_NAME = 'auth-example-lambda'
 const API_NAME = 'auth-example-api'
 const USERS_TABLE_NAME = 'auth-example-users'
 const AUTH_INDEX_NAME = 'auth-index'
-const CLIENT_HOST = '' // Set this to the domain, depending on where the client is hosted.
-const ACCESS_TOKEN_SECRET = '' || randomUUID() // Set the JWT secret here, to avoid invalidating existing tokens upon update; If empty, generate one.
-const REFRESH_TOKEN_SECRET = '' || randomUUID() // Set the JWT secret here, to avoid invalidating existing tokens upon update; If empty, generate one.
-const GMAIL_CLIENT_ID = '' // Set this.
-const GMAIL_CLIENT_SECRET = '' // Set this.
-const GMAIL_REFRESH_TOKEN = '' // Set this.
-const GMAIL_USER_EMAIL = '' // Set this.
+const NODEMAILER = {
+  SQS_QUEUE: {
+    MAIN: 'nodemailer-lambda-sqs',
+    DEAD_LETTER: 'nodemailer-lambda-sqs-dl',
+    TIMEOUT_SECONDS: 60,
+  },
+  LAMBDA_NAME: 'nodemailer-lambda',
+  LAYER_NAME: 'nodemailer-lambda-layer',
+}
 
 export class AuthExampleCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -46,10 +50,6 @@ export class AuthExampleCdkStack extends cdk.Stack {
         ACCESS_TOKEN_SECRET,
         AUTH_INDEX_NAME,
         CLIENT_HOST,
-        GMAIL_CLIENT_ID,
-        GMAIL_CLIENT_SECRET,
-        GMAIL_REFRESH_TOKEN,
-        GMAIL_USER_EMAIL,
         REFRESH_TOKEN_SECRET,
         USERS_TABLE_NAME,
       },
@@ -147,5 +147,59 @@ export class AuthExampleCdkStack extends cdk.Stack {
     // VerifyEmailConfirm resource
     const verifyEmailConfirm = verifyEmail.addResource('confirm')
     verifyEmailConfirm.addMethod('POST', integration)
+
+    // Now handle the SQS + Lambda for nodemailer.
+
+    // Create SQS queues.
+    const nodemailerSQSDL = new Queue(this, NODEMAILER.SQS_QUEUE.DEAD_LETTER, {
+      queueName: NODEMAILER.SQS_QUEUE.DEAD_LETTER,
+      retentionPeriod: cdk.Duration.days(14),
+    })
+    const nodemailerSQS = new Queue(this, NODEMAILER.SQS_QUEUE.MAIN, {
+      queueName: NODEMAILER.SQS_QUEUE.MAIN,
+      visibilityTimeout: cdk.Duration.seconds(NODEMAILER.SQS_QUEUE.TIMEOUT_SECONDS), // Set this to the same as the lambda timeout.
+      retentionPeriod: cdk.Duration.days(14),
+      deadLetterQueue: {
+        maxReceiveCount: 10,
+        queue: nodemailerSQSDL
+      }
+    })
+    // Update the auth lambda with this new SQS.
+    lambdaFunction.addEnvironment('NODEMAILER_SQS', nodemailerSQS.queueUrl)
+    nodemailerSQS.grantSendMessages(lambdaFunction)
+
+    // Create Lambda layer/s.
+    const nodemailerLambdaLayer = new LayerVersion(this, NODEMAILER.LAYER_NAME, {
+      layerVersionName: NODEMAILER.LAYER_NAME,
+      code: Code.fromAsset(`../../lambda/${NODEMAILER.LAYER_NAME}`), // Replace with the actual path
+      compatibleRuntimes: [Runtime.NODEJS_20_X], // Choose the appropriate runtime
+    })
+
+    // Create Lambda.
+    const nodemailerLambda = new Function(this, NODEMAILER.LAMBDA_NAME, {
+      functionName: NODEMAILER.LAMBDA_NAME,
+      runtime: Runtime.NODEJS_20_X,
+      architecture: Architecture.ARM_64,
+      handler: 'index.handler',
+      code: Code.fromAsset(`../../lambda/${NODEMAILER.LAMBDA_NAME}`),
+      timeout: cdk.Duration.seconds(NODEMAILER.SQS_QUEUE.TIMEOUT_SECONDS),
+      memorySize: 256,
+      retryAttempts: 0,
+      logFormat: LogFormat.JSON,
+      layers: [nodemailerLambdaLayer],
+      environment: {
+        GMAIL_CLIENT_ID,
+        GMAIL_CLIENT_SECRET,
+        GMAIL_REFRESH_TOKEN,
+        GMAIL_USER_EMAIL,
+        NODEMAILER_SQS: nodemailerSQS.queueUrl,
+      },
+    })
+    nodemailerSQS.grantConsumeMessages(nodemailerLambda)
+
+    // Add queue trigger to lambda.
+    nodemailerLambda.addEventSource(new SqsEventSource(nodemailerSQS, {
+      batchSize: 10, // Default.
+    }))
   }
 }
