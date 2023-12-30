@@ -66,15 +66,16 @@ export const isAuthenticated = async () => {
  *
  * @param {string} email - User's email address.
  * @param {string} password - User's password.
+ * @param {string} [totp] - Two-factor authentication code.
  */
-export const signIn = async (email: string, password: string) => {
+export const signIn = async (email: string, password: string, totp?: string) => {
 
   try {
     // Send a POST request to the sign-in endpoint with user credentials.
     const successfulSignIn = await makeCommonApiRequest({
       endpoint: '/auth/sign-in',
       method: 'POST',
-      body: { email, password },
+      body: { email, password, totp },
       responseType: 'json',
     })
 
