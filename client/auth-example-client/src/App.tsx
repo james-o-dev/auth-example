@@ -7,15 +7,44 @@ import { isAuthenticated, signOut } from './services/authService'
 import Profile from './pages/Profile/Profile'
 import ResetPassword from './pages/ResetPassword/ResetPassword'
 
-const isAuthenticatedLoader = async () => {
+/**
+ * Helper: Request if authenticated. Throw error if not.
+ * * Signs out if not authenticated (removes local tokens).
+ */
+const getIsAuthenticatedShared = async () => {
   try {
     const response = await isAuthenticated()
     if (!response) throw 'Not Authenticated'
-    return response
-
   } catch (error) {
-    alert('You are not authenticated; Please sign in.')
     signOut()
+    throw error
+  }
+}
+
+/**
+ * Loader: Only checks if authenticated.
+ * * Clears local tokens if not authenticated.
+ * * Always returns true
+ */
+const checkAuthenticatedState = async () => {
+  try {
+    await getIsAuthenticatedShared()
+  } catch (error) {
+    // Ignore.
+  }
+  return true
+}
+
+/**
+ * Loader: Displays message and redirects to sign in if not authenticated.
+ * * Returns true if authenticated
+ */
+const mustBeAuthenticated = async () => {
+  try {
+    await getIsAuthenticatedShared()
+    return true
+  } catch (error) {
+    alert('You are not authenticated. Please sign in.')
     return redirect('/sign-in')
   }
 }
@@ -32,7 +61,7 @@ const router = createBrowserRouter([
   {
     path: '/profile',
     Component: Profile,
-    loader: isAuthenticatedLoader
+    loader: mustBeAuthenticated
   },
   {
     path: '/reset-password',
@@ -41,6 +70,7 @@ const router = createBrowserRouter([
   {
     path: '/',
     Component: Home,
+    loader: checkAuthenticatedState
   },
 ])
 
