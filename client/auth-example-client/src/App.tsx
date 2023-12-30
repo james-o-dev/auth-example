@@ -3,7 +3,7 @@ import { createBrowserRouter, RouterProvider, redirect } from 'react-router-dom'
 import SignUp from './pages/SignUp/SignUp'
 import SignIn from './pages/SignIn/SignIn'
 import Home from './pages/Home/Home'
-import { isAuthenticated } from './services/authService'
+import { isAuthenticated, signOut } from './services/authService'
 import Profile from './pages/Profile/Profile'
 import ResetPassword from './pages/ResetPassword/ResetPassword'
 
@@ -15,6 +15,7 @@ const isAuthenticatedLoader = async () => {
 
   } catch (error) {
     alert('You are not authenticated; Please sign in.')
+    signOut()
     return redirect('/sign-in')
   }
 }
