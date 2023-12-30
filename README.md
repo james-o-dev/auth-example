@@ -37,26 +37,11 @@ This project aims to explore and demonstrate authentication in REST APIs using J
 
 ### AWS
 
-Once this repo is cloned, you can begin these steps:
-
-1. Update settings in `aws/lambda/auth-example-lambda/index.mjs`.
-2. Update settings in `aws/cdk/auth-example-cdk/lib/auth-example-cdk-stack.ts`.
-3. Update `aws/cdk/auth-example-cdk/cdk.json`: Change the `profile` to match your AWS CLI profile.
-4. Open a terminal and navigate to `aws/cdk/auth-example-cdk`.
-5. Run `npm run build`.
-6. Run `npm run synth` to check the CloudFormation stack.
-7. Deploy the stack with `npm run cdk:deploy`.
+TODO
 
 ### React Client
 
-Once AWS resources have been set up, you may proceed with the below:
-
-1. Update settings in `client/auth-example-client/src/services/apiService.ts`.
-2. Open a terminal and navigate to `client/auth-example-client`.
-3. Run `npm run dev` to start the React development server.
-4. Open the React client in your browser
-
-Feel free to explore the code in each directory for detailed implementation.
+TODO
 
 ## License
 
