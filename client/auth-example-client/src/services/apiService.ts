@@ -127,3 +127,50 @@ export const makeApiRequest = async (
     credentials,
   })
 }
+
+/**
+ * Further simplify API requests.
+ *
+ * @param {object} param0
+ * @param {string} param0.endpoint - The API endpoint to make the request to.
+ * @param {string} param0.method - The HTTP method to use.
+ * @param {'json' | 'text'} param0.responseType - The response type to use.
+ * @param {object} [param0.body] - The request body.
+ * @param {HeadersInit} [param0.headers] - The request headers.
+ * @param {boolean} [param0.includeCredentials] - Whether to include the authentication token in the request headers.
+ */
+export const makeCommonApiRequest = async ({
+  endpoint,
+  method,
+  responseType,
+  body,
+  includeCredentials,
+  headers,
+}: {
+  endpoint: string;
+  method: string;
+  responseType: 'json' | 'text';
+  body?: object;
+  includeCredentials?: boolean;
+  headers?: HeadersInit;
+}) => {
+  const response = await makeApiRequest({
+    endpoint,
+    method,
+    body,
+    includeCredentials,
+    headers,
+  })
+  let parsedResponse = null
+
+  if (responseType === 'json') {
+    parsedResponse = await response.json()
+  } else if (responseType === 'text') {
+    parsedResponse = await response.text()
+  }
+
+  if (!response.ok) throw new Error(parsedResponse)
+
+  // Return the authentication result.
+  return parsedResponse
+}

@@ -1,6 +1,6 @@
 // authService.ts
 
-import { ACCESS_TOKEN_STORAGE_NAME, REFRESH_TOKEN_STORAGE_NAME, USER_STORAGE_NAME, makeApiRequest, refreshAccessToken } from './apiService'
+import { ACCESS_TOKEN_STORAGE_NAME, REFRESH_TOKEN_STORAGE_NAME, USER_STORAGE_NAME, makeApiRequest, makeCommonApiRequest, refreshAccessToken } from './apiService'
 
 // Require at least one lowercase letter, one uppercase letter, one number, and one special character, with a minimum length of 8 characters.
 const PASSWORD_REGEXP = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
@@ -71,16 +71,12 @@ export const signIn = async (email: string, password: string) => {
 
   try {
     // Send a POST request to the sign-in endpoint with user credentials.
-    const response = await makeApiRequest({
+    const successfulSignIn = await makeCommonApiRequest({
       endpoint: '/auth/sign-in',
       method: 'POST',
       body: { email, password },
+      responseType: 'json',
     })
-
-    // Parse the JSON response from the server.
-    const successfulSignIn = await response.json()
-
-    if (!response.ok) throw new Error(successfulSignIn)
 
     // Store the authentication token in the local storage.
     localStorage.setItem(ACCESS_TOKEN_STORAGE_NAME, successfulSignIn.accessToken)
@@ -113,17 +109,13 @@ export const signUp = async (email: string, password: string, confirmPassword: s
 
   try {
     // Send a POST request to the sign-in endpoint with user credentials.
-    const response = await makeApiRequest({
+    const successfulSignUp = await makeCommonApiRequest({
       endpoint: '/auth/sign-up',
       method: 'POST',
       body: { email, password, confirmPassword },
       includeCredentials: false,
+      responseType: 'json',
     })
-
-    // Parse the JSON response from the server.
-    const successfulSignUp = await response.json()
-
-    if (!response.ok) throw new Error(successfulSignUp)
 
     // Store the authentication token in the local storage.
     localStorage.setItem(ACCESS_TOKEN_STORAGE_NAME, successfulSignUp.accessToken)
@@ -147,22 +139,14 @@ export const signUp = async (email: string, password: string, confirmPassword: s
  * @param {string} newPassword
  * @param {string} confirmPassword
  */
-export const changePassword = async (oldPassword: string, newPassword: string, confirmPassword: string) => {
-
-  const response = await makeApiRequest({
+export const changePassword = (oldPassword: string, newPassword: string, confirmPassword: string) => {
+  return makeCommonApiRequest({
     endpoint: '/auth/change-password',
     method: 'POST',
     body: { oldPassword, newPassword, confirmPassword },
-    includeCredentials: true
+    includeCredentials: true,
+    responseType: 'text',
   })
-
-  // Parse the JSON response from the server.
-  const successfulChangePassword = await response.json()
-
-  if (!response.ok) throw new Error(successfulChangePassword)
-
-  // Return the authentication result.
-  return successfulChangePassword
 }
 
 /**
@@ -170,40 +154,26 @@ export const changePassword = async (oldPassword: string, newPassword: string, c
  *
  * @param {string} email - User's email address.
  */
-export const resetPassword = async (email: string) => {
+export const resetPassword = (email: string) => {
   // Send a POST request to the sign-in endpoint with user credentials.
-  const response = await makeApiRequest({
+  return makeCommonApiRequest({
     endpoint: '/auth/reset-password',
     method: 'POST',
     body: { email },
+    responseType: 'text',
   })
-
-  // Parse the JSON response from the server.
-  const resetPasswordResponse = await response.json()
-
-  if (!response.ok) throw new Error(resetPasswordResponse)
-
-  // Return the authentication result.
-  return resetPasswordResponse
 }
 
 /**
  * Signs out all devices.
  */
-export const signOutAllDevices = async () => {
-  const response = await makeApiRequest({
+export const signOutAllDevices = () => {
+  return makeCommonApiRequest({
     endpoint: '/auth/sign-out',
     method: 'DELETE',
     includeCredentials: true,
+    responseType: 'text',
   })
-
-  // Parse the JSON response from the server.
-  const resetPasswordResponse = await response.text()
-
-  if (!response.ok) throw new Error(resetPasswordResponse)
-
-  // Return the authentication result.
-  return resetPasswordResponse
 }
 
 /**
@@ -212,17 +182,12 @@ export const signOutAllDevices = async () => {
  */
 export const getVerifiedEmailStatus = async () => {
   try {
-    const response = await makeApiRequest({
+    const emailVerifiedResponse = await makeCommonApiRequest({
       endpoint: '/auth/verify-email',
       method: 'GET',
       includeCredentials: true,
+      responseType: 'json',
     })
-
-    // Parse the JSON response from the server.
-    const emailVerifiedResponse = await response.json()
-
-    if (!response.ok) throw new Error(emailVerifiedResponse)
-
     // Return the authentication result.
     return emailVerifiedResponse.emailVerified
   } catch (error) {
@@ -234,18 +199,13 @@ export const getVerifiedEmailStatus = async () => {
  * Sends a request to the server to verify the user's email address.
  * * It will email the user with a verification code.
  */
-export const verifyEmailRequest = async () => {
-  const response = await makeApiRequest({
+export const verifyEmailRequest = () => {
+  return makeCommonApiRequest({
     endpoint: '/auth/verify-email/request',
     method: 'GET',
+    responseType: 'text',
     includeCredentials: true,
   })
-  const textResponse = await response.text()
-
-  if (!response.ok) throw new Error(textResponse)
-
-  // Return the authentication result.
-  return textResponse
 }
 
 /**
@@ -253,17 +213,12 @@ export const verifyEmailRequest = async () => {
  *
  * @param {string} code
  */
-export const verifyEmailConfirm = async (code: string) => {
-  const response = await makeApiRequest({
+export const verifyEmailConfirm = (code: string) => {
+  return makeCommonApiRequest({
     endpoint: '/auth/verify-email/confirm',
     method: 'POST',
     body: { code },
+    responseType: 'text',
     includeCredentials: true,
   })
-  const textResponse = await response.text()
-
-  if (!response.ok) throw new Error(textResponse)
-
-  // Return the authentication result.
-  return textResponse
 }
