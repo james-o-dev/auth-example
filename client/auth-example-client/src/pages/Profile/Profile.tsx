@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { addTotp, changePassword, getVerifiedEmailStatus, hasTotp, removeTotp, clearJwt, signOutAllDevices, verifyEmailConfirm, verifyEmailRequest } from '../../services/authService'
+import { addTotp, changePassword, getVerifiedEmailStatus, hasTotp, removeTotp, clearJwt, signOutAllDevices, verifyEmailConfirm, verifyEmailRequest, validateNewPassword } from '../../services/authService'
 import { Link, useNavigate } from 'react-router-dom'
 
 /**
@@ -11,6 +11,7 @@ const ChangePasswordForm = () => {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [changingPassword, setChangingPassword] = useState(false)
+  const [passwordValidationErrors, setPasswordValidationErrors] = useState([] as string[])
 
   /**
    * Change password.
@@ -22,13 +23,10 @@ const ChangePasswordForm = () => {
 
     if (changingPassword) return
 
-    if (newPassword !== confirmPassword) {
-      alert('New passwords do not match.')
-      return
-    }
-
-    if (newPassword === oldPassword) {
-      alert('New password must not match the old password.')
+    setPasswordValidationErrors([])
+    const validationErrors = validateNewPassword(newPassword, confirmPassword, oldPassword)
+    if (validationErrors.length > 0) {
+      setPasswordValidationErrors(validationErrors)
       return
     }
 
@@ -66,6 +64,16 @@ const ChangePasswordForm = () => {
         <br />
         <button disabled={changingPassword} type='submit'>Change password</button>
         {changingPassword && <span>Changing password...</span>}
+        {passwordValidationErrors.length > 0 && (
+          <div>
+            <p><b>Issues:</b></p>
+            <ul>
+              {passwordValidationErrors.map((message, index) => (
+                <li key={index}>{message}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </form>
     </>
   )
@@ -297,8 +305,7 @@ const TotpSection = () => {
   return (
     <>
       <p>Two-factor authentication accomplished with 'Timed One Time Passwords' (TOTP), which can be generated with popular OTP generators like 'Google Authenticator' or 'Authy'.</p>
-      <p>Note that TOTP will be removed when resetting/recovering your password.</p>
-      <p>Is TOTP enabled: {totpEnabled ? '✅' : '❌'}</p>
+      <p>Is TOTP enabled?: {totpEnabled ? '✅' : '❌'}</p>
       {totpEnabled && <button disabled={loadingTotp} type='button' onClick={onRemoveTotp}>Remove TOTP</button>}
       {!totpEnabled && <button disabled={loadingTotp} type='button' onClick={onAddTotp}>Add TOTP</button>}
       {qrcode && backup.length && totpContent}

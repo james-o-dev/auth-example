@@ -216,7 +216,6 @@ const findUserFromEmailQuery = (email) => {
  * * Throws Unauthorized if the token is not valid against the user
  *
  * @param {string} decodedToken
- * @param {string} [invalidMessage]
  */
 const checkTokenAgainstDb = async (decodedToken) => {
   if (!decodedToken || !decodedToken.userId) throwUnauthError()
@@ -397,11 +396,12 @@ const changePasswordEndpoint = async (userId, reqBody) => {
 }
 
 /**
- * Reset password endpoint.
+ * Reset password request endpoint.
+ * * Sends an email to this address containing a code used to reset the password.
  *
  * @param {*} reqBody
  */
-const resetPasswordEndpoint = async (reqBody) => {
+const resetPasswordRequestEndpoint = async (reqBody) => {
   if (!reqBody) throw buildValidationError(400, 'Invalid request body.')
   if (!reqBody.email) throw buildValidationError(400, 'Invalid email.')
 
@@ -413,32 +413,92 @@ const resetPasswordEndpoint = async (reqBody) => {
 
   const { userId } = findUser.Items[0]
 
-  // Generate a new password.
-  const newPassword = generateRandomHumanString()
-
-  // Hash the password.
-  const hashedPassword = await hashPassword(newPassword)
+  const resetPassword = {
+    // User must input this to confirm.
+    code: generateRandomHumanString(),
+    // Expires five minutes from now.
+    expiry: Date.now() + 300000,
+  }
 
   // Update the password in the DB.
   // Invalidate existing refresh tokens.
-  await updateCommand(USERS_TABLE_NAME, { userId }, { hashedPassword, iat: getIATNow(), totp: null })
+  const updateCommand$ = updateCommand(USERS_TABLE_NAME, { userId }, { resetPassword: JSON.stringify(resetPassword) })
 
   // Send the new password to the user.
-  await pushNodemailerSQSMessage({
+  const nodemailer$ = pushNodemailerSQSMessage({
     to: reqBody.email,
     subject: 'auth-example: Password reset',
     html: `
       <div>Hi ${reqBody.email},</div>
       <br>
-      <div>Your new password is:</div>
-      <div><strong>${newPassword}</strong></div>
+      <div>Your reset password verification code is:</div>
+      <div><strong>${resetPassword.code}</strong></div>
+      <div>This verification code will last for around five minutes.</div>
       <br>
-      <div>It is recommended to change this password to your own preference at your earliest convenience.</div>
+      <div>Copy and paste this verification code into the reset password input, to allow changing your password.</div>
     `
   })
 
+  // Parallel.
+  await Promise.all([updateCommand$, nodemailer$])
+
   // Respond.
-  return buildLambdaResponse(200, 'An auto-generated password has been mailed to you. Note: TOTP has been removed.')
+  return buildLambdaResponse(200, { message: 'An email has been sent.', userId })
+}
+
+/**
+ * Reset password confirm endpoint.
+ * * Validates new password and verification code.
+ *
+ * @param {*} reqBody
+ */
+const resetPasswordConfirmEndpoint = async (reqBody) => {
+  if (!reqBody) throw buildValidationError(400, 'Invalid request body.')
+  if (!reqBody.userId) throw buildValidationError(400, 'Invalid user.')
+  if (!reqBody.code) throw buildValidationError(400, 'Invalid code.')
+  if (!reqBody.newPassword) throw buildValidationError(400, 'Invalid new password.')
+  if (!reqBody.confirmPassword) throw buildValidationError(400, 'Password not re-confirmed.')
+
+  // Destructure.
+  const { userId, code, newPassword, confirmPassword } = reqBody
+
+  // Validate new password.
+  if (newPassword !== confirmPassword) throw buildValidationError(400, 'Passwords do not match.')
+  validatePasswordStrength(newPassword)
+
+  // Get user email.
+  const getUser = await getCommand(USERS_TABLE_NAME, { userId })
+  if (!getUser) throw buildValidationError(404, 'User not found.')
+  const { resetPassword } = getUser.Item
+  if (!resetPassword) throw buildValidationError(400, 'Password reset was never requested or already completed. Please request to reset the password again.')
+
+  const resetPasswordData = JSON.parse(resetPassword)
+  // Reset password validation.
+  if (resetPasswordData.code !== code) throw buildValidationError(400, 'Invalid code.')
+  if (resetPasswordData.expiry < Date.now()) throw buildValidationError(400, 'Code has expired.')
+
+  try {
+    // Hash new password.
+    const hashedPassword = await hashPassword(newPassword)
+
+    // Update new password in DB.
+    // Invalidate existing refresh tokens.
+    // Clear the resetPassword data.
+    // Email has been verified automatically (it emailed to the address previously).
+    // Remove TOTP.
+    await updateCommand(USERS_TABLE_NAME, { userId }, {
+      hashedPassword,
+      emailVerified: true,
+      iat: getIATNow(),
+      resetPassword: null,
+    })
+
+    // Respond.
+    return buildLambdaResponse(200, 'Password has been changed.')
+  } catch (error) {
+    console.error(error)
+    throw buildValidationError(500, 'Password could not be changed at this time. Please try again later.')
+  }
 }
 
 /**
@@ -473,7 +533,6 @@ const verifyEmailRequest = async (userId, email) => {
       <br>
       <div>Please input the following code in the email verification:</div>
       <div><strong>${verifyEmail.code}</strong></div>
-      <br>
       <div>This code will be valid for around 5 minutes.</div>
     `
   })
@@ -622,8 +681,9 @@ export const handler = async (event) => {
       response = await signOutEndpoint(accessToken.userId)
     }
 
-    // Reset route.
-    if (reqPath === '/auth/reset-password' && reqMethod === 'POST') response = await resetPasswordEndpoint(reqBody)
+    // Reset password routes.
+    if (reqPath === '/auth/reset-password/request' && reqMethod === 'POST') response = await resetPasswordRequestEndpoint(reqBody)
+    if (reqPath === '/auth/reset-password/confirm' && reqMethod === 'POST') response = await resetPasswordConfirmEndpoint(reqBody)
 
     // Change Password route.
     if (reqPath === '/auth/change-password' && reqMethod === 'POST') {

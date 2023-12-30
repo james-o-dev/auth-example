@@ -150,16 +150,39 @@ export const changePassword = (oldPassword: string, newPassword: string, confirm
 }
 
 /**
- * Resets the user's password.
+ * Request to reset the user's password.
  *
  * @param {string} email - User's email address.
  */
-export const resetPassword = (email: string) => {
+export const resetPasswordRequest = (email: string) => {
   // Send a POST request to the sign-in endpoint with user credentials.
   return makeCommonApiRequest({
-    endpoint: '/auth/reset-password',
+    endpoint: '/auth/reset-password/request',
     method: 'POST',
     body: { email },
+    responseType: 'json',
+  })
+}
+
+/**
+ * Request to reset the user's password.
+ *
+ * @param {string} userId
+ * @param {string} code
+ * @param {string} newPassword
+ * @param {string} confirmPassword
+ */
+export const resetPasswordConfirm = (userId: string, code: string, newPassword: string, confirmPassword: string) => {
+  // Send a POST request to the sign-in endpoint with user credentials.
+  return makeCommonApiRequest({
+    endpoint: '/auth/reset-password/confirm',
+    method: 'POST',
+    body: {
+      userId,
+      code,
+      newPassword,
+      confirmPassword,
+    },
     responseType: 'text',
   })
 }
@@ -257,4 +280,26 @@ export const addTotp = () => {
     responseType: 'json',
     includeCredentials: true,
   })
+}
+
+/**
+ * Validates the new password.
+ *
+ * @param {string} newPassword
+ * @param {string} confirmPassword
+ * @param {string} [oldPassword] - The old password.
+ */
+export const validateNewPassword = (newPassword: string, confirmPassword: string, oldPassword?: string) => {
+  const errorMessages: string[] = []
+
+  if (!newPassword) errorMessages.push('Password was not defined.')
+
+  if (newPassword !== confirmPassword) errorMessages.push('Passwords do not match.')
+
+  const validateThePassword = validatePasswordStrength(newPassword)
+  if (!validateThePassword.valid) errorMessages.push(validateThePassword.message)
+
+  if (oldPassword && oldPassword === newPassword) errorMessages.push('New password must not match the old password.')
+
+  return errorMessages
 }
