@@ -50,17 +50,18 @@ const ChangePasswordForm = () => {
       <p>Note: This will sign you out.</p>
 
       <form onSubmit={onChangePasswordFormSubmit}>
+        <input type="email" name="email" autoComplete="username" style={{ display: 'none' }} />
         <div>
           <label htmlFor="oldPassword">Old password:</label>
-          <input type="password" id="oldPassword" value={oldPassword} onChange={(event) => setOldPassword(event.target.value)} />
+          <input type="password" name="oldPassword" autoComplete="current-password" value={oldPassword} onChange={(event) => setOldPassword(event.target.value)} />
         </div>
         <div>
           <label htmlFor="newPassword">New password:</label>
-          <input type="password" id="newPassword" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} />
+          <input type="password" name="newPassword" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} />
         </div>
         <div>
           <label htmlFor="confirmPassword">Confirm password:</label>
-          <input type="password" id="confirmPassword" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} />
+          <input type="password" name="confirmPassword" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} />
         </div>
         <br />
         <button disabled={changingPassword} type="submit">Change password</button>
@@ -185,7 +186,7 @@ const VerifyEmail = () => {
           <br />
           <label>
             Verification code:
-            <input type="text" required value={verificationCode} onChange={e => setVerificationCode(e.target.value)} />
+            <input type="text" name="email" required value={verificationCode} onChange={e => setVerificationCode(e.target.value)} />
           </label>
           <button disabled={disableActions} type='submit'>Verify email</button>
           {verifying && <span>Verifying...</span>}

@@ -35,7 +35,7 @@ const ResetPassword = () => {
       <form onSubmit={onFormSubmit}>
         <label htmlFor="email">
           Email:
-          <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input required type="email" name="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
         <button disabled={isSubmitting} type="submit">Reset password</button>
         {isSubmitting && <span>Resetting...</span>}
