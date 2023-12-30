@@ -17,9 +17,9 @@ export interface NavbarProps {
 
 const NAV_ITEMS: NavbarItem[] = [
   { label: 'Home', to: '/', type: 'all' },
-  { label: 'Sign In', to: '/sign-in', type: 'unauth', },
-  { label: 'Sign Up', to: '/sign-up', type: 'unauth', },
-  { label: '⚠ Profile', to: '/profile', type: 'auth' },
+  { label: 'Sign in', to: '/sign-in', type: 'unauth', },
+  { label: 'Sign up', to: '/sign-up', type: 'unauth', },
+  { label: '👤 Profile', to: '/profile', type: 'auth' },
 ]
 
 const Navbar: React.FC<NavbarProps> = ({ navItems = NAV_ITEMS }) => {
@@ -33,6 +33,9 @@ const Navbar: React.FC<NavbarProps> = ({ navItems = NAV_ITEMS }) => {
     else return false
   })
 
+  /**
+   * Sign the user out.
+   */
   const onSignOut = () => {
     signOut()
     alert('You have been signed out.')
@@ -50,7 +53,7 @@ const Navbar: React.FC<NavbarProps> = ({ navItems = NAV_ITEMS }) => {
               </li>
             )
           })}
-        {authenticated && <li><a href="" onClick={onSignOut}>Sign Out</a></li>}
+        {authenticated && <li><a href="" onClick={onSignOut}>Sign out</a></li>}
       </ul>
     </nav>
   )
