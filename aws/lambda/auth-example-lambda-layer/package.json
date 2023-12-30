@@ -1,5 +1,5 @@
 {
-  "name": "auth-example-lambda-node-module-layer",
+  "name": "auth-example-lambda-layer",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",

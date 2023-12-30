@@ -6,7 +6,7 @@ import { AttributeType, BillingMode, ProjectionType, Table } from 'aws-cdk-lib/a
 import { Runtime, Architecture, Code, LogFormat, Function, LayerVersion } from 'aws-cdk-lib/aws-lambda'
 import { Construct } from 'constructs'
 
-const LAMBDA_NODE_MODULE_LAYER_NAME = 'auth-example-lambda-node-module-layer'
+const LAMBDA_NODE_MODULE_LAYER_NAME = 'auth-example-lambda-layer'
 const LAMBDA_NAME = 'auth-example-lambda'
 const API_NAME = 'auth-example-api'
 const USERS_TABLE_NAME = 'auth-example-users'
@@ -26,7 +26,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
     // Create Lambda layer/s.
     const lambdaNodeModuleLayer = new LayerVersion(this, LAMBDA_NODE_MODULE_LAYER_NAME, {
       layerVersionName: LAMBDA_NODE_MODULE_LAYER_NAME,
-      code: Code.fromAsset('../../lambda/auth-example-lambda-node-module-layer'), // Replace with the actual path
+      code: Code.fromAsset(`../../lambda/${LAMBDA_NODE_MODULE_LAYER_NAME}`), // Replace with the actual path
       compatibleRuntimes: [Runtime.NODEJS_20_X], // Choose the appropriate runtime
     })
 
