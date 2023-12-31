@@ -228,6 +228,7 @@ const TotpSection = () => {
   const [totpEnabled, setTotpEnabled] = useState(false)
   const [qrcode, setQrcode] = useState('')
   const [backup, setBackup] = useState([])
+  const [toggleTotpContent, setToggleTotpContent] = useState(false)
 
   useEffect(() => {
     // Check if TOTP is enabled initially.
@@ -269,8 +270,9 @@ const TotpSection = () => {
   const onAddTotp = async () => {
     if (loadingTotp) return
 
-    if(!confirm('Are you sure you want to add TOTP two-factor authentication to this account?')) return
+    if (!confirm('Are you sure you want to add TOTP two-factor authentication to this account?')) return
 
+    setToggleTotpContent(false)
     setLoadingTotp(true)
     try {
       const response = await addTotp()
@@ -298,12 +300,16 @@ const TotpSection = () => {
     <>
       <h3>TOTP added</h3>
       <p><strong>WARNING:</strong> The QR image and backup codes will be lost once you navigate away or sign out.</p>
+      <p>
+        Click this button to show/hide the TOTP content:
+        <button onClick={() => setToggleTotpContent(val => !val)} type='button'>{toggleTotpContent ? 'Hide' : 'Show'}</button>
+      </p>
       <div>
-        <img src={qrcode} />
+        {toggleTotpContent ? <img src={qrcode} /> : <div><strong>**QR CODE HIDDEN**</strong></div>}
       </div>
       <div>
-        <p>Backup codes:</p>
-        <p><strong>{backup.join(', ')}</strong></p>
+        <h3>Backup codes:</h3>
+        <p><strong>{toggleTotpContent ? backup.join(', ') : '**BACKUP CODES HIDDEN**'}</strong></p>
         <p>These can be used in place of a generated TOTP. Once one is used, it will be consumed and will not be able to be used again.</p>
         <p>Please store these in a secure location and update your list each time you use a backup code.</p>
       </div>
