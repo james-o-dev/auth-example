@@ -303,14 +303,16 @@ const TotpSection = () => {
       </div>
       <div>
         <p>Backup codes:</p>
-        <p>{backup.join(', ')}</p>\
+        <p><strong>{backup.join(', ')}</strong></p>
+        <p>These can be used in place of a generated TOTP. Once one is used, it will be consumed and will not be able to be used again.</p>
+        <p>Please store these in a secure location and update your list each time you use a backup code.</p>
       </div>
     </>
   )
 
   return (
     <>
-      <p>Two-factor authentication accomplished with 'Timed One Time Passwords' (TOTP), which can be generated with popular OTP generators like 'Google Authenticator' or 'Authy'.</p>
+      <p>Two-factor authentication is accomplished with 'Timed One Time Passwords' (TOTP), which can be generated with popular OTP generators like 'Google Authenticator' or 'Authy'.</p>
       <p>Is TOTP enabled?: {totpEnabled ? '✅' : '❌'}</p>
       {totpEnabled && <button disabled={loadingTotp} type='button' onClick={onRemoveTotp}>Remove TOTP</button>}
       {!totpEnabled && <button disabled={loadingTotp} type='button' onClick={onAddTotp}>Add TOTP</button>}
