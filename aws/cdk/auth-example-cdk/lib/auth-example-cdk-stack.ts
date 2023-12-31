@@ -116,6 +116,15 @@ export class AuthExampleCdkStack extends cdk.Stack {
         allowMethods: Cors.ALL_METHODS,
       }
     })
+    api.addUsagePlan('defaultUsage', {
+      name: 'defaultUsage',
+      throttle: {
+        rateLimit: 2,
+        burstLimit: 4,
+      },
+      apiStages: [{ api, stage: api.deploymentStage, }]
+    })
+
     const integration = new LambdaIntegration(lambdaFunction)
     const apiUrl = api.url
 
