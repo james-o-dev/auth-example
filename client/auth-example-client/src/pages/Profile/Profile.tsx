@@ -246,13 +246,17 @@ const TotpSection = () => {
   const onRemoveTotp = async () => {
     if (loadingTotp) return
 
+    const code = prompt('Please enter the current TOTP code:')
+    if (!code) return
+
     setLoadingTotp(true)
     try {
-      const message = await removeTotp()
+      const message = await removeTotp(code)
       alert(message)
       setTotpEnabled(false)
     } catch (error) {
-      alert('TOTP could not be removed at this time.')
+      console.error(error)
+      alert((error as Error)?.message || 'TOTP could not be removed at this time.')
     } finally {
       setLoadingTotp(false)
     }
@@ -310,6 +314,7 @@ const TotpSection = () => {
       <p>Is TOTP enabled?: {totpEnabled ? '✅' : '❌'}</p>
       {totpEnabled && <button disabled={loadingTotp} type='button' onClick={onRemoveTotp}>Remove TOTP</button>}
       {!totpEnabled && <button disabled={loadingTotp} type='button' onClick={onAddTotp}>Add TOTP</button>}
+      {loadingTotp && <span>Updating TOTP settings...</span>}
       {qrcode && backup.length && totpContent}
     </>
   )
