@@ -228,6 +228,7 @@ const TotpSection = () => {
   const [totpEnabled, setTotpEnabled] = useState(false)
   const [qrcode, setQrcode] = useState('')
   const [backup, setBackup] = useState([])
+  const [toggleTotpContent, setToggleTotpContent] = useState(false)
 
   useEffect(() => {
     // Check if TOTP is enabled initially.
@@ -246,13 +247,17 @@ const TotpSection = () => {
   const onRemoveTotp = async () => {
     if (loadingTotp) return
 
+    const code = prompt('Please enter the current TOTP code:')
+    if (!code) return
+
     setLoadingTotp(true)
     try {
-      const message = await removeTotp()
+      const message = await removeTotp(code)
       alert(message)
       setTotpEnabled(false)
     } catch (error) {
-      alert('TOTP could not be removed at this time.')
+      console.error(error)
+      alert((error as Error)?.message || 'TOTP could not be removed at this time.')
     } finally {
       setLoadingTotp(false)
     }
@@ -265,6 +270,9 @@ const TotpSection = () => {
   const onAddTotp = async () => {
     if (loadingTotp) return
 
+    if (!confirm('Are you sure you want to add TOTP two-factor authentication to this account?')) return
+
+    setToggleTotpContent(false)
     setLoadingTotp(true)
     try {
       const response = await addTotp()
@@ -292,22 +300,29 @@ const TotpSection = () => {
     <>
       <h3>TOTP added</h3>
       <p><strong>WARNING:</strong> The QR image and backup codes will be lost once you navigate away or sign out.</p>
+      <p>
+        Click this button to show/hide the TOTP content:
+        <button onClick={() => setToggleTotpContent(val => !val)} type='button'>{toggleTotpContent ? 'Hide' : 'Show'}</button>
+      </p>
       <div>
-        <img src={qrcode} />
+        {toggleTotpContent ? <img src={qrcode} /> : <div><strong>**QR CODE HIDDEN**</strong></div>}
       </div>
       <div>
-        <p>Backup codes:</p>
-        <p>{backup.join(', ')}</p>\
+        <h3>Backup codes:</h3>
+        <p><strong>{toggleTotpContent ? backup.join(', ') : '**BACKUP CODES HIDDEN**'}</strong></p>
+        <p>These can be used in place of a generated TOTP. Once one is used, it will be consumed and will not be able to be used again.</p>
+        <p>Please store these in a secure location and update your list each time you use a backup code.</p>
       </div>
     </>
   )
 
   return (
     <>
-      <p>Two-factor authentication accomplished with 'Timed One Time Passwords' (TOTP), which can be generated with popular OTP generators like 'Google Authenticator' or 'Authy'.</p>
+      <p>Two-factor authentication is accomplished with 'Timed One Time Passwords' (TOTP), which can be generated with popular OTP generators like 'Google Authenticator' or 'Authy'.</p>
       <p>Is TOTP enabled?: {totpEnabled ? '✅' : '❌'}</p>
       {totpEnabled && <button disabled={loadingTotp} type='button' onClick={onRemoveTotp}>Remove TOTP</button>}
       {!totpEnabled && <button disabled={loadingTotp} type='button' onClick={onAddTotp}>Add TOTP</button>}
+      {loadingTotp && <span>Updating TOTP settings...</span>}
       {qrcode && backup.length && totpContent}
     </>
   )

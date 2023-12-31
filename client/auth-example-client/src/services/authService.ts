@@ -260,12 +260,15 @@ export const hasTotp = () => {
 
 /**
  * Removes TOTP from the user's account.
+ *
+ * @param {string} code - Current TOTP code provided by the user.
  */
-export const removeTotp = () => {
+export const removeTotp = (code: string) => {
   return makeCommonApiRequest({
     endpoint: '/auth/totp/remove',
-    method: 'DELETE',
+    method: 'POST',
     responseType: 'text',
+    body: { code },
     includeCredentials: true,
   })
 }
