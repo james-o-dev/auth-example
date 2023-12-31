@@ -286,6 +286,21 @@ export const addTotp = () => {
 }
 
 /**
+ * Request to activate the TOTP.
+ *
+ * @param {string} code - Current TOTP code provided by the user.
+ */
+export const activateTotp = (code: string) => {
+  return makeCommonApiRequest({
+    endpoint: '/auth/totp/activate',
+    method: 'PUT',
+    responseType: 'text',
+    body: { code },
+    includeCredentials: true,
+  })
+}
+
+/**
  * Validates the new password.
  *
  * @param {string} newPassword
