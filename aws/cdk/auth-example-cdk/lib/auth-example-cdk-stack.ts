@@ -182,6 +182,9 @@ export class AuthExampleCdkStack extends cdk.Stack {
     const removeTotp = totp.addResource('remove')
     removeTotp.addMethod('POST', integration)
 
+    const activateTotp = totp.addResource('activate')
+    activateTotp.addMethod('PUT', integration)
+
     // Now handle the SQS + Lambda for nodemailer.
 
     // Create SQS queues.

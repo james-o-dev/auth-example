@@ -240,6 +240,12 @@ const checkTokenAgainstDb = async (decodedToken) => {
 const validateTotp = async (totpInput, totpSettings, userId) => {
   totpSettings = JSON.parse(totpSettings)
 
+  // Check if the TOTP is active.
+  // If it was not active, we can skip the validation.
+  if (!totpSettings.active) {
+    return { valid: true }
+  }
+
   // A backup code is used, remove it from the list and save it back to the database.
   if (totpSettings.backup.includes(totpInput)) {
     // Remove the backup code from the list of existing codes.
@@ -340,8 +346,11 @@ const signInEndpoint = async (reqBody) => {
 
   // Else if found, we have the email and the userId.
 
-  // If totpSettings exists, totp must also exist.
-  if (totp) {
+  // Get totpSettings.
+  const totpSettings = JSON.parse(totp || null)
+
+  // If the user has an active TOTP...
+  if (totpSettings?.active) {
     if (!totpInput) return buildLambdaResponse(200, { message: 'TOTP required.', totpRequired: true })
 
     const { valid: isTotpValid, backupsMessage } = await validateTotp(totpInput, totp, userId)
@@ -612,7 +621,16 @@ const getVerifiedEmailEndpoint = async (userId) => {
  */
 const hasTotpEndpoint = async (userId) => {
   const getUser = await getCommand(USERS_TABLE_NAME, { userId })
-  return buildLambdaResponse(200, { totp: !!getUser.Item.totp })
+
+  // No TOTP set.
+  if (!getUser.Item.totp) return buildLambdaResponse(200, { totp: false })
+
+  const totpSettings = JSON.parse(getUser.Item.totp)
+  // TOTP was added but was not activated.
+  if (!totpSettings.active) return buildLambdaResponse(200, { totp: false })
+
+  // TOTP is active.
+  return buildLambdaResponse(200, { totp: true })
 }
 
 /**
@@ -626,11 +644,11 @@ const addTotpEndpoint = async (userId, email) => {
   const backup = generateBackupCodes()
   const totp = JSON.stringify({ secret, url, backup })
 
-  await updateCommand(USERS_TABLE_NAME, { userId }, { totp, iat: getIATNow() })
+  await updateCommand(USERS_TABLE_NAME, { userId }, { totp })
 
   const qrcode = await QRCode.toDataURL(url)
 
-  return buildLambdaResponse(200, { message: 'TOTP added. Note: Previous access/refresh tokens have been revoked.', backup, qrcode })
+  return buildLambdaResponse(200, { message: 'TOTP added. It requires activation before it is applied.', backup, qrcode })
 }
 
 /**
@@ -641,7 +659,7 @@ const addTotpEndpoint = async (userId, email) => {
  * @param {*} reqBody
  */
 const removeTotpEndpoint = async (userId, reqBody) => {
-  if (!reqBody?.code) throw buildValidationError(400, 'Invalid TOTP.')
+  if (!reqBody?.code) throw buildValidationError(401, 'Invalid TOTP.')
 
   const getUser = await getCommand(USERS_TABLE_NAME, { userId })
   if (!getUser) throw buildValidationError(404, 'User not found.')
@@ -650,11 +668,47 @@ const removeTotpEndpoint = async (userId, reqBody) => {
   if (!totpSettings) throw buildValidationError(400, 'TOTP is not enabled for this user.')
 
   const { valid } = await validateTotp(reqBody.code, totpSettings, userId)
-  if (!valid) throw buildValidationError(400, 'Invalid TOTP.')
+  if (!valid) throw buildValidationError(401, 'Invalid TOTP.')
 
   await updateCommand(USERS_TABLE_NAME, { userId }, { totp: null })
 
   return buildLambdaResponse(200, 'TOTP removed.')
+}
+
+/**
+ * Activate TOTP for a user.
+ * * Once used, it will be active
+ * * Requires an existing TOTP to be added
+ *
+ * @param {string} userId
+ * @param {*} reqBody
+ */
+const activateTotpEndpoint = async (userId, reqBody) => {
+  if (!reqBody?.code) throw buildValidationError(401, 'Invalid TOTP.')
+
+  const getUser = await getCommand(USERS_TABLE_NAME, { userId })
+  if (!getUser) throw buildValidationError(404, 'User not found.')
+
+  const { totp } = getUser.Item
+  const totpSettings = JSON.parse(totp || null)
+  if (!totpSettings) throw buildValidationError(400, 'TOTP is not enabled for this user.')
+  if (totpSettings.active) throw buildValidationError(400, 'TOTP is already active.')
+
+  try {
+    const valid = Totp.validate({ passcode: reqBody.code, secret: totpSettings.secret })
+    if (!valid) throw new Error()
+  } catch (error) {
+    throw buildValidationError(401, 'Invalid TOTP.')
+  }
+
+  // Update TOTP to set as active.
+  const newTotp = JSON.stringify({ ...totpSettings, active: true })
+  // Save to DB.
+  // Also revoke JWTs.
+  await updateCommand(USERS_TABLE_NAME, { userId }, { totp: newTotp, iat: getIATNow() })
+
+  // Respond.
+  return buildLambdaResponse(200, 'TOTP activated. Existing JWT revoked.')
 }
 
 // index.js
@@ -754,6 +808,12 @@ export const handler = async (event) => {
     if (reqPath === '/auth/totp/remove' && reqMethod === 'POST') {
       const accessToken = await getJWT(reqHeaders)
       response = await removeTotpEndpoint(accessToken.userId, reqBody)
+    }
+
+    // Activate TOTP.
+    if (reqPath === '/auth/totp/activate' && reqMethod === 'PUT') {
+      const accessToken = await getJWT(reqHeaders)
+      response = await activateTotpEndpoint(accessToken.userId, reqBody)
     }
 
     // Respond.
