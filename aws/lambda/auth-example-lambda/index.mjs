@@ -647,14 +647,14 @@ const removeTotpEndpoint = async (userId, reqBody) => {
   if (!getUser) throw buildValidationError(404, 'User not found.')
 
   const { totp: totpSettings } = getUser.Item
-if (!totpSettings) throw buildValidationError(400, 'TOTP is not enabled for this user.')
+  if (!totpSettings) throw buildValidationError(400, 'TOTP is not enabled for this user.')
 
-  const { valid, backupsMessage } = await validateTotp(reqBody.code, totpSettings, userId)
+  const { valid } = await validateTotp(reqBody.code, totpSettings, userId)
   if (!valid) throw buildValidationError(400, 'Invalid TOTP.')
 
   await updateCommand(USERS_TABLE_NAME, { userId }, { totp: null })
 
-  return buildLambdaResponse(200, `TOTP removed. ${backupsMessage || ''}`.trim())
+  return buildLambdaResponse(200, 'TOTP removed.')
 }
 
 // index.js
