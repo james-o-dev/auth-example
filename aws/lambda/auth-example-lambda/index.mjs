@@ -811,7 +811,7 @@ export const handler = async (event) => {
     }
 
     // Activate TOTP.
-    if (reqPath === '/auth/totp/activate' && reqMethod === 'POST') {
+    if (reqPath === '/auth/totp/activate' && reqMethod === 'PUT') {
       const accessToken = await getJWT(reqHeaders)
       response = await activateTotpEndpoint(accessToken.userId, reqBody)
     }
