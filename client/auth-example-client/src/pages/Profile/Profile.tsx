@@ -265,6 +265,8 @@ const TotpSection = () => {
   const onAddTotp = async () => {
     if (loadingTotp) return
 
+    if(!confirm('Are you sure you want to add TOTP two-factor authentication to this account?')) return
+
     setLoadingTotp(true)
     try {
       const response = await addTotp()
