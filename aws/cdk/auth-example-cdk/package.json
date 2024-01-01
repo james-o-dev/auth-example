@@ -14,8 +14,8 @@
     "cdk:destroy": "cdk destroy",
     "cdk:rebuild": "npm run cdk:destroy && npm run cdk:deploy",
     "clean-cdk.out": "rimraf cdk.out/",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint": "eslint . --ext ts",
+    "lint:fix": "eslint . --ext ts --fix"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",
