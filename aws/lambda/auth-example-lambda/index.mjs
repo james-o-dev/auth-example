@@ -8,6 +8,7 @@ import jsonwebtoken from 'jsonwebtoken'
 import bcryptjs from 'bcryptjs'
 import { Totp, generateBackupCodes } from 'time2fa'
 import QRCode from 'qrcode'
+import fetch from 'node-fetch'
 
 // Environment variables.
 const AUTH_INDEX_NAME = process.env.AUTH_INDEX_NAME
@@ -15,11 +16,17 @@ if (!AUTH_INDEX_NAME) throw new Error('Missing AUTH_INDEX_NAME environment varia
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET
 if (!ACCESS_TOKEN_SECRET) throw new Error('Missing ACCESS_TOKEN_SECRET environment variable')
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET
-if (!REFRESH_TOKEN_SECRET) throw new Error('Missing REFRESH_TOKEN_SECRET environment variable')
+if (!ACCESS_TOKEN_SECRET) throw new Error('Missing ACCESS_TOKEN_SECRET environment variable')
+const CLIENT_HOST = process.env.CLIENT_HOST
+if (!CLIENT_HOST) throw new Error('Missing CLIENT_HOST environment variable')
 const USERS_TABLE_NAME = process.env.USERS_TABLE_NAME
 if (!USERS_TABLE_NAME) throw new Error('Missing USERS_TABLE_NAME environment variable')
 const NODEMAILER_SQS = process.env.NODEMAILER_SQS
 if (!NODEMAILER_SQS) throw new Error('Missing NODEMAILER_SQS environment variable')
+const GOOGLE_SSO_CLIENT_ID = process.env.GOOGLE_SSO_CLIENT_ID
+if (!GOOGLE_SSO_CLIENT_ID) throw new Error('Missing GOOGLE_SSO_CLIENT_ID environment variable')
+const GOOGLE_SSO_CLIENT_SECRET = process.env.GOOGLE_SSO_CLIENT_SECRET
+if (!GOOGLE_SSO_CLIENT_SECRET) throw new Error('Missing GOOGLE_SSO_CLIENT_SECRET environment variable')
 
 const ACCESS_TOKEN_EXPIRY = '10m'
 const REFRESH_TOKEN_EXPIRY = '7d'
@@ -27,6 +34,9 @@ const INVALID_TOKEN_MESSAGE = 'Unauthorized.'
 
 // Require at least one lowercase letter, one uppercase letter, one number, and one special character, with a minimum length of 8 characters.
 const PASSWORD_REGEXP = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+
+// Used in the Google SSO redirect uri parameter.
+const GOOGLE_SSO_REDIRECT_URI = `${CLIENT_HOST}/google-sso-callback`
 
 /**
  * Send message to the Nodemailer SQS queue, to queue sending an email
@@ -711,6 +721,101 @@ const activateTotpEndpoint = async (userId, reqBody) => {
   return buildLambdaResponse(200, 'TOTP activated. Existing JWT revoked.')
 }
 
+/**
+ * Returns Google SSO URL, for the client to redirect to
+ */
+const googleSSORedirect = async () => {
+  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_SSO_CLIENT_ID}&redirect_uri=${GOOGLE_SSO_REDIRECT_URI}&response_type=code&scope=profile email`
+  return buildLambdaResponse(200, { message: 'Google SSO link', url })
+}
+
+/**
+ * Handles getting the profile from the Google SSO callback.
+ * * Manages gettting a new Google access token
+ * * Returns the email
+ *
+ * @param {*} reqBody
+ */
+const getProfileFromGoogleCallback = async (reqBody) => {
+  const { code } = reqBody
+
+  // Get access token.
+  const accessTokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    body: JSON.stringify({
+      grant_type: 'authorization_code',
+      client_id: GOOGLE_SSO_CLIENT_ID,
+      client_secret: GOOGLE_SSO_CLIENT_SECRET,
+      redirect_uri: GOOGLE_SSO_REDIRECT_URI,
+      code,
+    })
+  })
+  const accessTokenJson = await accessTokenResponse.json()
+
+  // Get profile.
+  const profileResponse = await fetch('https://www.googleapis.com/oauth2/v1/userinfo', {
+    headers: { Authorization: `Bearer ${accessTokenJson.access_token}` },
+  })
+  const { email, verified_email: verifiedEmail } = await profileResponse.json()
+
+  return {
+    email,
+    verifiedEmail,
+  }
+}
+
+/**
+ * Google SSO callback endpoint.
+ * * Requested once the user has signed in with Google.
+ * * The client passes code from its query parameters as the payload here.
+ *
+ * @param {*} reqBody
+ */
+const googleSSOCallbackEndpoint = async (reqBody) => {
+  const { email } = await getProfileFromGoogleCallback(reqBody)
+
+  // Find email in the DB.
+  const findEmail = await findUserFromEmailQuery(email)
+  let userId
+
+  if (findEmail.Items.length) {
+    // If found, sign in.
+
+    // If email not verified, also verify it.
+    const user = findEmail.Items[0]
+    userId = user.userId
+
+    if (!user.emailVerified) await updateCommand(USERS_TABLE_NAME, { userId, }, { emailVerified: true })
+
+  } else {
+    // If not found, sign up.
+
+    // Generate a UUID.
+    userId = randomUUID()
+
+    // Store in DB.
+    await putCommand(USERS_TABLE_NAME, { userId }, {
+      email,
+      emailVerified: true, // Already verified - they used a Gmail/G-Suite address.
+      dateCreated: Date.now(),
+    })
+  }
+
+  // Succesful sign-up/sign-in.
+  if (userId && email) {
+    const payload = { userId, email }
+    // Generate refresh token.
+    const refreshToken = generateRefreshToken(payload)
+    // Generate access token.
+    const accessToken = generateAccessToken(payload)
+    // Respond
+    return buildLambdaResponse(200, { message: 'Signed in with Google.', accessToken, refreshToken })
+  }
+
+  // Not authorized.
+  throwUnauthError()
+}
+
 // index.js
 export const handler = async (event) => {
   try {
@@ -815,6 +920,10 @@ export const handler = async (event) => {
       const accessToken = await getJWT(reqHeaders)
       response = await activateTotpEndpoint(accessToken.userId, reqBody)
     }
+
+    // Google SSO routes.
+    if (reqPath === '/auth/sso/google' && reqMethod === 'GET') response = await googleSSORedirect()
+    if (reqPath === '/auth/sso/google/callback' && reqMethod === 'POST') response = await googleSSOCallbackEndpoint(reqBody)
 
     // Respond.
     return response
