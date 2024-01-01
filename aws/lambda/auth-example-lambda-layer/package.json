@@ -12,6 +12,7 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
+    "node-fetch": "^3.3.2",
     "qrcode": "^1.5.3",
     "time2fa": "^1.2.2"
   }
