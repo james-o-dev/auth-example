@@ -102,7 +102,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
         'userId',
         'totp',
         'emailVerified',
-      ]
+      ],
     })
     // Grant DB access to the lambda.
     dynamoTable.grantReadWriteData(lambdaFunction)
@@ -121,7 +121,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
         allowCredentials: true,
         allowHeaders: Cors.DEFAULT_HEADERS,
         allowMethods: Cors.ALL_METHODS,
-      }
+      },
     })
     api.addUsagePlan('defaultUsage', {
       name: 'defaultUsage',
@@ -129,7 +129,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
         rateLimit: 2,
         burstLimit: 4,
       },
-      apiStages: [{ api, stage: api.deploymentStage, }]
+      apiStages: [{ api, stage: api.deploymentStage }],
     })
 
     const integration = new LambdaIntegration(lambdaFunction)
@@ -223,8 +223,8 @@ export class AuthExampleCdkStack extends cdk.Stack {
       retentionPeriod: cdk.Duration.days(14),
       deadLetterQueue: {
         maxReceiveCount: 10,
-        queue: nodemailerSQSDL
-      }
+        queue: nodemailerSQSDL,
+      },
     })
     // Update the auth lambda with this new SQS.
     lambdaFunction.addEnvironment('NODEMAILER_SQS', nodemailerSQS.queueUrl)
