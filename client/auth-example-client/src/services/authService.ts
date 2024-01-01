@@ -3,7 +3,7 @@
 import { ACCESS_TOKEN_STORAGE_NAME, REFRESH_TOKEN_STORAGE_NAME, makeApiRequest, makeCommonApiRequest, refreshAccessToken } from './apiService'
 
 // Require at least one lowercase letter, one uppercase letter, one number, and one special character, with a minimum length of 8 characters.
-const PASSWORD_REGEXP = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+const PASSWORD_REGEXP = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+-])[A-Za-z\d!@#$%^&*()_+-]{8,}$/
 
 /**
  * Clear JWTs.
@@ -21,7 +21,7 @@ export const clearJwt = () => {
 export const validatePasswordStrength = (password: string) => {
   const passed = PASSWORD_REGEXP.test(password)
   if (passed) return { valid: true, message: 'Password strength is strong enough.' }
-  return { valid: false, message: 'Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character, with a minimum length of 8 characters.' }
+  return { valid: false, message: 'Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character (!@#$%^&*()_+-), with a minimum length of 8 characters.' }
 }
 
 /**

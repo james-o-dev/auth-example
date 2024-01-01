@@ -32,8 +32,8 @@ const ACCESS_TOKEN_EXPIRY = '10m'
 const REFRESH_TOKEN_EXPIRY = '7d'
 const INVALID_TOKEN_MESSAGE = 'Unauthorized.'
 
-// Require at least one lowercase letter, one uppercase letter, one number, and one special character, with a minimum length of 8 characters.
-const PASSWORD_REGEXP = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+// Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character (!@#$%^&*()_+-), with a minimum length of 8 characters.
+const PASSWORD_REGEXP = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+-])[A-Za-z\d!@#$%^&*()_+-]{8,}$/
 
 // Used in the Google SSO redirect uri parameter.
 const GOOGLE_SSO_REDIRECT_URI = `${CLIENT_HOST}/google-sso-callback`
@@ -64,7 +64,7 @@ const pushNodemailerSQSMessage = async ({ to, subject, text, html }) => {
 const validatePasswordStrength = (password) => {
   const passed = PASSWORD_REGEXP.test(password)
   if (passed) return true
-  throw buildValidationError(400, 'Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character, with a minimum length of 8 characters.')
+  throw buildValidationError(400, 'Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character (!@#$%^&*()_+-), with a minimum length of 8 characters.')
 }
 
 /**
