@@ -17,6 +17,8 @@ const GMAIL_CLIENT_ID = process.env.GMAIL_CLIENT_ID || ''
 const GMAIL_CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET || ''
 const GMAIL_REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN || ''
 const GMAIL_USER_EMAIL = process.env.GMAIL_USER_EMAIL || ''
+const GOOGLE_SSO_CLIENT_ID = process.env.GOOGLE_SSO_CLIENT_ID || ''
+const GOOGLE_SSO_CLIENT_SECRET = process.env.GOOGLE_SSO_CLIENT_SECRET || ''
 if (
   !CLIENT_HOST
   || !ACCESS_TOKEN_SECRET
@@ -25,6 +27,8 @@ if (
   || !GMAIL_CLIENT_SECRET
   || !GMAIL_REFRESH_TOKEN
   || !GMAIL_USER_EMAIL
+  || !GOOGLE_SSO_CLIENT_ID
+  || !GOOGLE_SSO_CLIENT_SECRET
 ) throw new Error('Missing environment variables')
 
 // Other settings.
@@ -69,6 +73,8 @@ export class AuthExampleCdkStack extends cdk.Stack {
       environment: {
         ACCESS_TOKEN_SECRET,
         AUTH_INDEX_NAME,
+        GOOGLE_SSO_CLIENT_ID,
+        GOOGLE_SSO_CLIENT_SECRET,
         CLIENT_HOST,
         REFRESH_TOKEN_SECRET,
         USERS_TABLE_NAME,
@@ -95,6 +101,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
         'hashedPassword',
         'userId',
         'totp',
+        'emailVerified',
       ]
     })
     // Grant DB access to the lambda.
@@ -193,6 +200,15 @@ export class AuthExampleCdkStack extends cdk.Stack {
 
     const activateTotp = totp.addResource('activate')
     activateTotp.addMethod('PUT', integration)
+
+    // SSO resource
+    const sso = authResource.addResource('sso')
+
+    // Google SSO
+    const googleSSO = sso.addResource('google')
+    googleSSO.addMethod('GET', integration)
+    const googleSSOCallback = googleSSO.addResource('callback')
+    googleSSOCallback.addMethod('POST', integration)
 
     // Now handle the SQS + Lambda for nodemailer.
 
