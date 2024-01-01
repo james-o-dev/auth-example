@@ -814,7 +814,7 @@ const googleSSOCallbackEndpoint = async (reqBody) => {
       if (totpSettings?.active) {
         // Signing in requires a TOTP input.
         if (!totpInput) {
-          const createSSOToken = jsonwebtoken.sign({ email, code }, ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY })
+          const createSSOToken = jsonwebtoken.sign({ email, }, ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY })
           return buildLambdaResponse(200, { message: 'TOTP required.', totpRequired: true, ssoToken: createSSOToken, })
         }
 
