@@ -45,7 +45,11 @@ const ChangePasswordForm = () => {
 
   return (
     <>
-      <p>Note: This will sign you out.</p>
+      <p>
+        Note: Once your password has been changed, you will automatically be signed out.
+        <br />
+        Note: If you signed up with Google, you can set a password by signing out and then using the 'Reset password' feature in the Sign In page.
+      </p>
 
       <form onSubmit={onChangePasswordFormSubmit}>
         <input type='email' name='email' autoComplete='username' style={{ display: 'none' }} />
@@ -293,14 +297,14 @@ const TotpSection = () => {
     }
   }
 
-/**
- * Activates TOTP (Time-based One-Time Password) for the user's account.
- *
- * Prompts the user to enter their current TOTP code. Sends a request to
- * activate TOTP if a valid code is provided. Sets loading state and handles
- * response/errors. Logs the user out and redirects to sign in page if
- * successful.
- */
+  /**
+   * Activates TOTP (Time-based One-Time Password) for the user's account.
+   *
+   * Prompts the user to enter their current TOTP code. Sends a request to
+   * activate TOTP if a valid code is provided. Sets loading state and handles
+   * response/errors. Logs the user out and redirects to sign in page if
+   * successful.
+   */
   const onActivateTotp = async () => {
     if (loadingTotp) return
 
