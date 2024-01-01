@@ -5,7 +5,11 @@ import { DeleteCommand, GetCommand, PutCommand, DynamoDBDocumentClient, ScanComm
 // DynamoDB client.
 const dynamoDBClient = new DynamoDBClient({})
 // DynamoDB document client.
-const docClient = DynamoDBDocumentClient.from(dynamoDBClient)
+const docClient = DynamoDBDocumentClient.from(dynamoDBClient, {
+  marshallOptions: {
+    removeUndefinedValues: true,
+  }
+})
 
 /**
  * Given an object, returns the first key/value pair, as an array.
