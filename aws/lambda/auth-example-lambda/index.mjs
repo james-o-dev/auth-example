@@ -1,5 +1,5 @@
 import { buildLambdaResponse, buildValidationError, generateRandomString } from './lib/common.mjs'
-import { getCommand, putCommand, queryCommand, updateCommand, } from './lib/dynamodb.mjs'
+import { getCommand, putCommand, queryCommand, updateCommand } from './lib/dynamodb.mjs'
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs'
 const sqsClient = new SQSClient({})
 
@@ -50,8 +50,8 @@ const pushNodemailerSQSMessage = async ({ to, subject, text, html }) => {
   const sendMessageCommand = new SendMessageCommand({
     QueueUrl: NODEMAILER_SQS,
     MessageBody: JSON.stringify({
-      to, subject, text, html
-    })
+      to, subject, text, html,
+    }),
   })
   return sqsClient.send(sendMessageCommand)
 }
@@ -100,7 +100,7 @@ const generateAccessToken = (payload) => jsonwebtoken.sign(payload, ACCESS_TOKEN
  *
  * @param {*} payload
  */
-const generateRefreshToken = (payload) => jsonwebtoken.sign(payload, REFRESH_TOKEN_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY, })
+const generateRefreshToken = (payload) => jsonwebtoken.sign(payload, REFRESH_TOKEN_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY })
 
 /**
  * Verify an access token.
@@ -176,7 +176,7 @@ const signUpValidation = (reqBody) => {
   if (reqBody.password !== reqBody.confirmPassword) throw buildValidationError(400, 'Passwords do not match.')
   validatePasswordStrength(reqBody.password)
 
-  return { email: reqBody.email, password: reqBody.password, }
+  return { email: reqBody.email, password: reqBody.password }
 }
 
 /**
@@ -224,7 +224,7 @@ const findUserFromEmailQuery = (email) => {
     indexName: AUTH_INDEX_NAME,
     attributeValues: {
       email,
-    }
+    },
   })
 }
 
@@ -272,7 +272,7 @@ const validateTotp = async (totpInput, totpSettings, userId) => {
     // Return.
     const backupsRemaining = totpSettings.backup.length
     const backupsMessage = `A backup TOTP code was used. You have ${backupsRemaining} remaining codes left. To replenish, remove and re-add TOTP.`
-    return { valid: true, backupsMessage, }
+    return { valid: true, backupsMessage }
   } else {
     // TOTP was used.
     // Match totp with the settings.
@@ -299,7 +299,7 @@ const refreshTokenEndpoint = async (decodedRefreshToken) => {
     // const refreshToken = generateRefreshToken(user) // Can generate a new refresh token here, if we want to use 'rolling' refresh tokens.
 
     // Respond.
-    return buildLambdaResponse(200, { message: 'New access token issued.', accessToken, })
+    return buildLambdaResponse(200, { message: 'New access token issued.', accessToken })
   } catch (_) {
     throwUnauthError()
   }
@@ -336,7 +336,7 @@ const signUpEndpoint = async (reqBody) => {
   const refreshToken = generateRefreshToken(user)
 
   // Respond.
-  return buildLambdaResponse(201, { message: 'User has been created.', accessToken, refreshToken, })
+  return buildLambdaResponse(201, { message: 'User has been created.', accessToken, refreshToken })
 }
 
 /**
@@ -477,7 +477,7 @@ const resetPasswordRequestEndpoint = async (reqBody) => {
       <div>This verification code will last for around five minutes.</div>
       <br>
       <div>Copy and paste this verification code into the reset password input, to allow changing your password.</div>
-    `
+    `,
   })
 
   // Parallel.
@@ -575,7 +575,7 @@ const verifyEmailRequest = async (userId, email) => {
       <div>Please input the following code in the email verification:</div>
       <div><strong>${verifyEmail.code}</strong></div>
       <div>This code will be valid for around 5 minutes.</div>
-    `
+    `,
   })
 
   return buildLambdaResponse(200, 'An email has been sent to you.')
@@ -753,7 +753,7 @@ const getProfileFromGoogleCallback = async (code) => {
       client_secret: GOOGLE_SSO_CLIENT_SECRET,
       redirect_uri: GOOGLE_SSO_REDIRECT_URI,
       code,
-    })
+    }),
   })
   const accessTokenJson = await accessTokenResponse.json()
 
@@ -814,8 +814,8 @@ const googleSSOCallbackEndpoint = async (reqBody) => {
       if (totpSettings?.active) {
         // Signing in requires a TOTP input.
         if (!totpInput) {
-          const createSSOToken = jsonwebtoken.sign({ email, }, ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY })
-          return buildLambdaResponse(200, { message: 'TOTP required.', totpRequired: true, ssoToken: createSSOToken, })
+          const createSSOToken = jsonwebtoken.sign({ email }, ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY })
+          return buildLambdaResponse(200, { message: 'TOTP required.', totpRequired: true, ssoToken: createSSOToken })
         }
 
         const validatedTotp = await validateTotp(totpInput, totp, userId)
@@ -824,7 +824,7 @@ const googleSSOCallbackEndpoint = async (reqBody) => {
       }
 
       // If the email was not already verified, you can verify it now.
-      if (!user.emailVerified) await updateCommand(USERS_TABLE_NAME, { userId, }, { emailVerified: true })
+      if (!user.emailVerified) await updateCommand(USERS_TABLE_NAME, { userId }, { emailVerified: true })
 
     } else {
       // If not found, sign up.

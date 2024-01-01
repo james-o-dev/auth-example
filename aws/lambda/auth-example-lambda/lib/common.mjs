@@ -65,7 +65,7 @@ export const makeCookie = (name, value, maxAge, secure = false) => {
  */
 export const setCookieHeader = (cookies) => {
   return {
-    'Set-Cookie': cookies
+    'Set-Cookie': cookies,
   }
 }
 

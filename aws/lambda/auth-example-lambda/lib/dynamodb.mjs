@@ -8,7 +8,7 @@ const dynamoDBClient = new DynamoDBClient({})
 const docClient = DynamoDBDocumentClient.from(dynamoDBClient, {
   marshallOptions: {
     removeUndefinedValues: true,
-  }
+  },
 })
 
 /**
@@ -41,7 +41,7 @@ export const putCommand = async (tableName, partitionKey, body) => {
     Item: {
       ...body,
       [partitionKeyName]: partitionKeyValueToUse,
-    }
+    },
   })
 
   const result = await docClient.send(newPutCommand)
@@ -64,7 +64,7 @@ export const getCommand = async (tableName, partitionKey) => {
     TableName: tableName,
     Key: {
       [partitionKeyName]: partitionKeyValue,
-    }
+    },
   })
 
   return docClient.send(newGetCommand)
@@ -96,7 +96,7 @@ export const deleteCommand = async (tableName, partitionKey) => {
     TableName: tableName,
     Key: {
       [partitionKeyName]: partitionKeyValue,
-    }
+    },
   })
 
   return docClient.send(newDeleteCommand)
@@ -152,7 +152,7 @@ export const queryCommand = async (tableName, queryOptions) => {
 
   const newQueryCommand = new QueryCommand({
     TableName: tableName,
-    ...queryParams
+    ...queryParams,
   })
 
   return docClient.send(newQueryCommand)
@@ -190,7 +190,7 @@ const queryCommandBuilder = (queryOptions) => {
       ...acc,
       [`#attr${index}`]: attributeName,
     }),
-    {}
+    {},
   )
 
   const expressionAttributeValues = Object.keys(attributeValues).reduce(
@@ -198,7 +198,7 @@ const queryCommandBuilder = (queryOptions) => {
       ...acc,
       [`:val${index}`]: attributeValues[attributeName],
     }),
-    {}
+    {},
   )
 
   return {

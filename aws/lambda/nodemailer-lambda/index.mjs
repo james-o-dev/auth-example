@@ -22,7 +22,7 @@ const getAccessToken = async () => {
   const oauth2Client = new OAuth2(
     GMAIL_CLIENT_ID,
     GMAIL_CLIENT_SECRET,
-    'https://developers.google.com/oauthplayground'
+    'https://developers.google.com/oauthplayground',
   )
 
   oauth2Client.setCredentials({
