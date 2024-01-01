@@ -52,26 +52,12 @@ export class AuthExampleCdkStack extends cdk.Stack {
     super(scope, id, props)
 
     // Create Lambda layer/s.
-    const lambdaNodeModuleLayer = new LayerVersion(this, LAMBDA_NODE_MODULE_LAYER_NAME, {
-      layerVersionName: LAMBDA_NODE_MODULE_LAYER_NAME,
-      description: `Layer required for ${LAMBDA_NODE_MODULE_LAYER_NAME} Lambda function.`,
-      code: Code.fromAsset(`../../lambda/${LAMBDA_NODE_MODULE_LAYER_NAME}`), // Replace with the actual path
-      compatibleRuntimes: [Runtime.NODEJS_20_X], // Choose the appropriate runtime
-    })
+    const authLambdaLayer = this.createLambdaLayer(LAMBDA_NODE_MODULE_LAYER_NAME, LAMBDA_NODE_MODULE_LAYER_NAME)
 
     // Create Lambda.
-    const lambdaFunction = new Function(this, LAMBDA_NAME, {
-      functionName: LAMBDA_NAME,
+    const authLambdaFunction = this.createLambdaFunction({ functionName: LAMBDA_NAME }, {
       description: 'Main authentication example Lambda function.',
-      runtime: Runtime.NODEJS_20_X,
-      architecture: Architecture.ARM_64,
-      handler: 'index.handler',
-      code: Code.fromAsset(`../../lambda/${LAMBDA_NAME}`),
-      timeout: cdk.Duration.seconds(29),
-      memorySize: 256,
-      retryAttempts: 0,
-      logFormat: LogFormat.JSON,
-      layers: [lambdaNodeModuleLayer],
+      layers: [authLambdaLayer],
       environment: {
         ACCESS_TOKEN_SECRET,
         AUTH_INDEX_NAME,
@@ -107,7 +93,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
       ],
     })
     // Grant DB access to the lambda.
-    dynamoTable.grantReadWriteData(lambdaFunction)
+    dynamoTable.grantReadWriteData(authLambdaFunction)
 
     // Create API Gateway.
     // Note: Also automatically deploys the API.
@@ -135,7 +121,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
       apiStages: [{ api, stage: api.deploymentStage }],
     })
 
-    const integration = new LambdaIntegration(lambdaFunction)
+    const integration = new LambdaIntegration(authLambdaFunction)
     const apiUrl = api.url
 
     // Output the API Gateway endpoint URL
@@ -144,76 +130,76 @@ export class AuthExampleCdkStack extends cdk.Stack {
       description: 'API Gateway URL',
     })
 
-    // Health resource.
-    const healthResource = api.root.addResource('health')
-    healthResource.addMethod('GET', integration, { operationName: 'getHealth' })
+    // API health resource.
+    // `/health`
+    this.addApiResource(api.root, 'health', integration, [{ method: 'GET', operationName: 'getHealth' }])
 
-
-    // Auth resource.
-    const authResource = api.root.addResource('auth')
-    authResource.addMethod('GET', integration, { operationName: 'checkAccessToken' })
-
+    // Auth root resource.
+    // `/auth`
+    const authResource = this.addApiResource(api.root, 'auth', integration, [{ method: 'GET', operationName: 'checkAccessToken' }])
 
     // RefreshToken resource.
-    const refreshTokenResource = authResource.addResource('refresh-token')
-    refreshTokenResource.addMethod('GET', integration, { operationName: 'refreshAccessToken' })
+    // `/auth/refresh-token`
+    this.addApiResource(authResource, 'refresh-token', integration, [{ method: 'GET', operationName: 'refreshAccessToken' }])
 
     // SignUp resource.
-    const signUpResource = authResource.addResource('sign-up')
-    signUpResource.addMethod('POST', integration, { operationName: 'signUp' })
+    // `/auth/sign-up`
+    this.addApiResource(authResource, 'sign-up', integration, [{ method: 'POST', operationName: 'signUp' }])
 
     // SignIn resource.
-    const signInResource = authResource.addResource('sign-in')
-    signInResource.addMethod('POST', integration, { operationName: 'signIn' })
+    // `/auth/sign-in`
+    this.addApiResource(authResource, 'sign-in', integration, [{ method: 'POST', operationName: 'signIn' }])
 
     // SignOut resource.
-    const signOutResource = authResource.addResource('sign-out')
-    signOutResource.addMethod('DELETE', integration, { operationName: 'signOut' })
+    // `/auth/sign-out`
+    this.addApiResource(authResource, 'sign-out', integration, [{ method: 'DELETE', operationName: 'signOut' }])
 
     // ChangePassword resource.
-    const changePassword = authResource.addResource('change-password')
-    changePassword.addMethod('POST', integration, { operationName: 'changePassword' })
+    // `/auth/change-password`
+    this.addApiResource(authResource, 'change-password', integration, [{ method: 'POST', operationName: 'changePassword' }])
 
     // ResetPassword resource.
-    const resetPassword = authResource.addResource('reset-password')
-    const resetPasswordRequest = resetPassword.addResource('request')
-    resetPasswordRequest.addMethod('POST', integration, { operationName: 'resetPasswordRequest' })
-    const resetPasswordConfirm = resetPassword.addResource('confirm')
-    resetPasswordConfirm.addMethod('POST', integration, { operationName: 'resetPasswordConfirm'  })
+    // `/auth/reset-password`
+    const resetPassword = this.addApiResource(authResource, 'reset-password', integration)
+    // ResetPassword request.
+    // `/auth/reset-password/request`
+    this.addApiResource(resetPassword, 'request', integration, [{ method: 'POST', operationName: 'resetPasswordRequest' }])
+    // ResetPassword confirm.
+    // `/auth/reset-password/confirm`
+    this.addApiResource(resetPassword, 'confirm', integration, [{ method: 'POST', operationName: 'resetPasswordConfirm' }])
 
-    // VerifyEmail resource
-    const verifyEmail = authResource.addResource('verify-email')
-    verifyEmail.addMethod('GET', integration, { operationName: 'isEmailVerified'   })
+    // VerifyEmail resource.
+    // `/auth/verify-email`
+    const verifyEmail = this.addApiResource(authResource, 'verify-email', integration, [{ method: 'GET', operationName: 'isEmailVerified' }])
+    // VerifyEmail request.
+    // `/auth/verify-email/request`
+    this.addApiResource(verifyEmail, 'request', integration, [{ method: 'GET', operationName: 'verifyEmailRequest' }])
+    // VerifyEmail confirm.
+    // `/auth/verify-email/confirm`
+    this.addApiResource(verifyEmail, 'confirm', integration, [{ method: 'POST', operationName: 'verifyEmailConfirm' }])
 
-    // VerifyEmailRequest resource
-    const verifyEmailRequest = verifyEmail.addResource('request')
-    verifyEmailRequest.addMethod('GET', integration, { operationName: 'verifyEmailRequest' })
+    // TOTP resource.
+    // `/auth/totp`
+    const totp = this.addApiResource(authResource, 'totp', integration, [{ method: 'GET', operationName: 'hasActiveTotp' }])
+    // Add TOTP.
+    // `/auth/totp/add`
+    this.addApiResource(totp, 'add', integration, [{ method: 'PUT', operationName: 'addTotp' }])
+    // Activate TOTP.
+    // `/auth/totp/activate`
+    this.addApiResource(totp, 'activate', integration, [{ method: 'PUT', operationName: 'activateTotp' }])
+    // Remove TOTP.
+    // `/auth/totp/remove`
+    this.addApiResource(totp, 'remove', integration, [{ method: 'POST', operationName: 'removeTotp' }])
 
-    // VerifyEmailConfirm resource
-    const verifyEmailConfirm = verifyEmail.addResource('confirm')
-    verifyEmailConfirm.addMethod('POST', integration, { operationName: 'verifyEmailConfirm' })
-
-    // TOTP resource
-    const totp = authResource.addResource('totp')
-    totp.addMethod('GET', integration, { operationName: 'hasActiveTotp' })
-
-    const addTotp = totp.addResource('add')
-    addTotp.addMethod('PUT', integration, { operationName: 'addTotp' })
-
-    const removeTotp = totp.addResource('remove')
-    removeTotp.addMethod('POST', integration, { operationName: 'removeTotp' })
-
-    const activateTotp = totp.addResource('activate')
-    activateTotp.addMethod('PUT', integration, { operationName: 'activateTotp' })
-
-    // SSO resource
-    const sso = authResource.addResource('sso')
-
-    // Google SSO
-    const googleSSO = sso.addResource('google')
-    googleSSO.addMethod('GET', integration, { operationName: 'getGoogleSSOLink' })
-    const googleSSOCallback = googleSSO.addResource('callback')
-    googleSSOCallback.addMethod('POST', integration, { operationName: 'signInWithGoogleSSO' })
+    // SSO resource.
+    // `/auth/sso`
+    const sso = this.addApiResource(authResource, 'sso', integration)
+    // Google SSO.
+    // `/auth/sso/google`
+    const googleSSO = this.addApiResource(sso, 'google', integration, [{ method: 'GET', operationName: 'getGoogleSSOLink' }])
+    // Google SSO callback.
+    // `/auth/sso/google/callback`
+    this.addApiResource(googleSSO, 'callback', integration, [{ method: 'POST', operationName: 'signInWithGoogleSSO' }])
 
     // Now handle the SQS + Lambda for nodemailer.
 
@@ -232,29 +218,16 @@ export class AuthExampleCdkStack extends cdk.Stack {
       },
     })
     // Update the auth lambda with this new SQS.
-    lambdaFunction.addEnvironment('NODEMAILER_SQS', nodemailerSQS.queueUrl)
-    nodemailerSQS.grantSendMessages(lambdaFunction)
+    authLambdaFunction.addEnvironment('NODEMAILER_SQS', nodemailerSQS.queueUrl)
+    nodemailerSQS.grantSendMessages(authLambdaFunction)
 
-    // Create Lambda layer/s.
-    const nodemailerLambdaLayer = new LayerVersion(this, NODEMAILER.LAYER_NAME, {
-      layerVersionName: NODEMAILER.LAYER_NAME,
-      description: `Layer required for ${NODEMAILER.LAMBDA_NAME} Lambda function.`,
-      code: Code.fromAsset(`../../lambda/${NODEMAILER.LAYER_NAME}`), // Replace with the actual path
-      compatibleRuntimes: [Runtime.NODEJS_20_X], // Choose the appropriate runtime
-    })
+    // Create Nodemailer Lambda layer/s.
+    const nodemailerLambdaLayer = this.createLambdaLayer(NODEMAILER.LAYER_NAME, NODEMAILER.LAMBDA_NAME)
 
-    // Create Lambda.
-    const nodemailerLambda = new Function(this, NODEMAILER.LAMBDA_NAME, {
-      functionName: NODEMAILER.LAMBDA_NAME,
+    // Create Nodemailer Lambda.
+    const nodemailerLambda = this.createLambdaFunction({ functionName: NODEMAILER.LAMBDA_NAME }, {
       description: 'Nodemailer async Lambda function, using SQS.',
-      runtime: Runtime.NODEJS_20_X,
-      architecture: Architecture.ARM_64,
-      handler: 'index.handler',
-      code: Code.fromAsset(`../../lambda/${NODEMAILER.LAMBDA_NAME}`),
       timeout: cdk.Duration.seconds(NODEMAILER.SQS_QUEUE.TIMEOUT_SECONDS),
-      memorySize: 256,
-      retryAttempts: 0,
-      logFormat: LogFormat.JSON,
       layers: [nodemailerLambdaLayer],
       environment: {
         GMAIL_CLIENT_ID,
@@ -270,5 +243,62 @@ export class AuthExampleCdkStack extends cdk.Stack {
     nodemailerLambda.addEventSource(new SqsEventSource(nodemailerSQS, {
       batchSize: 10, // Default.
     }))
+  }
+
+  /**
+   * Creates a Lambda function.
+   */
+  createLambdaFunction(
+    // Required params.
+    { functionName }:
+      { functionName: string, },
+    // Optional params.
+    { layers, environment, description, timeout }:
+      { layers?: LayerVersion[], environment?: { [key: string]: string }, description?: string, timeout?: cdk.Duration },
+  ) {
+    // Create Lambda.
+    return new Function(this, functionName, {
+      functionName,
+      description,
+      runtime: Runtime.NODEJS_20_X,
+      architecture: Architecture.ARM_64,
+      handler: 'index.handler',
+      code: Code.fromAsset(`../../lambda/${functionName}`),
+      timeout: timeout || cdk.Duration.seconds(29),
+      memorySize: 256,
+      retryAttempts: 0,
+      logFormat: LogFormat.JSON,
+      layers,
+      environment,
+    })
+  }
+
+  /**
+   * Creates a Lambda layer.
+   *
+   * @param {string} layerVersionName
+   * @param {string} lambdaFunctionName
+   */
+  createLambdaLayer(layerVersionName: string, lambdaFunctionName: string) {
+    return new LayerVersion(this, layerVersionName, {
+      layerVersionName,
+      description: `Layer required for the ${lambdaFunctionName} Lambda function.`,
+      code: Code.fromAsset(`../../lambda/${layerVersionName}`), // Replace with the actual path
+      compatibleRuntimes: [Runtime.NODEJS_20_X], // Choose the appropriate runtime
+    })
+  }
+
+  /**
+   * Adds an API resource.
+   *
+   * @param {cdk.aws_apigateway.IResource} api
+   * @param {string} path
+   * @param {LambdaIntegration} integration
+   * @param {{ method: string, operationName?: string }[]} [methods]
+   */
+  addApiResource(api: cdk.aws_apigateway.IResource, path: string, integration: LambdaIntegration, methods?: { method: string, operationName?: string }[]) {
+    const resource = api.addResource(path)
+    if (methods?.length) methods.forEach(({ method, operationName }) => resource.addMethod(method, integration, { operationName }))
+    return resource
   }
 }
