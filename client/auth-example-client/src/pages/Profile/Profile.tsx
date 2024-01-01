@@ -284,7 +284,7 @@ const TotpSection = () => {
 
       alert([
         'TOTP has been added;',
-        'However, it will not activated until you confirm it below.'
+        'However, it will not activated until you confirm it below.',
       ].join('\n'))
 
       setQrcode(response.qrcode)

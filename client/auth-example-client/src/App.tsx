@@ -62,7 +62,7 @@ const router = createBrowserRouter([
   {
     path: '/profile',
     Component: Profile,
-    loader: mustBeAuthenticated
+    loader: mustBeAuthenticated,
   },
   {
     path: '/reset-password',
@@ -75,7 +75,7 @@ const router = createBrowserRouter([
   {
     path: '/',
     Component: Home,
-    loader: checkAuthenticatedState
+    loader: checkAuthenticatedState,
   },
 ])
 

@@ -17,8 +17,8 @@ export interface NavbarProps {
 
 const NAV_ITEMS: NavbarItem[] = [
   { label: 'Home', to: '/', type: 'all' },
-  { label: 'Sign in', to: '/sign-in', type: 'unauth', },
-  { label: 'Sign up', to: '/sign-up', type: 'unauth', },
+  { label: 'Sign in', to: '/sign-in', type: 'unauth' },
+  { label: 'Sign up', to: '/sign-up', type: 'unauth' },
   { label: '👤 Profile', to: '/profile', type: 'auth' },
 ]
 

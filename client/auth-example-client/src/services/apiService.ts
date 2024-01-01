@@ -30,8 +30,8 @@ export const refreshAccessToken = async () => {
     const response = await fetch(`${API_HOST}/auth/refresh-token`, {
       credentials: 'include',
       headers: {
-        Authorization: `Bearer ${refreshToken}`
-      }
+        Authorization: `Bearer ${refreshToken}`,
+      },
     })
 
     // It could not refresh the access token.
@@ -76,7 +76,7 @@ const getAccessToken = async () => {
 const getAuthHeader = async () => {
   const accessToken = await getAccessToken()
   return {
-    Authorization: `Bearer ${accessToken}`
+    Authorization: `Bearer ${accessToken}`,
   }
 }
 
@@ -107,7 +107,7 @@ export const apiHealth = async () => {
  */
 export const makeApiRequest = async (
   { endpoint, method, body, headers, includeCredentials }:
-    { endpoint: string; method: string; body?: object; headers?: HeadersInit; includeCredentials?: boolean }
+    { endpoint: string; method: string; body?: object; headers?: HeadersInit; includeCredentials?: boolean },
 ): Promise<Response> => {
 
   let authHeader = {}
