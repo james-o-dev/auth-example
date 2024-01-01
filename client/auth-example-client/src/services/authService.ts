@@ -321,3 +321,44 @@ export const validateNewPassword = (newPassword: string, confirmPassword: string
 
   return errorMessages
 }
+
+/**
+ * Redirects the user to the Google SSO page.
+ */
+export const useGoogleSSO = async () => {
+  const { url } = await makeCommonApiRequest({
+    endpoint: '/auth/sso/google',
+    method: 'GET',
+    responseType: 'json',
+  })
+  window.location = url
+}
+
+/**
+ * Given the code provided by the Google SSO callback, request from the server to verify and then sign-in
+ * * Will sign-up if the email does not exist in the database - they will have no password.
+ */
+export const googleSSOCallback = async (code: string) => {
+  try {
+    // Send a POST request to the sign-in endpoint with user credentials.
+    const successResponse = await makeCommonApiRequest({
+      endpoint: '/auth/sso/google/callback',
+      method: 'POST',
+      body: { code },
+      includeCredentials: false,
+      responseType: 'json',
+    })
+
+    // Store the authentication token in the local storage.
+    localStorage.setItem(ACCESS_TOKEN_STORAGE_NAME, successResponse.accessToken)
+    localStorage.setItem(REFRESH_TOKEN_STORAGE_NAME, successResponse.refreshToken)
+
+    return successResponse
+  } catch (error) {
+    // Handle and log any errors that occur during the sign-in process.
+    console.error('Error during Google sign-in:', error)
+
+    // Re-throw the error to indicate that sign-in was unsuccessful.
+    throw error
+  }
+}

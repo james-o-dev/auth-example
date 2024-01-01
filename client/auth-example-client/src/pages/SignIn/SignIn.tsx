@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { signIn } from '../../services/authService'
+import { useGoogleSSO, signIn } from '../../services/authService'
 
 const SignIn = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -66,6 +66,7 @@ const SignIn = () => {
         <button disabled={isSubmitting} type='submit'>Sign In</button>
         {isSubmitting && <span>Signing in...</span>}
       </form>
+      <button type='button' onClick={useGoogleSSO}>Sign in with Google</button>
       <div>
         <Link to='/sign-up'>Sign up instead</Link>
         <br />

@@ -6,6 +6,7 @@ import Home from './pages/Home/Home'
 import { isAuthenticated, clearJwt } from './services/authService'
 import Profile from './pages/Profile/Profile'
 import ResetPassword from './pages/ResetPassword/ResetPassword'
+import GoogleSSOCallback from './pages/GoogleSSOCallback/GoogleSSOCallback'
 
 /**
  * Helper: Request if authenticated. Throw error if not.
@@ -66,6 +67,10 @@ const router = createBrowserRouter([
   {
     path: '/reset-password',
     Component: ResetPassword,
+  },
+  {
+    path: '/google-sso-callback',
+    Component: GoogleSSOCallback,
   },
   {
     path: '/',
