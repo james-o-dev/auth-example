@@ -143,6 +143,13 @@ const throwUnauthError = () => {
 }
 
 /**
+ * Helper: Throw an error for an invalid TOTP.
+ */
+const throwInvalidTotp = () => {
+  throw buildValidationError(401, 'Invalid TOTP.')
+}
+
+/**
  * Helper: Do sign in validation.
  * * Throws a 400 error if they are invalid.
  * * TODO: Replace with API Gateway validation
@@ -364,7 +371,7 @@ const signInEndpoint = async (reqBody) => {
     if (!totpInput) return buildLambdaResponse(200, { message: 'TOTP required.', totpRequired: true })
 
     const { valid: isTotpValid, backupsMessage } = await validateTotp(totpInput, totp, userId)
-    if (!isTotpValid) throw buildValidationError(401, 'Invalid TOTP.')
+    if (!isTotpValid) throwInvalidTotp()
     backupCodesMessage = backupsMessage || ''
   }
 
@@ -669,7 +676,7 @@ const addTotpEndpoint = async (userId, email) => {
  * @param {*} reqBody
  */
 const removeTotpEndpoint = async (userId, reqBody) => {
-  if (!reqBody?.code) throw buildValidationError(401, 'Invalid TOTP.')
+  if (!reqBody?.code) throwInvalidTotp()
 
   const getUser = await getCommand(USERS_TABLE_NAME, { userId })
   if (!getUser) throw buildValidationError(404, 'User not found.')
@@ -678,7 +685,7 @@ const removeTotpEndpoint = async (userId, reqBody) => {
   if (!totpSettings) throw buildValidationError(400, 'TOTP is not enabled for this user.')
 
   const { valid } = await validateTotp(reqBody.code, totpSettings, userId)
-  if (!valid) throw buildValidationError(401, 'Invalid TOTP.')
+  if (!valid) throwInvalidTotp()
 
   await updateCommand(USERS_TABLE_NAME, { userId }, { totp: null })
 
@@ -694,7 +701,7 @@ const removeTotpEndpoint = async (userId, reqBody) => {
  * @param {*} reqBody
  */
 const activateTotpEndpoint = async (userId, reqBody) => {
-  if (!reqBody?.code) throw buildValidationError(401, 'Invalid TOTP.')
+  if (!reqBody?.code) throwInvalidTotp()
 
   const getUser = await getCommand(USERS_TABLE_NAME, { userId })
   if (!getUser) throw buildValidationError(404, 'User not found.')
@@ -708,7 +715,7 @@ const activateTotpEndpoint = async (userId, reqBody) => {
     const valid = Totp.validate({ passcode: reqBody.code, secret: totpSettings.secret })
     if (!valid) throw new Error()
   } catch (error) {
-    throw buildValidationError(401, 'Invalid TOTP.')
+    throwInvalidTotp()
   }
 
   // Update TOTP to set as active.
@@ -734,11 +741,9 @@ const googleSSORedirect = async () => {
  * * Manages gettting a new Google access token
  * * Returns the email
  *
- * @param {*} reqBody
+ * @param {string} code From the Google callback
  */
-const getProfileFromGoogleCallback = async (reqBody) => {
-  const { code } = reqBody
-
+const getProfileFromGoogleCallback = async (code) => {
   // Get access token.
   const accessTokenResponse = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -756,7 +761,8 @@ const getProfileFromGoogleCallback = async (reqBody) => {
   const profileResponse = await fetch('https://www.googleapis.com/oauth2/v1/userinfo', {
     headers: { Authorization: `Bearer ${accessTokenJson.access_token}` },
   })
-  const { email, verified_email: verifiedEmail } = await profileResponse.json()
+  const profileJson = await profileResponse.json()
+  const { email, verified_email: verifiedEmail } = profileJson
 
   return {
     email,
@@ -772,48 +778,85 @@ const getProfileFromGoogleCallback = async (reqBody) => {
  * @param {*} reqBody
  */
 const googleSSOCallbackEndpoint = async (reqBody) => {
-  const { email } = await getProfileFromGoogleCallback(reqBody)
+  // Note about `ssoToken`:
+  // From my understanding, once a Google code has been used, it can not be used again.
+  // So the `ssoToken` is required if TOTP is required - it stores the verified email in a JWT without requiring getting another Google token.
+  const { code, totpInput, ssoToken } = reqBody
 
-  // Find email in the DB.
-  const findEmail = await findUserFromEmailQuery(email)
-  let userId
+  try {
 
-  if (findEmail.Items.length) {
-    // If found, sign in.
+    let totpBackupsMessage = ''
+    let email = ''
 
-    // If email not verified, also verify it.
-    const user = findEmail.Items[0]
-    userId = user.userId
+    if (ssoToken) {
+      const ssoTokenVerified = jsonwebtoken.verify(ssoToken, ACCESS_TOKEN_SECRET)
+      email = ssoTokenVerified.email
+    } else {
+      const callbackReturn = await getProfileFromGoogleCallback(code)
+      email = callbackReturn.email
+    }
 
-    if (!user.emailVerified) await updateCommand(USERS_TABLE_NAME, { userId, }, { emailVerified: true })
+    // Find email in the DB.
+    const findEmail = await findUserFromEmailQuery(email)
+    let userId
 
-  } else {
-    // If not found, sign up.
+    if (findEmail.Items.length) {
+      // If found, sign in.
 
-    // Generate a UUID.
-    userId = randomUUID()
+      const user = findEmail.Items[0]
+      userId = user.userId
+      const totp = user.totp
 
-    // Store in DB.
-    await putCommand(USERS_TABLE_NAME, { userId }, {
-      email,
-      emailVerified: true, // Already verified - they used a Gmail/G-Suite address.
-      dateCreated: Date.now(),
-    })
+      // Get totpSettings.
+      const totpSettings = JSON.parse(user.totp || null)
+
+      // If the user has an active TOTP...
+      if (totpSettings?.active) {
+        // Signing in requires a TOTP input.
+        if (!totpInput) {
+          const createSSOToken = jsonwebtoken.sign({ email, code }, ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY })
+          return buildLambdaResponse(200, { message: 'TOTP required.', totpRequired: true, ssoToken: createSSOToken, })
+        }
+
+        const validatedTotp = await validateTotp(totpInput, totp, userId)
+        if (!validatedTotp.valid) throwInvalidTotp()
+        totpBackupsMessage = validatedTotp.backupsMessage || ''
+      }
+
+      // If the email was not already verified, you can verify it now.
+      if (!user.emailVerified) await updateCommand(USERS_TABLE_NAME, { userId, }, { emailVerified: true })
+
+    } else {
+      // If not found, sign up.
+
+      // Generate a UUID.
+      userId = randomUUID()
+
+      // Store in DB.
+      await putCommand(USERS_TABLE_NAME, { userId }, {
+        email,
+        emailVerified: true, // Already verified - they used a Gmail/G-Suite address.
+        dateCreated: Date.now(),
+      })
+    }
+
+    // Succesful sign-up/sign-in.
+    if (userId && email) {
+      const payload = { userId, email }
+      // Generate refresh token.
+      const refreshToken = generateRefreshToken(payload)
+      // Generate access token.
+      const accessToken = generateAccessToken(payload)
+      // Respond
+      return buildLambdaResponse(200, { message: `Signed in with Google. ${totpBackupsMessage}`.trim(), accessToken, refreshToken })
+    }
+
+    // Not authorized.
+    throwUnauthError()
+  } catch (error) {
+    console.error(error)
+    throwUnauthError()
   }
-
-  // Succesful sign-up/sign-in.
-  if (userId && email) {
-    const payload = { userId, email }
-    // Generate refresh token.
-    const refreshToken = generateRefreshToken(payload)
-    // Generate access token.
-    const accessToken = generateAccessToken(payload)
-    // Respond
-    return buildLambdaResponse(200, { message: 'Signed in with Google.', accessToken, refreshToken })
-  }
-
-  // Not authorized.
-  throwUnauthError()
 }
 
 // index.js

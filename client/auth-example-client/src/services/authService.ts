@@ -337,14 +337,18 @@ export const useGoogleSSO = async () => {
 /**
  * Given the code provided by the Google SSO callback, request from the server to verify and then sign-in
  * * Will sign-up if the email does not exist in the database - they will have no password.
+ *
+ * @param {string} code - Code provided by the Google SSO callback.
+ * @param {string} [totpInput] - Two-factor authentication code.
+ * @param {string} [ssoToken] - Temporary token used during SSO and TOTP.
  */
-export const googleSSOCallback = async (code: string) => {
+export const googleSSOCallback = async (code: string, totpInput?: string, ssoToken?: string) => {
   try {
     // Send a POST request to the sign-in endpoint with user credentials.
     const successResponse = await makeCommonApiRequest({
       endpoint: '/auth/sso/google/callback',
       method: 'POST',
-      body: { code },
+      body: { code, totpInput, ssoToken },
       includeCredentials: false,
       responseType: 'json',
     })
