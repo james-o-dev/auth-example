@@ -3,24 +3,41 @@ const { randomUUID } = require('node:crypto')
 const TEST_USER_UNIQUE_PART = 'apitest'
 
 /**
+ * Generate a unique email address.
+ *
+ * @param {string} [email] Custom emial to use. Be sure to include '{+}' in the email.
+ */
+const getUniqueEmail = (email = process.env.API_TEST_EMAIL) => {
+  const unique = `+${TEST_USER_UNIQUE_PART}${Date.now()}`
+  return email.replace('{+}', unique)
+}
+
+/**
+ * Generate a random valid password.
+ */
+const getGeneratedPassword = () => {
+  return randomUUID() + 'A123!'
+}
+
+/**
  * Sign up a new user.
  *
+ * @param {object} [user]
+ * @param {string} [user.email] The user's email.
+ * @param {string} [user.password] The user's password.
  * @returns {Promise<object>} The user - email, password, refreshToken, accessToken.
  */
-const signUpUser = async () => {
-  const unique = `+${TEST_USER_UNIQUE_PART}${Date.now()}`
-  const email = process.env.API_TEST_EMAIL.replace('{+}', unique)
-  const password = randomUUID() + 'A123!'
+const signUpUser = async ({ email, password } = {}) => {
   const newUser = {
-    email,
-    password,
+    email: email || getUniqueEmail(),
+    password: password || getGeneratedPassword(),
   }
 
   const response = await fetch(`${process.env.API_HOST}/auth/sign-up`, {
     method: 'POST',
     body: JSON.stringify({
       ...newUser,
-      confirmPassword: password,
+      confirmPassword: newUser.password,
     }),
   })
   const data = await response.json()
@@ -67,14 +84,13 @@ const signInUser = async (user) => {
 /**
  * Refresh the access token.
  *
- * @param {object} user
- * @param {string} user.refreshToken The user's refresh token.
+ * @param {string} refreshToken The user's refresh token.
  */
-const refreshAccessToken = async (user) => {
+const refreshAccessToken = async (refreshToken) => {
   return fetch(`${process.env.API_HOST}/auth/refresh-token`, {
     method: 'GET',
     headers: {
-      ...getAuthHeader(user.refreshToken),
+      ...getAuthHeader(refreshToken),
     },
     credentials: 'include',
   })
@@ -85,9 +101,11 @@ const cleanupTests = async () => {
 }
 
 module.exports = {
-  signUpUser,
-  getAuthHeader,
-  signInUser,
-  refreshAccessToken,
   cleanupTests,
+  getAuthHeader,
+  getGeneratedPassword,
+  getUniqueEmail,
+  refreshAccessToken,
+  signInUser,
+  signUpUser,
 }
