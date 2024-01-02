@@ -5,6 +5,9 @@ import { ACCESS_TOKEN_STORAGE_NAME, REFRESH_TOKEN_STORAGE_NAME, makeApiRequest, 
 // Require at least one lowercase letter, one uppercase letter, one number, and one special character, with a minimum length of 8 characters.
 const PASSWORD_REGEXP = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+-])[A-Za-z\d!@#$%^&*()_+-]{8,}$/
 
+// Standard email format. Also includes '+' symbol.
+const EMAIL_REGEXP = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+
 /**
  * Clear JWTs.
  */
@@ -14,7 +17,7 @@ export const clearJwt = () => {
 }
 
 /**
- * Validate password strength; Returns true if valid, throws validation error if not.
+ * Validate password strength.
  *
  * @param {string} password
  */
@@ -22,6 +25,17 @@ export const validatePasswordStrength = (password: string) => {
   const passed = PASSWORD_REGEXP.test(password)
   if (passed) return { valid: true, message: 'Password strength is strong enough.' }
   return { valid: false, message: 'Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character (!@#$%^&*()_+-), with a minimum length of 8 characters.' }
+}
+
+/**
+ * Validate email format.
+ *
+ * @param {string} email
+ */
+export const validateEmailFormat = (email: string) => {
+  const passed = EMAIL_REGEXP.test(email)
+  if (passed) return { valid: true, message: 'Email format is valid.' }
+  return { valid: false, message: 'Email format is invalid' }
 }
 
 /**

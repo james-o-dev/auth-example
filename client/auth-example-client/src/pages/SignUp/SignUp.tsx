@@ -1,7 +1,7 @@
 // Import React and required hooks
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { signUp, validateNewPassword } from '../../services/authService'
+import { signUp, validateEmailFormat, validateNewPassword } from '../../services/authService'
 
 // Define the SignUp component
 const SignUp: React.FC = () => {
@@ -26,12 +26,19 @@ const SignUp: React.FC = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
 
-    setValidationMessages([])
-    const validationErrors = validateNewPassword(password, confirmPassword)
-    if (validationErrors.length > 0) {
-      setValidationMessages(validationErrors)
+    let newValidationErrors: string[] = []
+
+    const isEmaiLValid = validateEmailFormat(email)
+    if (!isEmaiLValid.valid) newValidationErrors.push(isEmaiLValid.message)
+
+    const passwordValidationErrorMessages = validateNewPassword(password, confirmPassword)
+    if (passwordValidationErrorMessages.length > 0) newValidationErrors = [...newValidationErrors, ...passwordValidationErrorMessages]
+
+    if (newValidationErrors.length > 0) {
+      setValidationMessages(newValidationErrors)
       return
     }
+    setValidationMessages([])
 
     // You can make an API call or handle signup logic as per your application requirements
     // For simplicity, logging the input values to the console in this example
