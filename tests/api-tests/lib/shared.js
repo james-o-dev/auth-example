@@ -82,6 +82,20 @@ const signInUser = async (user) => {
 }
 
 /**
+ * Authenticate the access token.
+ *
+ * @param {string} accessToken
+ */
+const authenticateAccessToken = async (accessToken) => {
+  return fetch(`${process.env.API_HOST}/auth`, {
+    method: 'GET',
+    headers: {
+      ...getAuthHeader(accessToken),
+    },
+  })
+}
+
+/**
  * Refresh the access token.
  *
  * @param {string} refreshToken The user's refresh token.
@@ -101,6 +115,7 @@ const cleanupTests = async () => {
 }
 
 module.exports = {
+  authenticateAccessToken,
   cleanupTests,
   getAuthHeader,
   getGeneratedPassword,
