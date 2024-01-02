@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { BatchWriteItemCommand, DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { DeleteCommand, GetCommand, PutCommand, DynamoDBDocumentClient, ScanCommand, UpdateCommand, QueryCommand } from '@aws-sdk/lib-dynamodb'
 
 // DynamoDB client.
@@ -236,6 +236,28 @@ const queryCommandBuilder = (queryOptions) => {
   }
 }
 
-export const batchDeleteCommand = () => {
-  // TODO
+/**
+ * Execute a batch delete command on the DynamoDB table, to delete multiple items.
+ * * Note only allows deleting up to 20 at a time, per the Dynamo DB documentation.
+ * * https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html
+ *
+ * @param {string} tableName
+ * @param {string} keyName
+ * @param {any[]} keys Default an array of strings; Assumes the keys are strings.
+ * @param {string} [keyType='S'] Default 'S' - string type.
+ */
+export const batchDeleteCommand = (tableName, keyName, keys, keyType = 'S') => {
+  const params = {
+    RequestItems: {
+      [tableName]: keys.map(key => ({
+        DeleteRequest: {
+          Key: {
+            [keyName]: { [keyType]: key }, // Only string allowed
+          },
+        },
+      })),
+    },
+  }
+  const command = new BatchWriteItemCommand(params)
+  return docClient.send(command)
 }

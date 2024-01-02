@@ -1,5 +1,5 @@
 import { buildLambdaResponse, buildValidationError, generateRandomString } from './lib/common.mjs'
-import { deleteCommand, getCommand, putCommand, queryCommand, scanCommand, updateCommand } from './lib/dynamodb.mjs'
+import { batchDeleteCommand, getCommand, putCommand, queryCommand, scanCommand, updateCommand } from './lib/dynamodb.mjs'
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs'
 const sqsClient = new SQSClient({})
 
@@ -871,10 +871,11 @@ const cleanupTests = async () => {
 
   if (!testUsers.Count) return buildLambdaResponse(200, 'No test records found.')
 
-  // await deleteCommand(USERS_TABLE_NAME, { userId: { $in: userIds } })
+  // 'deleteCommand()': Inefficient, but allows deleting more than 25 at a time.
+  // await Promise.all(testUsers.Items.map((item) => deleteCommand(USERS_TABLE_NAME, { userId: item.userId })))
 
-  // TODO: Inefficient, use batch instead.
-  await Promise.all(testUsers.Items.map((item) => deleteCommand(USERS_TABLE_NAME, { userId: item.userId })))
+  // 'batchDeleteCommand()': More efficient, but only allows deleting 25 at a time.
+  await batchDeleteCommand(USERS_TABLE_NAME, 'userId', testUsers.Items.map(({ userId }) => userId))
 
   return buildLambdaResponse(200, `${testUsers.Count} test user records removed.`)
 }
