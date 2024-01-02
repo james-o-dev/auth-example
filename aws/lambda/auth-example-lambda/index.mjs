@@ -41,6 +41,9 @@ const EMAIL_REGEXP = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 // Used in the Google SSO redirect uri parameter.
 const GOOGLE_SSO_REDIRECT_URI = `${CLIENT_HOST}/google-sso-callback`
 
+// If the user email contains this, it is determined to be a test user/email.
+const TEST_EMAIL_CONTAINS = '+apitest'
+
 /**
  * Send message to the Nodemailer SQS queue, to queue sending an email
  *
@@ -867,7 +870,7 @@ const googleSSOCallbackEndpoint = async (reqBody) => {
  * Remove any existing test data from the database.
  */
 const cleanupTests = async () => {
-  const testUsers = await scanCommand(USERS_TABLE_NAME, { email: '+apitest' })
+  const testUsers = await scanCommand(USERS_TABLE_NAME, { email: TEST_EMAIL_CONTAINS })
 
   if (!testUsers.Count) return buildLambdaResponse(200, 'No test records found.')
 
@@ -878,6 +881,39 @@ const cleanupTests = async () => {
   await batchDeleteCommand(USERS_TABLE_NAME, 'userId', testUsers.Items.map(({ userId }) => userId))
 
   return buildLambdaResponse(200, `${testUsers.Count} test user records removed.`)
+}
+
+/**
+ * Gets the full user record from the database; Only applicable for test users.
+ *
+ * @param {string} email
+ * @param {string} userId
+ */
+const getTestUser = async (email, userId) => {
+  if (!email.includes(TEST_EMAIL_CONTAINS)) throw buildValidationError(400, 'Invalid test email.')
+
+  const getUser = await getCommand(USERS_TABLE_NAME, { userId })
+  if (!getUser.Item || email !== getUser.Item.email) throw buildValidationError(400, 'Invalid test email.')
+
+  return buildLambdaResponse(200, getUser.Item)
+}
+
+/**
+ * Directly update the user record from the database; Only applicable for test users.
+ *
+ * @param {string} email
+ * @param {string} userId
+ * @param {*} reqBody
+ */
+const updateTestUser = async (email, userId, reqBody) => {
+  if (!email.includes(TEST_EMAIL_CONTAINS)) throw buildValidationError(400, 'Invalid test email.')
+
+  const getUser = await getCommand(USERS_TABLE_NAME, { userId })
+  if (!getUser.Item || email !== getUser.Item.email) throw buildValidationError(400, 'Invalid test email.')
+
+  await updateCommand(USERS_TABLE_NAME, { userId }, reqBody)
+
+  return buildLambdaResponse(200, 'Test user updated.')
 }
 
 // index.js
@@ -991,6 +1027,16 @@ export const handler = async (event) => {
 
     // Admin routes.
     if (reqPath === '/admin/cleanup-tests' && reqMethod === 'GET') response = await cleanupTests()
+    // Get test user.
+    if (reqPath === '/admin/test-user' && reqMethod === 'GET') {
+      const accessToken = await getJWT(reqHeaders)
+      response = await getTestUser(accessToken.email, accessToken.userId)
+    }
+    // Update test user.
+    if (reqPath === '/admin/test-user' && reqMethod === 'PUT') {
+      const accessToken = await getJWT(reqHeaders)
+      response = await updateTestUser(accessToken.email, accessToken.userId, reqBody)
+    }
 
     // Respond.
     return response

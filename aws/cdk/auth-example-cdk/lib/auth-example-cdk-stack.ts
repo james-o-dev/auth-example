@@ -206,6 +206,13 @@ export class AuthExampleCdkStack extends cdk.Stack {
     // Clean up records created by tests.
     // `/admin/cleanup-tests`
     this.addApiResource(admin, 'cleanup-tests', integration, [{ method: 'GET', operationName: 'cleanupTests' }])
+    // Test user endpoints.
+    // Only applicable for test users.
+    // `/admin/test-user`
+    this.addApiResource(admin, 'test-user', integration, [
+      { method: 'GET', operationName: 'getTestUser' },
+      { method: 'PUT', operationName: 'updateTestUser' },
+    ])
 
     // Now handle the SQS + Lambda for nodemailer.
 

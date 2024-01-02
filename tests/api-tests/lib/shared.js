@@ -114,13 +114,34 @@ const cleanupTests = async () => {
   return fetch(`${process.env.API_HOST}/admin/cleanup-tests`, { method: 'GET' })
 }
 
+const getTestUser = async (accessToken) => {
+  return fetch(`${process.env.API_HOST}/admin/test-user`, {
+    method: 'GET',
+    headers: {
+      ...getAuthHeader(accessToken),
+    },
+  })
+}
+
+const updateTestUser = async (accessToken, body) => {
+  return fetch(`${process.env.API_HOST}/admin/test-user`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+    headers: {
+      ...getAuthHeader(accessToken),
+    },
+  })
+}
+
 module.exports = {
   authenticateAccessToken,
   cleanupTests,
   getAuthHeader,
   getGeneratedPassword,
+  getTestUser,
   getUniqueEmail,
   refreshAccessToken,
   signInUser,
   signUpUser,
+  updateTestUser,
 }
