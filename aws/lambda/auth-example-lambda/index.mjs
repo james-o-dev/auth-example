@@ -35,6 +35,9 @@ const INVALID_TOKEN_MESSAGE = 'Unauthorized.'
 // Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character (!@#$%^&*()_+-), with a minimum length of 8 characters.
 const PASSWORD_REGEXP = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+-])[A-Za-z\d!@#$%^&*()_+-]{8,}$/
 
+// Standard email format. Also includes '+' symbol.
+const EMAIL_REGEXP = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+
 // Used in the Google SSO redirect uri parameter.
 const GOOGLE_SSO_REDIRECT_URI = `${CLIENT_HOST}/google-sso-callback`
 
@@ -172,6 +175,7 @@ const signInValidation = (reqBody) => {
  * @param {*} reqBody
  */
 const signUpValidation = (reqBody) => {
+  if (!reqBody.email || !EMAIL_REGEXP.test(reqBody.email)) throw buildValidationError(400, 'Invalid email address.')
   if (!reqBody.confirmPassword) throw buildValidationError(400, 'Password not re-confirmed.')
   if (reqBody.password !== reqBody.confirmPassword) throw buildValidationError(400, 'Passwords do not match.')
   validatePasswordStrength(reqBody.password)
