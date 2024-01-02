@@ -161,7 +161,7 @@ const throwInvalidTotp = () => {
  */
 const signInValidation = (reqBody) => {
   if (!reqBody) throw buildValidationError(400, 'Invalid request body.')
-  if (!reqBody.email) throw buildValidationError(400, 'Invalid email.')
+  if (!reqBody.email) throw buildValidationError(400, 'Invalid email address.')
   if (!reqBody.password) throw buildValidationError(400, 'Invalid password.')
 
   return { email: reqBody.email, password: reqBody.password, totp: reqBody.totp }
