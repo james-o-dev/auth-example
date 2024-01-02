@@ -43,6 +43,11 @@ const GOOGLE_SSO_REDIRECT_URI = `${CLIENT_HOST}/google-sso-callback`
 
 // If the user email contains this, it is determined to be a test user/email.
 const TEST_EMAIL_CONTAINS = '+apitest'
+// DO NOT USE THIS FOR TEST USERS (OR ANY USERS).
+// Secondary identifier. Used when testing the admin endpoints.
+// Must not contain the test user identifier
+// It will be deleted along with users that contain the above.
+const TEST_EMAIL_CONTAINS_2 = '+nontestuser'
 
 /**
  * Send message to the Nodemailer SQS queue, to queue sending an email
@@ -871,14 +876,20 @@ const googleSSOCallbackEndpoint = async (reqBody) => {
  */
 const cleanupTests = async () => {
   const testUsers = await scanCommand(USERS_TABLE_NAME, { email: TEST_EMAIL_CONTAINS })
+  const testUsers2 = await scanCommand(USERS_TABLE_NAME, { email: TEST_EMAIL_CONTAINS_2 })
 
   if (!testUsers.Count) return buildLambdaResponse(200, 'No test records found.')
+
+  const userIds = [
+    ...testUsers.Items.map(({ userId }) => userId),
+    ...testUsers2.Items.map(({ userId }) => userId),
+  ]
 
   // 'deleteCommand()': Inefficient, but allows deleting more than 25 at a time.
   // await Promise.all(testUsers.Items.map((item) => deleteCommand(USERS_TABLE_NAME, { userId: item.userId })))
 
   // 'batchDeleteCommand()': More efficient, but only allows deleting 25 at a time.
-  await batchDeleteCommand(USERS_TABLE_NAME, 'userId', testUsers.Items.map(({ userId }) => userId))
+  await batchDeleteCommand(USERS_TABLE_NAME, 'userId', userIds)
 
   return buildLambdaResponse(200, `${testUsers.Count} test user records removed.`)
 }
@@ -890,10 +901,10 @@ const cleanupTests = async () => {
  * @param {string} userId
  */
 const getTestUser = async (email, userId) => {
-  if (!email.includes(TEST_EMAIL_CONTAINS)) throw buildValidationError(400, 'Invalid test email.')
+  if (!email.includes(TEST_EMAIL_CONTAINS)) throw buildValidationError(400, 'Invalid test user.')
 
   const getUser = await getCommand(USERS_TABLE_NAME, { userId })
-  if (!getUser.Item || email !== getUser.Item.email) throw buildValidationError(400, 'Invalid test email.')
+  if (!getUser.Item || email !== getUser.Item.email) throw buildValidationError(400, 'Invalid test user.')
 
   return buildLambdaResponse(200, getUser.Item)
 }
@@ -906,10 +917,10 @@ const getTestUser = async (email, userId) => {
  * @param {*} reqBody
  */
 const updateTestUser = async (email, userId, reqBody) => {
-  if (!email.includes(TEST_EMAIL_CONTAINS)) throw buildValidationError(400, 'Invalid test email.')
+  if (!email.includes(TEST_EMAIL_CONTAINS)) throw buildValidationError(400, 'Invalid test user.')
 
   const getUser = await getCommand(USERS_TABLE_NAME, { userId })
-  if (!getUser.Item || email !== getUser.Item.email) throw buildValidationError(400, 'Invalid test email.')
+  if (!getUser.Item || email !== getUser.Item.email) throw buildValidationError(400, 'Invalid test user.')
 
   await updateCommand(USERS_TABLE_NAME, { userId }, reqBody)
 

@@ -1,14 +1,15 @@
 const { randomUUID } = require('node:crypto')
 
-const TEST_USER_UNIQUE_PART = 'apitest'
+const TEST_USER_UNIQUE_PART = '+apitest'
+const TEST_USER_UNIQUE_PART_2 = '+nontestuser'
 
 /**
  * Generate a unique email address.
  *
- * @param {string} [email] Custom emial to use. Be sure to include '{+}' in the email.
+ * @param {string} [email] Custom email to use. Be sure to include '{+}' in the email.
  */
-const getUniqueEmail = (email = process.env.API_TEST_EMAIL) => {
-  const unique = `+${TEST_USER_UNIQUE_PART}${Date.now()}`
+const getUniqueEmail = (email = process.env.API_TEST_EMAIL, useSecondaryIdentifer = false) => {
+  const unique = `${useSecondaryIdentifer ? TEST_USER_UNIQUE_PART_2 : TEST_USER_UNIQUE_PART }${Date.now()}`
   return email.replace('{+}', unique)
 }
 
@@ -143,5 +144,7 @@ module.exports = {
   refreshAccessToken,
   signInUser,
   signUpUser,
+  TEST_USER_UNIQUE_PART,
+  TEST_USER_UNIQUE_PART_2,
   updateTestUser,
 }
