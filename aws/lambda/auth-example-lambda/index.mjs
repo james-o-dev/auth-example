@@ -521,7 +521,7 @@ const resetPasswordConfirmEndpoint = async (reqBody) => {
 
   // Get user email.
   const getUser = await getCommand(USERS_TABLE_NAME, { userId })
-  if (!getUser) throw buildValidationError(404, 'User not found.')
+  if (!getUser || !getUser.Item) throw buildValidationError(404, 'User not found.')
   const { resetPassword } = getUser.Item
   if (!resetPassword) throw buildValidationError(400, 'Password reset was never requested or already completed. Please request to reset the password again.')
 
