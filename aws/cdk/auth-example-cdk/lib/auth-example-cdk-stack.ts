@@ -201,6 +201,12 @@ export class AuthExampleCdkStack extends cdk.Stack {
     // `/auth/sso/google/callback`
     this.addApiResource(googleSSO, 'callback', integration, [{ method: 'POST', operationName: 'signInWithGoogleSSO' }])
 
+    // Admin resource.
+    const admin = this.addApiResource(api.root, 'admin', integration)
+    // Clean up records created by tests.
+    // `/admin/cleanup-tests`
+    this.addApiResource(admin, 'cleanup-tests', integration, [{ method: 'GET', operationName: 'cleanupTests' }])
+
     // Now handle the SQS + Lambda for nodemailer.
 
     // Create SQS queues.

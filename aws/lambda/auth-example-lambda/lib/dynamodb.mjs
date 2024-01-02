@@ -72,13 +72,40 @@ export const getCommand = async (tableName, partitionKey) => {
 
 /**
  * Execute a scan command on the DynamoDB table
- * * TODO: additional parameters for filtering
  *
  * @param {string} tableName
+ * @param {*} [containsFilter] Filter to records containing the values.
+ * * Connected with 'and'
+ * * Take an object with properties; The keys are the field names and the values are the values of the field to update.
  */
-export const scanCommand = async (tableName) => {
+export const scanCommand = async (tableName, containsFilter = undefined) => {
+  let filterParams = {}
+
+  // Build the filter expression and attribute values
+  if (containsFilter) {
+    filterParams = {
+      FilterExpression: '',
+      ExpressionAttributeNames: {},
+      ExpressionAttributeValues: {},
+    }
+
+    const filterExpressions = []
+
+    Object.keys(containsFilter).forEach((key, index) => {
+      const a = `#attr${index}`
+      const v = `:value${index}`
+
+      filterExpressions.push(`contains(${a}, ${v})`)
+      filterParams.ExpressionAttributeNames[a] = key
+      filterParams.ExpressionAttributeValues[v] = containsFilter[key]
+    })
+
+    filterParams.FilterExpression = filterExpressions.join(' and ')
+  }
+
   const newScanCommand = new ScanCommand({
     TableName: tableName,
+    ...filterParams,
   })
   return docClient.send(newScanCommand)
 }
@@ -207,4 +234,8 @@ const queryCommandBuilder = (queryOptions) => {
     ExpressionAttributeNames: expressionAttributeNames,
     ExpressionAttributeValues: expressionAttributeValues,
   }
+}
+
+export const batchDeleteCommand = () => {
+  // TODO
 }

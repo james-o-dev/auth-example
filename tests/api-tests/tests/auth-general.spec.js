@@ -4,8 +4,7 @@ const users = []
 describe('Auth general', () => {
 
   afterAll(async () => {
-    console.log('Clean up the following users:\n' + users.map(({ email, password }) => `e: ${email} | p: ${password}`).join('\n'))
-    // await sharedFunctions.cleanupTests()
+    await sharedFunctions.cleanupTests()
   })
 
   test('successfully signs up user', async () => {

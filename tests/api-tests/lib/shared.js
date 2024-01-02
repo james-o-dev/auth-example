@@ -81,9 +81,7 @@ const refreshAccessToken = async (user) => {
 }
 
 const cleanupTests = async () => {
-  return fetch(`${process.env.API_HOST}/admin/cleanup-tests`, {
-    method: 'GET',
-  })
+  return fetch(`${process.env.API_HOST}/admin/cleanup-tests`, { method: 'GET' })
 }
 
 module.exports = {

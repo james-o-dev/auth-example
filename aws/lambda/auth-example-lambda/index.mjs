@@ -1,5 +1,5 @@
 import { buildLambdaResponse, buildValidationError, generateRandomString } from './lib/common.mjs'
-import { getCommand, putCommand, queryCommand, updateCommand } from './lib/dynamodb.mjs'
+import { deleteCommand, getCommand, putCommand, queryCommand, scanCommand, updateCommand } from './lib/dynamodb.mjs'
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs'
 const sqsClient = new SQSClient({})
 
@@ -863,6 +863,22 @@ const googleSSOCallbackEndpoint = async (reqBody) => {
   }
 }
 
+/**
+ * Remove any existing test data from the database.
+ */
+const cleanupTests = async () => {
+  const testUsers = await scanCommand(USERS_TABLE_NAME, { email: '+apitest' })
+
+  if (!testUsers.Count) return buildLambdaResponse(200, 'No test records found.')
+
+  // await deleteCommand(USERS_TABLE_NAME, { userId: { $in: userIds } })
+
+  // TODO: Inefficient, use batch instead.
+  await Promise.all(testUsers.Items.map((item) => deleteCommand(USERS_TABLE_NAME, { userId: item.userId })))
+
+  return buildLambdaResponse(200, `${testUsers.Count} test user records removed.`)
+}
+
 // index.js
 export const handler = async (event) => {
   try {
@@ -971,6 +987,9 @@ export const handler = async (event) => {
     // Google SSO routes.
     if (reqPath === '/auth/sso/google' && reqMethod === 'GET') response = await googleSSORedirect()
     if (reqPath === '/auth/sso/google/callback' && reqMethod === 'POST') response = await googleSSOCallbackEndpoint(reqBody)
+
+    // Admin routes.
+    if (reqPath === '/admin/cleanup-tests' && reqMethod === 'GET') response = await cleanupTests()
 
     // Respond.
     return response
