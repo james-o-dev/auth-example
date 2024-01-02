@@ -188,11 +188,14 @@ describe('Auth general', () => {
     })
 
     test('Successfully signs out', async () => {
+      // A delay is required between sign-up/sign-in and sign out.
+      // Caused by potential race condition.
+      // Possibly due to DynamoDB's 'eventual write' which may cause issues.
+      // Or possibly due to the JWT iat value.
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
       let response = await signOutRequest(user.accessToken)
       expect(response.status).toBe(204)
-
-      // Promise delay by 1+ seconds.
-      await new Promise(resolve => setTimeout(resolve, 1500))
 
       // Attempt to refresh access token. Should not allow it since it has been revoked.
       response = await sharedFunctions.refreshAccessToken(user.refreshToken)
