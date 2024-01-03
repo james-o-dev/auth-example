@@ -81,9 +81,9 @@ describe('Google SSO tests', () => {
       const ssoToken = data.ssoToken
 
       const [response0, response1, response2] = await Promise.all([
-        googleSSOCallback(user.email, user.accessToken, totpInput), // Invalid SSO
-        googleSSOCallback(user.email, ssoToken, 'totpInput'), // Invalid TOTP
-        googleSSOCallback(user.email, ssoToken, totpInput), // Valid sign in.
+        googleSSOCallback(null, user.accessToken, totpInput), // Invalid SSO
+        googleSSOCallback(null, ssoToken, 'totpInput'), // Invalid TOTP
+        googleSSOCallback(null, ssoToken, totpInput), // Valid sign in.
       ])
       const [data0, data1, data2] = await Promise.all([
         response0.json(),
