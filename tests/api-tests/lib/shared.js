@@ -161,7 +161,72 @@ const updateTestUser = async (accessToken, body) => {
   })
 }
 
+/**
+ * Add TOTP to the user.
+ *
+ * @param {string} accessToken
+ */
+const addTotp = async (accessToken) => {
+  return fetch(`${process.env.API_HOST}/auth/totp/add`, {
+    method: 'PUT',
+    headers: {
+      ...getAuthHeader(accessToken),
+    },
+  })
+}
+
+/**
+ * Activate an existing TOTP auth for the user.
+ *
+ * @param {string} accessToken
+ * @param {string} code Current TOTP
+ */
+const activateTotp = async (accessToken, code) => {
+  return fetch(`${process.env.API_HOST}/auth/totp/activate`, {
+    method: 'PUT',
+    headers: {
+      ...getAuthHeader(accessToken),
+    },
+    body: JSON.stringify({ code }),
+  })
+}
+
+/**
+ * Adds and activates TOTP for the user.
+ * * It will also sign in again to get new tokens.
+ *
+ * @param {string} accessToken
+ * @param {string} email
+ * @param {string} password
+ */
+const addAndActivateTotp = async (accessToken, email, password) => {
+  let response, data
+
+  // Add TOTP.
+  await addTotp(accessToken)
+  // Get test user from the DB.
+  response = await getTestUser(accessToken)
+  data = await response.json()
+  // Get the TOTP settings from the test user.
+  const totpSettings = JSON.parse(data.totp)
+  // Get the TOTP code.
+  const code = getTotpCode(totpSettings.secret)
+  await activateTotp(accessToken, code)
+  // Sign in with TOTP, to get new tokens.
+  response = await signInUserWithTotp(email, password, totpSettings.secret)
+  data = await response.json()
+
+  return {
+    code,
+    accessToken: data.accessToken,
+    refreshToken: data.refreshToken,
+  }
+}
+
 module.exports = {
+  activateTotp,
+  addAndActivateTotp,
+  addTotp,
   authenticateAccessToken,
   cleanupTests,
   getAuthHeader,

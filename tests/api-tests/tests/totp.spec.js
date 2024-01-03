@@ -15,36 +15,6 @@ describe('TOTP tests', () => {
     })
   }
 
-  /**
-   * Add TOTP to the user.
-   *
-   * @param {string} accessToken
-   */
-  const addTotp = async (accessToken) => {
-    return fetch(`${process.env.API_HOST}/auth/totp/add`, {
-      method: 'PUT',
-      headers: {
-        ...sharedFunctions.getAuthHeader(accessToken),
-      },
-    })
-  }
-
-  /**
-   * Activate an existing TOTP auth for the user.
-   *
-   * @param {string} accessToken
-   * @param {string} code Current TOTP
-   */
-  const activateTotp = async (accessToken, code) => {
-    return fetch(`${process.env.API_HOST}/auth/totp/activate`, {
-      method: 'PUT',
-      headers: {
-        ...sharedFunctions.getAuthHeader(accessToken),
-      },
-      body: JSON.stringify({ code }),
-    })
-  }
-
   describe('Has TOTP', () => {
     let user
 
@@ -84,7 +54,7 @@ describe('TOTP tests', () => {
     test('Adds TOTP successfully', async () => {
       let data, response
 
-      response = await addTotp(user.accessToken)
+      response = await sharedFunctions.addTotp(user.accessToken)
       data = await response.json()
       expect(response.status).toBe(200)
       expect(response.ok).toBe(true)
@@ -104,7 +74,7 @@ describe('TOTP tests', () => {
       expect(data.totp).toBeTruthy()
 
       // Allows overriding the TOTP.
-      response = await addTotp(user.accessToken)
+      response = await sharedFunctions.addTotp(user.accessToken)
       data = await response.json()
       expect(response.status).toBe(200)
       expect(response.ok).toBe(true)
@@ -124,7 +94,7 @@ describe('TOTP tests', () => {
       const tokens = ['', null, user.refreshToken]
 
       await Promise.all(tokens.map(async (token) => {
-        const response = await addTotp(token)
+        const response = await sharedFunctions.addTotp(token)
         expect(response.status).toBe(401)
         expect(response.ok).toBe(false)
       }))
@@ -143,7 +113,7 @@ describe('TOTP tests', () => {
     beforeEach(async () => {
       let response, data
 
-      await addTotp(user.accessToken)
+      await sharedFunctions.addTotp(user.accessToken)
       response = await sharedFunctions.getTestUser(user.accessToken)
       data = await response.json()
       totpSettings = JSON.parse(data.totp)
@@ -153,7 +123,7 @@ describe('TOTP tests', () => {
       let response, data
 
       const code = sharedFunctions.getTotpCode(totpSettings.secret)
-      response = await activateTotp(user.accessToken, code)
+      response = await sharedFunctions.activateTotp(user.accessToken, code)
       expect(response.status).toBe(200)
       expect(response.ok).toBe(true)
 
@@ -208,7 +178,7 @@ describe('TOTP tests', () => {
       const tokens = ['', null, user.refreshToken]
 
       await Promise.all(tokens.map(async (token) => {
-        const response = await activateTotp(token)
+        const response = await sharedFunctions.activateTotp(token)
         expect(response.status).toBe(401)
         expect(response.ok).toBe(false)
       }))
@@ -218,7 +188,7 @@ describe('TOTP tests', () => {
       const tests = [null, '', 'code']
 
       await Promise.all(tests.map(async (code) => {
-        const response = await activateTotp(user.accessToken, code)
+        const response = await sharedFunctions.activateTotp(user.accessToken, code)
         expect(response.status).toBe(401)
         expect(response.ok).toBe(false)
       }))
@@ -228,7 +198,7 @@ describe('TOTP tests', () => {
       let response = await sharedFunctions.signUpUser()
       const nonTotpUser = response
 
-      response = await activateTotp(nonTotpUser.accessToken, 'code')
+      response = await sharedFunctions.activateTotp(nonTotpUser.accessToken, 'code')
       const data = await response.json()
       expect(response.status).toBe(400)
       expect(response.ok).toBe(false)
@@ -242,7 +212,7 @@ describe('TOTP tests', () => {
     beforeAll(async () => {
       const response = await sharedFunctions.signUpUser()
       user = response
-      await addAndActivateTotp(user.accessToken)
+      await sharedFunctions.addAndActivateTotp(user.accessToken)
     })
 
     /**
@@ -262,35 +232,6 @@ describe('TOTP tests', () => {
       })
     }
 
-    /**
-     * Adds and activates TOTP for the user.
-     * * It will also sign in again to get new tokens.
-     *
-     * @param {string} accessToken
-     * @param {string} email
-     * @param {string} password
-     */
-    const addAndActivateTotp = async (accessToken, email, password) => {
-      let response, data
-
-      await addTotp(accessToken)
-      response = await sharedFunctions.getTestUser(accessToken)
-      data = await response.json()
-      const totpSettings = JSON.parse(data.totp)
-
-      const code = sharedFunctions.getTotpCode(totpSettings.secret)
-      await activateTotp(accessToken, code)
-
-      response = await sharedFunctions.signInUserWithTotp(email, password, totpSettings.secret)
-      data = await response.json()
-
-      return {
-        code,
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
-      }
-    }
-
     test('Invalid token', async () => {
       const tokens = ['', null, user.refreshToken]
 
@@ -306,7 +247,7 @@ describe('TOTP tests', () => {
 
       data = await sharedFunctions.signUpUser()
       const newUser = data
-      data = await addAndActivateTotp(newUser.accessToken, newUser.email, newUser.password)
+      data = await sharedFunctions.addAndActivateTotp(newUser.accessToken, newUser.email, newUser.password)
       newUser.accessToken = data.accessToken
       newUser.refreshToken = data.refreshToken
 
@@ -350,7 +291,7 @@ describe('TOTP tests', () => {
       const newUser = data
 
       // Add TOTP but don't activate it.
-      await addTotp(newUser.accessToken)
+      await sharedFunctions.addTotp(newUser.accessToken)
 
       response = await removeTotp(newUser.accessToken, 'code')
       data = await response.json()
