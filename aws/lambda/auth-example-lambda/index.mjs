@@ -48,6 +48,8 @@ const TEST_EMAIL_CONTAINS = '+apitest'
 // Must not contain the test user identifier
 // It will be deleted along with users that contain the above.
 const TEST_EMAIL_CONTAINS_2 = '+nontestuser'
+// Set to true to send nodemailer mails even to test users; Default off - disabled.
+const ENABLE_NODEMAILER_FOR_TEST = false
 
 /**
  * Send message to the Nodemailer SQS queue, to queue sending an email
@@ -58,6 +60,9 @@ const TEST_EMAIL_CONTAINS_2 = '+nontestuser'
  * @param {string} html
  */
 const pushNodemailerSQSMessage = async ({ to, subject, text, html }) => {
+  // Do not send emails to test users, unless enabled.
+  if (!ENABLE_NODEMAILER_FOR_TEST && (to.includes(TEST_EMAIL_CONTAINS) || to.includes(TEST_EMAIL_CONTAINS_2))) return
+
   const sendMessageCommand = new SendMessageCommand({
     QueueUrl: NODEMAILER_SQS,
     MessageBody: JSON.stringify({
