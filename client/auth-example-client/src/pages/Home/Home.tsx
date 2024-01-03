@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import Navbar from '../../components/NavBar/NavBar'
 import { apiHealth } from '../../services/apiService'
 
 const Home = () => {
@@ -16,8 +15,7 @@ const Home = () => {
 
   return (
     <>
-      <Navbar />
-      <h1>Hello World!</h1>
+      <h2>Hello World!</h2>
       <p>API health: {healthMessage}</p>
     </>
   )

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { addTotp, changePassword, getVerifiedEmailStatus, hasTotp, removeTotp, clearJwt, signOutAllDevices, verifyEmailConfirm, verifyEmailRequest, validateNewPassword, activateTotp } from '../../services/authService'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
 
 /**
  * Form to change passwords, child component.
@@ -12,6 +13,7 @@ const ChangePasswordForm = () => {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [changingPassword, setChangingPassword] = useState(false)
   const [passwordValidationErrors, setPasswordValidationErrors] = useState([] as string[])
+  const auth = useAuth()
 
   /**
    * Change password.
@@ -35,6 +37,7 @@ const ChangePasswordForm = () => {
       await changePassword(oldPassword, newPassword, confirmPassword)
       alert('Password changed successful; You will be signed out shortly.')
       clearJwt()
+      auth.setAuthenticated(false)
       navigate('/sign-in')
     } catch (error) {
       alert((error as Error).message || 'Sign up unsuccessful; Please try again.')
@@ -89,6 +92,7 @@ const ChangePasswordForm = () => {
 const SignOutAllDevices = () => {
   const navigate = useNavigate()
   const [signingOut, setSigningOut] = useState(false)
+  const auth = useAuth()
 
   /**
    * Make request to sign out of all devices.
@@ -101,6 +105,7 @@ const SignOutAllDevices = () => {
       await signOutAllDevices()
       alert('Sign out of all devices successfully; You will be redirected shortly')
       clearJwt()
+      auth.setAuthenticated(false)
       navigate('/sign-in')
     } catch (_) {
       alert('Could not complete at this time.')
@@ -235,6 +240,7 @@ const TotpSection = () => {
   const [qrcode, setQrcode] = useState('')
   const [backup, setBackup] = useState([])
   const [toggleTotpContent, setToggleTotpContent] = useState(false)
+  const auth = useAuth()
 
   useEffect(() => {
     // Check if TOTP is enabled initially.
@@ -320,6 +326,7 @@ const TotpSection = () => {
       setTotpEnabled(true)
       alert('TOTP has been activated; You will now be signed out.')
       clearJwt()
+      auth.setAuthenticated(false)
       navigate('/sign-in')
     } catch (error) {
       alert((error as Error)?.message || 'TOTP could not be activated at this time.')
@@ -379,37 +386,27 @@ const TotpSection = () => {
  * Component: User's profile, parent component
  */
 const Profile = () => {
-  const navigate = useNavigate()
-
-  /**
-   * Sign out.
-   */
-  const onSignOut = () => {
-    clearJwt()
-    navigate('/sign-in')
-  }
 
   return (
     <>
-      <h1>My Profile</h1>
-      <Link to='/'>Home</Link>
-      <br />
-      <a href='' type='button' onClick={onSignOut}>Sign out</a>
+      <h2>Profile</h2>
+
+      <div>Here you can configure your profile...</div>
 
       <hr />
-      <h2>Change password</h2>
+      <h3>Change password</h3>
       <ChangePasswordForm />
 
       <hr />
-      <h2>Verify email</h2>
+      <h3>Verify email</h3>
       <VerifyEmail />
 
       <hr />
-      <h2>Two-factor authentication</h2>
+      <h3>Two-factor authentication</h3>
       <TotpSection />
 
       <hr />
-      <h2>Sign out of all devices</h2>
+      <h3>Sign out of all devices</h3>
       <SignOutAllDevices />
     </>
   )

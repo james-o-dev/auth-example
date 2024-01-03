@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { googleSSOCallback } from '../../services/authService'
+import { useAuth } from '../../contexts/AuthContext'
 
 const GoogleSSOCallback = () => {
   // Get the current location object
@@ -11,6 +12,7 @@ const GoogleSSOCallback = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [ssoToken, setSsoToken] = useState('')
   const [totpInput, setTotpInput] = useState('')
+  const auth = useAuth()
 
   /**
    * Attempt to sign in with Google
@@ -45,6 +47,7 @@ const GoogleSSOCallback = () => {
         return
       }
       alert(response.message)
+      auth.setAuthenticated(true)
       navigate('/profile')
     } catch (error) {
       alert((error as Error)?.message || 'Could not sign in with Google at this time. Please try again later.')

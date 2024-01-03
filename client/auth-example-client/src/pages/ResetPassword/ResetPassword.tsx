@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { clearJwt, resetPasswordConfirm, resetPasswordRequest, validateNewPassword } from '../../services/authService'
+import { useAuth } from '../../contexts/AuthContext'
 
 const ResetPassword = () => {
   const navigate = useNavigate()
@@ -13,6 +14,7 @@ const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordValidationErrors, setPasswordValidationErrors] = useState([] as string[])
+  const auth = useAuth()
 
   const disableActions = isSending || isChanging
 
@@ -60,6 +62,7 @@ const ResetPassword = () => {
       await resetPasswordConfirm(userId, code, newPassword, confirmPassword)
       alert('Password changed successfully')
       clearJwt()
+      auth.setAuthenticated(false)
       navigate('/sign-in')
     } catch (error) {
       alert(error)

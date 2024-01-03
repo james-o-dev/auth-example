@@ -1,87 +1,69 @@
+import { Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import './App.css'
-import { createBrowserRouter, RouterProvider, redirect } from 'react-router-dom'
-import SignUp from './pages/SignUp/SignUp'
-import SignIn from './pages/SignIn/SignIn'
+import Header from './components/Header/Header'
 import Home from './pages/Home/Home'
-import { isAuthenticated, clearJwt } from './services/authService'
-import Profile from './pages/Profile/Profile'
+import SignIn from './pages/SignIn/SignIn'
+import SignUp from './pages/SignUp/SignUp'
 import ResetPassword from './pages/ResetPassword/ResetPassword'
 import GoogleSSOCallback from './pages/GoogleSSOCallback/GoogleSSOCallback'
+import Profile from './pages/Profile/Profile'
+import { AuthProvider, RequireAuth } from './providers/AuthProvider'
+import { useAuth } from './contexts/AuthContext'
+import { Suspense, useEffect, useState } from 'react'
+import { isAuthenticated } from './services/authService'
 
-/**
- * Helper: Request if authenticated. Throw error if not.
- * * Signs out if not authenticated (removes local tokens).
- */
-const getIsAuthenticatedShared = async () => {
-  try {
-    const response = await isAuthenticated()
-    if (!response) throw 'Not Authenticated'
-  } catch (error) {
-    clearJwt()
-    throw error
-  }
-}
-
-/**
- * Loader: Only checks if authenticated.
- * * Clears local tokens if not authenticated.
- * * Always returns true
- */
-const checkAuthenticatedState = async () => {
-  try {
-    await getIsAuthenticatedShared()
-  } catch (error) {
-    // Ignore.
-  }
-  return true
-}
-
-/**
- * Loader: Displays message and redirects to sign in if not authenticated.
- * * Returns true if authenticated
- */
-const mustBeAuthenticated = async () => {
-  try {
-    await getIsAuthenticatedShared()
-    return true
-  } catch (error) {
-    alert('You are not authenticated. Please sign in.')
-    return redirect('/sign-in')
-  }
-}
-
-const router = createBrowserRouter([
-  {
-    path: '/sign-up',
-    Component: SignUp,
-  },
-  {
-    path: '/sign-in',
-    Component: SignIn,
-  },
-  {
-    path: '/profile',
-    Component: Profile,
-    loader: mustBeAuthenticated,
-  },
-  {
-    path: '/reset-password',
-    Component: ResetPassword,
-  },
-  {
-    path: '/google-sso-callback',
-    Component: GoogleSSOCallback,
-  },
-  {
-    path: '/',
-    Component: Home,
-    loader: checkAuthenticatedState,
-  },
-])
-
-function App() {
+const App = () => {
   return (
-    <RouterProvider router={router} fallbackElement={<p>Loading...</p>} />
+    <>
+      <AuthProvider>
+        <Routes>
+          <Route path='/' element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path='/sign-in' element={<SignIn />} />
+            <Route path='/sign-up' element={<SignUp />} />
+            <Route path='/reset-password' element={<ResetPassword />} />
+            <Route path='/google-sso-callback' element={<GoogleSSOCallback />} />
+
+            {/* Protected */}
+            <Route path='/profile' element={
+              <RequireAuth>
+                <Profile />
+              </RequireAuth>
+            } />
+
+          </Route>
+        </Routes>
+      </AuthProvider>
+    </>
+  )
+}
+
+const Layout = () => {
+  const [canRender, setCanRender] = useState(false)
+  const auth = useAuth()
+  const location = useLocation()
+
+  useEffect(() => {
+    const request = async () => {
+      const response = await isAuthenticated()
+      auth.setAuthenticated(response)
+      setCanRender(true)
+    }
+    request()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location]) // We re-authenticate every time a location/route changes to keep it up-to-date.
+
+  const content = (
+    <>
+      <Header />
+      <Outlet />
+    </>
+  )
+  const loading = <div>Loading...</div>
+  return (
+    <Suspense fallback={loading}>
+      {canRender && content}
+    </Suspense>
   )
 }
 
