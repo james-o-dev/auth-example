@@ -39,7 +39,7 @@ const App = () => {
 }
 
 const Layout = () => {
-  const [hasLoaded, setHasLoaded] = useState(false)
+  const [canRender, setCanRender] = useState(false)
   const auth = useAuth()
   const location = useLocation()
 
@@ -47,11 +47,11 @@ const Layout = () => {
     const request = async () => {
       const response = await isAuthenticated()
       auth.setAuthenticated(response)
-      setHasLoaded(true)
+      setCanRender(true)
     }
     request()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location]) // We re-authenticated every time a location/route changes.
+  }, [location]) // We re-authenticate every time a location/route changes to keep it up-to-date.
 
   const content = (
     <>
@@ -62,7 +62,7 @@ const Layout = () => {
   const loading = <div>Loading...</div>
   return (
     <Suspense fallback={loading}>
-      {hasLoaded && content}
+      {canRender && content}
     </Suspense>
   )
 }
