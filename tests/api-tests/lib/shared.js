@@ -9,7 +9,7 @@ const TEST_USER_UNIQUE_PART_2 = '+nontestuser'
  * @param {string} [email] Custom email to use. Be sure to include '{+}' in the email.
  */
 const getUniqueEmail = (email = process.env.API_TEST_EMAIL, useSecondaryIdentifer = false) => {
-  const unique = `${useSecondaryIdentifer ? TEST_USER_UNIQUE_PART_2 : TEST_USER_UNIQUE_PART }${Date.now()}`
+  const unique = `${useSecondaryIdentifer ? TEST_USER_UNIQUE_PART_2 : TEST_USER_UNIQUE_PART}${Date.now()}`
   return email.replace('{+}', unique)
 }
 
@@ -66,18 +66,20 @@ const getAuthHeader = (token) => {
 
 /**
  * Sign in a user.
- * * Without TOTP
+ * * With TOTP
  *
  * @param {string} email The user's email.
  * @param {string} password The user's password.
+ * @param {string} [totp] TOTP if active
  * @returns {Promise<Response>} The response.
  */
-const signInUser = async (email, password) => {
+const signInUser = async (email, password, totp) => {
   return fetch(`${process.env.API_HOST}/auth/sign-in`, {
     method: 'POST',
     body: JSON.stringify({
-      email: email,
-      password: password,
+      email,
+      password,
+      totp,
     }),
   })
 }

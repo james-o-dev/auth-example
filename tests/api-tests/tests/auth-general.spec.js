@@ -217,11 +217,12 @@ describe('Auth general', () => {
       let response = await signOutRequest(user.accessToken)
       expect(response.status).toBe(204)
 
-      // Attempt to refresh access token. Should not allow it since it has been revoked.
+      // Should invalidate existing access tokens.
+      response = await sharedFunctions.authenticateAccessToken(user.accessToken)
+      expect(response.status).toBe(401)
+      // Should invalidate existing refresh tokens.
       response = await sharedFunctions.refreshAccessToken(user.refreshToken)
       expect(response.status).toBe(401)
-      const data = await response.json()
-      expect(data).toBe('Unauthorized.')
     })
 
     test('Invalid access token', async () => {
@@ -277,7 +278,7 @@ describe('Auth general', () => {
       user.password = newPassword
 
       // Should invalidate existing access tokens.
-      response = await sharedFunctions.refreshAccessToken(user.accessToken)
+      response = await sharedFunctions.authenticateAccessToken(user.accessToken)
       expect(response.status).toBe(401)
       // Should invalidate existing refresh tokens.
       response = await sharedFunctions.refreshAccessToken(user.refreshToken)

@@ -97,7 +97,7 @@ describe('Reset password tests', () => {
       expect(response.ok).toBe(true)
 
       // Should invalidate existing access tokens.
-      response = await sharedFunctions.refreshAccessToken(user.accessToken)
+      response = await sharedFunctions.authenticateAccessToken(user.accessToken)
       expect(response.status).toBe(401)
       // Should invalidate existing refresh tokens.
       response = await sharedFunctions.refreshAccessToken(user.refreshToken)
