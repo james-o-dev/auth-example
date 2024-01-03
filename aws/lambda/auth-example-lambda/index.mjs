@@ -17,6 +17,8 @@ const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET
 if (!ACCESS_TOKEN_SECRET) throw new Error('Missing ACCESS_TOKEN_SECRET environment variable')
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET
 if (!REFRESH_TOKEN_SECRET) throw new Error('Missing REFRESH_TOKEN_SECRET environment variable')
+const SSO_TOKEN_SECRET = process.env.SSO_TOKEN_SECRET
+if (!SSO_TOKEN_SECRET) throw new Error('Missing SSO_TOKEN_SECRET environment variable')
 const CLIENT_HOST = process.env.CLIENT_HOST
 if (!CLIENT_HOST) throw new Error('Missing CLIENT_HOST environment variable')
 const USERS_TABLE_NAME = process.env.USERS_TABLE_NAME
@@ -802,81 +804,95 @@ const googleSSOCallbackEndpoint = async (reqBody) => {
   // From my understanding, once a Google code has been used, it can not be used again.
   // So the `ssoToken` is required if TOTP is required - it stores the verified email in a JWT without requiring getting another Google token.
   const { code, totpInput, ssoToken } = reqBody
+  // Used for testing only - bypass Google auth or ssoToken.
+  const testEmail = reqBody.test
+
+  let totpBackupsMessage = ''
+  let email = ''
 
   try {
-
-    let totpBackupsMessage = ''
-    let email = ''
-
     if (ssoToken) {
-      const ssoTokenVerified = jsonwebtoken.verify(ssoToken, ACCESS_TOKEN_SECRET)
+      // Using ssoToken from previous attempt to verify email.
+      // Used if the account also has an active TOTP.
+      const ssoTokenVerified = jsonwebtoken.verify(ssoToken, SSO_TOKEN_SECRET)
       email = ssoTokenVerified.email
-    } else {
+    } else if (code) {
+      // By default, verify via Google SSO API .
       const callbackReturn = await getProfileFromGoogleCallback(code)
       email = callbackReturn.email
+    } else if (testEmail?.includes(TEST_EMAIL_CONTAINS)) {
+      // Test user email only.
+      email = testEmail
     }
-
-    // Find email in the DB.
-    const findEmail = await findUserFromEmailQuery(email)
-    let userId
-
-    if (findEmail.Items.length) {
-      // If found, sign in.
-
-      const user = findEmail.Items[0]
-      userId = user.userId
-      const totp = user.totp
-
-      // Get totpSettings.
-      const totpSettings = JSON.parse(user.totp || null)
-
-      // If the user has an active TOTP...
-      if (totpSettings?.active) {
-        // Signing in requires a TOTP input.
-        if (!totpInput) {
-          const createSSOToken = jsonwebtoken.sign({ email }, ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY })
-          return buildLambdaResponse(200, { message: 'TOTP required.', totpRequired: true, ssoToken: createSSOToken })
-        }
-
-        const validatedTotp = await validateTotp(totpInput, totp, userId)
-        if (!validatedTotp.valid) throwInvalidTotp()
-        totpBackupsMessage = validatedTotp.backupsMessage || ''
-      }
-
-      // If the email was not already verified, you can verify it now.
-      if (!user.emailVerified) await updateCommand(USERS_TABLE_NAME, { userId }, { emailVerified: true })
-
-    } else {
-      // If not found, sign up.
-
-      // Generate a UUID.
-      userId = randomUUID()
-
-      // Store in DB.
-      await putCommand(USERS_TABLE_NAME, { userId }, {
-        email,
-        emailVerified: true, // Already verified - they used a Gmail/G-Suite address.
-        dateCreated: Date.now(),
-      })
-    }
-
-    // Succesful sign-up/sign-in.
-    if (userId && email) {
-      const payload = { userId, email }
-      // Generate refresh token.
-      const refreshToken = generateRefreshToken(payload)
-      // Generate access token.
-      const accessToken = generateAccessToken(payload)
-      // Respond
-      return buildLambdaResponse(200, { message: `Signed in with Google. ${totpBackupsMessage}`.trim(), accessToken, refreshToken })
-    }
-
-    // Not authorized.
-    throwUnauthError()
   } catch (error) {
     console.error(error)
     throwUnauthError()
   }
+
+  // Email could not be found or verified above.
+  if (!email) throwUnauthError()
+
+  // Find email in the DB.
+  const findEmail = await findUserFromEmailQuery(email)
+  let userId
+
+  if (findEmail.Items.length) {
+    // If found, sign in.
+
+    const user = findEmail.Items[0]
+    userId = user.userId
+    const totp = user.totp
+
+    // Get totpSettings.
+    const totpSettings = JSON.parse(user.totp || null)
+
+    // If the user has an active TOTP...
+    if (totpSettings?.active) {
+      // Signing in requires a TOTP input.
+      if (!totpInput) {
+        const createSSOToken = jsonwebtoken.sign({ email }, SSO_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY })
+        return buildLambdaResponse(200, { message: 'TOTP required.', totpRequired: true, ssoToken: createSSOToken })
+      }
+
+      try {
+        const validatedTotp = await validateTotp(totpInput, totp, userId)
+        if (!validatedTotp.valid) throwInvalidTotp()
+        totpBackupsMessage = validatedTotp.backupsMessage || ''
+      } catch (error) {
+        throwInvalidTotp()
+      }
+    }
+
+    // If the email was not already verified, you can verify it now.
+    if (!user.emailVerified) await updateCommand(USERS_TABLE_NAME, { userId }, { emailVerified: true })
+
+  } else {
+    // If not found, sign up.
+
+    // Generate a UUID.
+    userId = randomUUID()
+
+    // Store in DB.
+    await putCommand(USERS_TABLE_NAME, { userId }, {
+      email,
+      emailVerified: true, // Already verified - they used a Gmail/G-Suite address.
+      dateCreated: Date.now(),
+    })
+  }
+
+  // Successful sign-up/sign-in.
+  if (userId && email) {
+    const payload = { userId, email }
+    // Generate refresh token.
+    const refreshToken = generateRefreshToken(payload)
+    // Generate access token.
+    const accessToken = generateAccessToken(payload)
+    // Respond
+    return buildLambdaResponse(200, { message: `Signed in with Google. ${totpBackupsMessage}`.trim(), accessToken, refreshToken })
+  }
+
+  // Not authorized.
+  throwUnauthError()
 }
 
 /**

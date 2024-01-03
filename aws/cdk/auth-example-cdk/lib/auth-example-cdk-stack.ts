@@ -13,6 +13,7 @@ import 'dotenv/config'
 const CLIENT_HOST = process.env.CLIENT_HOST || ''
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || ''
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || ''
+const SSO_TOKEN_SECRET = process.env.SSO_TOKEN_SECRET || ''
 const GMAIL_CLIENT_ID = process.env.GMAIL_CLIENT_ID || ''
 const GMAIL_CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET || ''
 const GMAIL_REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN || ''
@@ -23,6 +24,7 @@ if (
   !CLIENT_HOST
   || !ACCESS_TOKEN_SECRET
   || !REFRESH_TOKEN_SECRET
+  || !SSO_TOKEN_SECRET
   || !GMAIL_CLIENT_ID
   || !GMAIL_CLIENT_SECRET
   || !GMAIL_REFRESH_TOKEN
@@ -30,6 +32,15 @@ if (
   || !GOOGLE_SSO_CLIENT_ID
   || !GOOGLE_SSO_CLIENT_SECRET
 ) throw new Error('Missing environment variables')
+
+// Ensure token secrets are not shared.
+const checkSecretsAreShared = [
+  ACCESS_TOKEN_SECRET,
+  REFRESH_TOKEN_SECRET,
+  SSO_TOKEN_SECRET,
+]
+const checkSecretsAreSharedSet = new Set(checkSecretsAreShared)
+if (checkSecretsAreSharedSet.size !== checkSecretsAreShared.length) throw new Error('Some secrets are being shared!')
 
 // Other settings.
 const LAMBDA_NODE_MODULE_LAYER_NAME = 'auth-example-lambda-layer'
@@ -65,6 +76,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
         GOOGLE_SSO_CLIENT_SECRET,
         CLIENT_HOST,
         REFRESH_TOKEN_SECRET,
+        SSO_TOKEN_SECRET,
         USERS_TABLE_NAME,
       },
     })
