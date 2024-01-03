@@ -42,36 +42,20 @@ export const validateEmailFormat = (email: string) => {
  * Fetch the API whether the user is authenticated.
  */
 export const isAuthenticated = async () => {
-  /**
-   * Request to verify access token.
-   */
-  const accessTokenRequest = makeApiRequest({ endpoint: '/auth', method: 'GET', includeCredentials: true })
+  // Initial attempt to verify.
+  const response = await makeApiRequest({ endpoint: '/auth', method: 'GET', includeCredentials: true })
+  // No errors, it is verified.
+  if (response.ok) return true
 
-  /**
-   * Attempt to refresh the access token, then try again.
-   */
-  const retryAuth = async () => {
-    await refreshAccessToken()
-    const response = await accessTokenRequest
-    return response.ok
-  }
+  // Get new access token, via the refresh token.
+  const newAccessToken = await refreshAccessToken()
+  // New access token is already saved, it is assumed to be authenticated now.
+  if (newAccessToken) return true
 
-  try {
-    const response = await accessTokenRequest
-
-    if (response.ok) return true
-    throw new Error('Not authenticated initially - try refreshing the token.')
-
-  } catch (error) {
-    // Attempt to refresh the token, then try again.
-    if (await retryAuth()) {
-      return true
-    } else {
-      // Could not refresh to get a new token; Handle non-OK response (e.g., unauthorized).
-      clearJwt()
-      return false
-    }
-  }
+  // It could not refresh the token, not authenticated.
+  // Also clean-up existing stored JWTs.
+  clearJwt()
+  return false
 }
 
 /**
