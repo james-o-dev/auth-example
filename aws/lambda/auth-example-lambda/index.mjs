@@ -16,7 +16,7 @@ if (!AUTH_INDEX_NAME) throw new Error('Missing AUTH_INDEX_NAME environment varia
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET
 if (!ACCESS_TOKEN_SECRET) throw new Error('Missing ACCESS_TOKEN_SECRET environment variable')
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET
-if (!ACCESS_TOKEN_SECRET) throw new Error('Missing ACCESS_TOKEN_SECRET environment variable')
+if (!REFRESH_TOKEN_SECRET) throw new Error('Missing REFRESH_TOKEN_SECRET environment variable')
 const CLIENT_HOST = process.env.CLIENT_HOST
 if (!CLIENT_HOST) throw new Error('Missing CLIENT_HOST environment variable')
 const USERS_TABLE_NAME = process.env.USERS_TABLE_NAME
