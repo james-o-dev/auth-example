@@ -2,6 +2,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { signUp, validateEmailFormat, validateNewPassword } from '../../services/authService'
+import { useAuth } from '../../contexts/AuthContext'
 
 // Define the SignUp component
 const SignUp: React.FC = () => {
@@ -12,6 +13,7 @@ const SignUp: React.FC = () => {
   const [validationMessages, setValidationMessages] = useState([] as string[])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
+  const auth = useAuth()
 
   /**
    * Function to handle form submission.
@@ -46,6 +48,7 @@ const SignUp: React.FC = () => {
     try {
       await signUp(email, password, confirmPassword)
       alert('Sign up successful; You will be redirected shortly.')
+      auth.setAuthenticated(true)
       navigate('/profile')
     } catch (error) {
       alert((error as Error).message || 'Sign up unsuccessful; Please try again.')

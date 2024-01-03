@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useGoogleSSO, signIn } from '../../services/authService'
+import { useAuth } from '../../contexts/AuthContext'
 
 const SignIn = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -9,6 +10,7 @@ const SignIn = () => {
   const [totp, setTotp] = useState('')
   const [requireTotp, setRequireTotp] = useState(false)
   const navigate = useNavigate()
+  const auth = useAuth()
 
   // Handle form submission.
   const handleSubmit = async (event: React.FormEvent) => {
@@ -25,6 +27,7 @@ const SignIn = () => {
         return
       } else {
         alert(response.message)
+        auth.setAuthenticated(true)
         navigate('/profile')
       }
     } catch (error) {
