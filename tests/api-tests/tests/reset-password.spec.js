@@ -30,6 +30,9 @@ describe('Reset password tests', () => {
       let data = await response.json()
       expect(data.userId).toBeTruthy()
 
+      // Add one second delay.
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
       // Check database that the 'resetPassword' object has been saved.
       const getUser = await sharedFunctions.getTestUser(user.accessToken)
       data = await getUser.json()

@@ -127,6 +127,9 @@ describe('TOTP tests', () => {
       expect(response.status).toBe(200)
       expect(response.ok).toBe(true)
 
+      // Add one second delay.
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
       // Should invalidate existing access tokens.
       response = await sharedFunctions.authenticateAccessToken(user.accessToken)
       expect(response.status).toBe(401)
@@ -250,6 +253,9 @@ describe('TOTP tests', () => {
       data = await sharedFunctions.addAndActivateTotp(newUser.accessToken, newUser.email, newUser.password)
       newUser.accessToken = data.accessToken
       newUser.refreshToken = data.refreshToken
+
+      // Add one second delay.
+      await new Promise(resolve => setTimeout(resolve, 1000))
 
       response = await removeTotp(newUser.accessToken, data.code)
       data = await response.json()
