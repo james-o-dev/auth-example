@@ -66,18 +66,18 @@ const getAuthHeader = (token) => {
 
 /**
  * Sign in a user.
+ * * Without TOTP
  *
- * @param {object} user
- * @param {string} user.email The user's email.
- * @param {string} user.password The user's password.
+ * @param {string} email The user's email.
+ * @param {string} password The user's password.
  * @returns {Promise<Response>} The response.
  */
-const signInUser = async (user) => {
+const signInUser = async (email, password) => {
   return fetch(`${process.env.API_HOST}/auth/sign-in`, {
     method: 'POST',
     body: JSON.stringify({
-      email: user.email,
-      password: user.password,
+      email: email,
+      password: password,
     }),
   })
 }

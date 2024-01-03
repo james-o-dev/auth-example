@@ -2,10 +2,6 @@ const sharedFunctions = require('../lib/shared')
 
 describe('Test users', () => {
 
-  afterAll(async () => {
-    await sharedFunctions.cleanupTests()
-  })
-
   describe('Get test user', () => {
     let user
 

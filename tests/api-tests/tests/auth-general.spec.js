@@ -4,10 +4,6 @@ const users = []
 
 describe('Auth general', () => {
 
-  afterAll(async () => {
-    await sharedFunctions.cleanupTests()
-  })
-
   describe('Sign up', () => {
 
     const signUpRequest = async ({ email, password, confirmPassword }) => {
@@ -81,7 +77,7 @@ describe('Auth general', () => {
     })
 
     test('Successfully signs in user', async () => {
-      const response = await sharedFunctions.signInUser(user)
+      const response = await sharedFunctions.signInUser(user.email, user.password)
       const data = await response.json()
       expect(response.status).toBe(200)
       expect(response.ok).toBe(true)
@@ -203,7 +199,7 @@ describe('Auth general', () => {
 
     beforeEach(async () => {
       // Sign-in again to get new refresh and access tokens.
-      const response = await sharedFunctions.signInUser({ email: user.email, password: user.password })
+      const response = await sharedFunctions.signInUser(user.email, user.password)
       const data = await response.json()
       user = {
         ...user,
@@ -249,7 +245,7 @@ describe('Auth general', () => {
 
     beforeEach(async () => {
       // Sign-in again to get new refresh and access tokens.
-      const response = await sharedFunctions.signInUser({ email: user.email, password: user.password })
+      const response = await sharedFunctions.signInUser(user.email, user.password)
       const data = await response.json()
       user = {
         ...user,
@@ -292,7 +288,7 @@ describe('Auth general', () => {
         { password: newPassword, status: 200 },
       ]
       await Promise.all(signInTests.map(async test => {
-        const response = await sharedFunctions.signInUser({ email: user.email, password: test.password })
+        const response = await sharedFunctions.signInUser(user.email, test.password)
         expect(response.status).toBe(test.status)
       }))
     })
