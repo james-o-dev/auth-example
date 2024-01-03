@@ -1,4 +1,4 @@
-import { Outlet, Route, Routes } from 'react-router-dom'
+import { Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import './App.css'
 import Header from './components/Header/Header'
 import Home from './pages/Home/Home'
@@ -41,16 +41,17 @@ const App = () => {
 const Layout = () => {
   const [hasLoaded, setHasLoaded] = useState(false)
   const auth = useAuth()
+  const location = useLocation()
 
   useEffect(() => {
-    if (hasLoaded) return
     const request = async () => {
       const response = await isAuthenticated()
       auth.setAuthenticated(response)
       setHasLoaded(true)
     }
     request()
-  }, [auth, hasLoaded])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location]) // We re-authenticated every time a location/route changes.
 
   const content = (
     <>
@@ -58,9 +59,7 @@ const Layout = () => {
       <Outlet />
     </>
   )
-
   const loading = <div>Loading...</div>
-
   return hasLoaded ? content : loading
 }
 
