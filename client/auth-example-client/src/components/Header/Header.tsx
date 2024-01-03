@@ -5,30 +5,29 @@ import { NavLink } from 'react-router-dom'
 import { clearJwt } from '../../services/authService'
 import { useAuth } from '../../contexts/AuthContext'
 
-export interface HeaderItem {
+interface HeaderItem {
   to: string,
   label: string,
-  type: 'all' | 'auth' | 'unauth',
+  type: HeaderItemType,
+}
+enum HeaderItemType {
+  'all',
+  'auth',
+  'unauth',
 }
 
-export interface HeaderProps {
-  navItems?: HeaderItem[]
-}
-
-const NAV_ITEMS: HeaderItem[] = [
-  { label: 'Home', to: '/', type: 'all' },
-  { label: 'Sign in', to: '/sign-in', type: 'unauth' },
-  { label: 'Sign up', to: '/sign-up', type: 'unauth' },
-  { label: '👤 Profile', to: '/profile', type: 'auth' },
-]
-
-const Header: React.FC<HeaderProps> = ({ navItems = NAV_ITEMS }) => {
+const Header: React.FC = () => {
   const auth = useAuth()
 
-  const filteredNavItems = navItems.filter(({ type }) => {
-    if (type === 'all') return true
-    else if (type === 'auth' && auth.authenticated) return true
-    else if (type === 'unauth' && !auth.authenticated) return true
+  const navItems: HeaderItem[] = [
+    { label: 'Home', to: '/', type: HeaderItemType.all },
+    { label: 'Sign in', to: '/sign-in', type: HeaderItemType.unauth },
+    { label: 'Sign up', to: '/sign-up', type: HeaderItemType.unauth },
+    { label: '👤 Profile', to: '/profile', type: HeaderItemType.auth },
+  ].filter(({ type }) => {
+    if (type === HeaderItemType.all) return true
+    else if (type === HeaderItemType.auth && auth.authenticated) return true
+    else if (type === HeaderItemType.unauth && !auth.authenticated) return true
     else return false
   })
 
@@ -46,12 +45,12 @@ const Header: React.FC<HeaderProps> = ({ navItems = NAV_ITEMS }) => {
       <h1>Auth Example</h1>
       <nav>
         <ul className='inline-flex'>
-          {filteredNavItems
+          {navItems
             .map(({ to, label }, index) => {
               return (
                 <li key={index}>
                   <NavLink to={to}>{label}</NavLink>
-                  {/* <NavLink to={to} className={({ isActive }) => isActive ? 'collapse' : ''}>{label}</NavLink> */}
+                  {/* <NavLink to={to} className={({ isActive }) => isActive ? 'font-bold underline' : ''}>{label}</NavLink> */}
                 </li>
               )
             })}
