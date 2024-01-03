@@ -114,6 +114,7 @@ describe('TOTP tests', () => {
       let response, data
 
       await sharedFunctions.addTotp(user.accessToken)
+      await new Promise(resolve => setTimeout(resolve, 1000)) // Add one second delay.
       response = await sharedFunctions.getTestUser(user.accessToken)
       data = await response.json()
       totpSettings = JSON.parse(data.totp)
@@ -127,8 +128,7 @@ describe('TOTP tests', () => {
       expect(response.status).toBe(200)
       expect(response.ok).toBe(true)
 
-      // Add one second delay.
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await new Promise(resolve => setTimeout(resolve, 1000)) // Add one second delay.
 
       // Should invalidate existing access tokens.
       response = await sharedFunctions.authenticateAccessToken(user.accessToken)
@@ -142,6 +142,8 @@ describe('TOTP tests', () => {
       data = await response.json()
       user.accessToken = data.accessToken
       user.refreshToken = data.refreshToken
+
+      await new Promise(resolve => setTimeout(resolve, 1000)) // Add one second delay.
 
       // TOTP should now be active.
       response = await hasTotp(user.accessToken)
@@ -159,6 +161,8 @@ describe('TOTP tests', () => {
       expect(data.refreshToken).toBeFalsy()
       expect(data.accessToken).toBeFalsy()
 
+      await new Promise(resolve => setTimeout(resolve, 1000)) // Add one second delay.
+
       // Check using a backup code.
       const backup = totpSettings.backup[0]
       response = await sharedFunctions.signInUser(user.email, user.password, backup)
@@ -169,13 +173,15 @@ describe('TOTP tests', () => {
       expect(data.accessToken).toBeTruthy()
       expect(data.message).toBe('Sign in successful. A backup TOTP code was used. You have 9 remaining codes left. To replenish, remove and re-add TOTP.')
 
+      await new Promise(resolve => setTimeout(resolve, 1000)) // Add one second delay.
+
       // Check database that the backup has been consumed.
       response = await sharedFunctions.getTestUser(user.accessToken)
       data = await response.json()
       const updatedTotpSettings = JSON.parse(data.totp)
       expect(updatedTotpSettings.backup.length).toBe(totpSettings.backup.length - 1)
       expect(updatedTotpSettings.backup).not.toContain(backup)
-    })
+    }, 10000)
 
     test('Invalid token', async () => {
       const tokens = ['', null, user.refreshToken]
@@ -254,8 +260,7 @@ describe('TOTP tests', () => {
       newUser.accessToken = data.accessToken
       newUser.refreshToken = data.refreshToken
 
-      // Add one second delay.
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await new Promise(resolve => setTimeout(resolve, 1000)) // Add one second delay.
 
       response = await removeTotp(newUser.accessToken, data.code)
       data = await response.json()
