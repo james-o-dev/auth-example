@@ -32,7 +32,6 @@ if (!GOOGLE_SSO_CLIENT_SECRET) throw new Error('Missing GOOGLE_SSO_CLIENT_SECRET
 
 const ACCESS_TOKEN_EXPIRY = '10m'
 const REFRESH_TOKEN_EXPIRY = '7d'
-const INVALID_TOKEN_MESSAGE = 'Unauthorized.'
 
 // Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character (!@#$%^&*()_+-), with a minimum length of 8 characters.
 const PASSWORD_REGEXP = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+-])[A-Za-z\d!@#$%^&*()_+-]{8,}$/
@@ -157,7 +156,7 @@ const generateRandomHumanString = () => `${generateRandomString(4)}-${generateRa
  * Helper: Throw an error for being Unauthorized.
  */
 const throwUnauthError = () => {
-  throw buildValidationError(401, INVALID_TOKEN_MESSAGE)
+  throw buildValidationError(401, 'Unauthorized.')
 }
 
 /**
