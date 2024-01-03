@@ -1,4 +1,5 @@
 const { randomUUID } = require('node:crypto')
+const { Totp, generateConfig } = require('time2fa')
 
 const TEST_USER_UNIQUE_PART = '+apitest'
 const TEST_USER_UNIQUE_PART_2 = '+nontestuser'
@@ -85,6 +86,30 @@ const signInUser = async (email, password, totp) => {
 }
 
 /**
+ * Generate a current TOTP, from an existing TOTP secret
+ * * Using default TOTP settings
+ *
+ * @param {string} secret
+ */
+const getTotpCode = (secret) => {
+  const config = generateConfig()
+  const codes = Totp.generatePasscodes({ secret }, config)
+  return codes[0]
+}
+
+/**
+ * Sign in a user with TOTP.
+ *
+ * @param {string} email
+ * @param {string} password
+ * @param {string} totpSecret The TOTP secret that is used to generate OTPs. Get this from the database.
+ */
+const signInUserWithTotp = async (email, password, totpSecret) => {
+  const totp = getTotpCode(totpSecret)
+  return signInUser(email, password, totp)
+}
+
+/**
  * Authenticate the access token.
  *
  * @param {string} accessToken
@@ -142,11 +167,13 @@ module.exports = {
   getAuthHeader,
   getGeneratedPassword,
   getTestUser,
+  getTotpCode,
   getUniqueEmail,
   refreshAccessToken,
   signInUser,
+  signInUserWithTotp,
   signUpUser,
-  TEST_USER_UNIQUE_PART,
   TEST_USER_UNIQUE_PART_2,
+  TEST_USER_UNIQUE_PART,
   updateTestUser,
 }
