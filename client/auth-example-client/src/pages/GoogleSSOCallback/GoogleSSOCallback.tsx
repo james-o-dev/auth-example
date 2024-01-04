@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { googleSSOCallback } from '../../services/authService'
 import { useAuth } from '../../contexts/AuthContext'
 import FormInput from '../../components/FormInput/FormInput'
@@ -67,7 +67,6 @@ const GoogleSSOCallback = () => {
   return (
     <>
       <p>Signing in with Google...</p>
-      {!isLoading && <Link to='/sign-in'>Sign in again &rarr;</Link>}
       {totpRequired && (
         <form onSubmit={signInWithGoogle}>
           <br />
