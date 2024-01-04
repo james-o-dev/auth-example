@@ -12,7 +12,7 @@ interface ProfileSidebar {
  * Display the sidebar in the profile.
  */
 const ProfileSidebar = ({ onSidebarItemClick }: { onSidebarItemClick: (item: ProfileSidebar) => void }) => {
-  const [indexSelected, setIndexSelected] = useState(-1)
+  const [indexSelected, setIndexSelected] = useState(0)
 
   const items = [
     { label: 'Home', element: <ProfileHome /> },
@@ -453,7 +453,7 @@ const ProfileHome = () => {
  * Component: User's profile, parent component
  */
 const Profile = () => {
-  const [elementDisplayed, setElementDisplayed] = useState<JSX.Element | null>(null)
+  const [elementDisplayed, setElementDisplayed] = useState<JSX.Element | null>(<ProfileHome />)
 
 
   const onSidebarItemClick = (item: ProfileSidebar) => {
