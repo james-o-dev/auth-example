@@ -73,34 +73,37 @@ const ResetPassword = () => {
 
   const RequestForm = (
     <form onSubmit={onRequestSubmit}>
-      <label htmlFor='email'>
-        Email:
-        <input required type='email' name='email' value={email} onChange={(e) => setEmail(e.target.value)} />
+      <label htmlFor='email' className='flex items-center'>
+        <div className='mr-2 min-w-[60px]'>Email:</div>
+        <input required className='w-full' type='email' name='email' value={email} onChange={(e) => setEmail(e.target.value)} />
       </label>
-      <button disabled={disableActions} type='submit'>Send verification email</button>
-      {isSending && <span>Sending...</span>}
+      <br />
+      <button className='w-full' disabled={disableActions} type='submit'>
+        {isSending ? 'Sending...' : 'Send verification email'}
+      </button>
     </form>
   )
 
   const ConfirmForm = (
     <form onSubmit={onConfirmSubmit}>
-      <label htmlFor='code'>
-        Verification code:
-        <input required type='text' name='code' value={code} onChange={(e) => setCode(e.target.value)} />
+      <label htmlFor='code' className='flex items-center'>
+        <div className='mr-2 min-w-[140px]'>Verification code:</div>
+        <input required className='w-full' type='text' name='code' value={code} onChange={(e) => setCode(e.target.value)} />
       </label>
       <br />
-      <label htmlFor='newPassword'>
-        New password:
-        <input required type='password' name='newPassword' autoComplete='new-password' value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+      <label htmlFor='newPassword' className='flex items-center'>
+        <div className='mr-2 min-w-[140px]'>New password:</div>
+        <input required className='w-full' type='password' name='newPassword' autoComplete='new-password' value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
       </label>
       <br />
-      <label htmlFor='confirmPassword'>
-        Confirm password:
-        <input required type='password' name='confirmPassword' autoComplete='new-password' value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+      <label htmlFor='confirmPassword' className='flex items-center'>
+        <div className='mr-2 min-w-[140px]'>Confirm password:</div>
+        <input required className='w-full' type='password' name='confirmPassword' autoComplete='new-password' value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
       </label>
       <br />
-      <button disabled={disableActions} type='submit'>Change password</button>
-      {isChanging && <span>Changing...</span>}
+      <button className='w-full' disabled={disableActions} type='submit'>
+        {isChanging ? 'Changing...' : 'Change password'}
+      </button>
       {passwordValidationErrors.length > 0 && (
         <div>
           <p><b>Issues:</b></p>
@@ -115,14 +118,20 @@ const ResetPassword = () => {
   )
 
   return (
-    <div>
-      <h2>Reset Password</h2>
-      <p>Enter your email address below to reset your password.</p>
-      <p>This will send an email to the address containing a verification code. Use this code in conjunction with your new password in order to complete the process.</p>
-      {!emailSent && RequestForm}
-      {emailSent && ConfirmForm}
-      <br />
-      <Link to='/sign-in'>Sign in instead</Link>
+    <div className='container-sm'>
+      <div className='max-w-sm mx-auto border rounded p-4'>
+        <h2 className='text-center'>Reset Password</h2>
+        <hr />
+        <br />
+        <p>Enter your email address below to reset your password.</p>
+        <br />
+        <p>This will send an email to the address containing a verification code. Use this code in conjunction with your new password in order to complete the process.</p>
+        <br />
+        {!emailSent && RequestForm}
+        {emailSent && ConfirmForm}
+        <br />
+        <Link to='/sign-in'>Sign in instead &rarr;</Link>
+      </div>
     </div>
   )
 }
