@@ -37,6 +37,9 @@ export default {
           backgroundColor: 'white',
           borderRadius: '5px',
           transition: 'background-color 0.3s, color 0.3s',
+          '&:disabled': {
+            opacity: 0.33,
+          },
         },
         'button:hover': {
           backgroundColor: themeColour,
