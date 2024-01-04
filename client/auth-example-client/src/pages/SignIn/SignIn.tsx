@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useGoogleSSO, signIn } from '../../services/authService'
 import { useAuth } from '../../contexts/AuthContext'
+import GoogleSignInButton from '../../components/GoogleSignInButton/GoogleSignInButton'
+
 
 const SignIn = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -42,40 +44,45 @@ const SignIn = () => {
    */
   const totpInput = (
     <>
-      <label>
-        TOTP required:
-        <input required type='text' name='totp' value={totp} onChange={(e) => setTotp(e.target.value)} />
+      <label className='flex items-center'>
+        <div className='mr-2 min-w-[120px]'>TOTP required:</div>
+        <input required className='w-full' type='text' name='totp' value={totp} onChange={(e) => setTotp(e.target.value)} />
       </label>
       <br />
     </>
   )
 
   return (
-    <div>
-      <h2>Sign In</h2>
-      <form onSubmit={handleSubmit}>
+    <div className='container-sm'>
+      <div className='max-w-sm mx-auto border rounded p-4'>
+        <h2 className='text-center'>Sign In</h2>
+        <form onSubmit={handleSubmit}>
+          <hr />
+          <br />
+          <label className='flex items-center'>
+            <div className='mr-2 min-w-[70px]'>Email:</div>
+            <input className='w-full' required type='email' name='email' autoComplete='username' value={email} onChange={(e) => setEmail(e.target.value)} />
+          </label>
+          <br />
+          <label className='flex items-center'>
+            <div className='mr-2 min-w-[70px]'>Password:</div>
+            <input className='w-full' required type='password' name='password' autoComplete='current-password' value={password} onChange={(e) => setPassword(e.target.value)} />
+          </label>
+          <br />
+          {requireTotp && totpInput}
+          <button className='w-full primary' disabled={isSubmitting} type='submit'>
+            {isSubmitting ? 'Signing in...' : 'Sign In'}
+          </button>
+        </form>
         <br />
-        <label>
-          Email:
-          <input required type='email' name='email' autoComplete='username' value={email} onChange={(e) => setEmail(e.target.value)} />
-        </label>
+        <div className='flex justify-center'>
+          <GoogleSignInButton onClick={useGoogleSSO} />
+        </div>
         <br />
-        <label>
-          Password:
-          <input required type='password' name='password' autoComplete='current-password' value={password} onChange={(e) => setPassword(e.target.value)} />
-        </label>
-        <br />
-        {requireTotp && totpInput}
-        <button disabled={isSubmitting} type='submit'>Sign In</button>
-        {isSubmitting && <span>Signing in...</span>}
-      </form>
-      <button type='button' onClick={useGoogleSSO}>Sign in with Google</button>
-      <div>
-        <Link to='/sign-up'>Sign up instead</Link>
-        <br />
-        <Link to='/reset-password'>Reset password</Link>
-        <br />
-        <Link to='/'>Home</Link>
+        <div className='flex flex-col'>
+          <Link to='/sign-up'>Sign up instead &rarr;</Link>
+          <Link to='/reset-password'>Reset password &rarr;</Link>
+        </div>
       </div>
     </div>
   )

@@ -3,6 +3,51 @@ import { addTotp, changePassword, getVerifiedEmailStatus, hasTotp, removeTotp, c
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 
+interface ProfileSidebar {
+  label: string,
+  element: JSX.Element,
+}
+
+/**
+ * Display the sidebar in the profile.
+ */
+const ProfileSidebar = ({ onSidebarItemClick }: { onSidebarItemClick: (item: ProfileSidebar) => void }) => {
+  const [indexSelected, setIndexSelected] = useState(-1)
+
+  const items = [
+    { label: 'Home', element: <ProfileHome /> },
+    { label: 'Change password', element: <ChangePasswordForm /> },
+    { label: 'Verify email', element: <VerifyEmail /> },
+    { label: 'Two-factor auth', element: <TotpSection /> },
+    { label: 'Sign out all devices', element: <SignOutAllDevices /> },
+  ]
+
+  const normalButtonClassName = 'bg-gray-200 text-black border-none'
+  const selectedButtonClassName = 'bg-gray-200 text-black border-none font-bold'
+
+  const onSidebarItemClickInternal = (item: ProfileSidebar, index: number) => {
+    setIndexSelected(index)
+    onSidebarItemClick(item)
+  }
+
+
+  return (
+    <div className='bg-gray-200 text-black h-screen w-56 fixed top-14 left-0 p-4'>
+      {/* Sidebar content goes here */}
+      {items.map((item, index) => (
+        <div key={index}>
+          <button
+            className={indexSelected === index ? selectedButtonClassName : normalButtonClassName}
+            onClick={() => onSidebarItemClickInternal(item, index)}>
+            {indexSelected === index && <span>&rarr;&nbsp;</span>}
+            {item.label}
+          </button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 /**
  * Form to change passwords, child component.
  */
@@ -46,31 +91,37 @@ const ChangePasswordForm = () => {
     }
   }
 
+  const onReset = () => {
+    setOldPassword('')
+    setNewPassword('')
+    setConfirmPassword('')
+    setPasswordValidationErrors([])
+  }
+
   return (
     <>
-      <p>
-        Note: Once your password has been changed, you will automatically be signed out.
-        <br />
-        Note: If you signed up with Google, you can set a password by signing out and then using the 'Reset password' feature in the Sign In page.
-      </p>
-
       <form onSubmit={onChangePasswordFormSubmit}>
         <input type='email' name='email' autoComplete='username' style={{ display: 'none' }} />
-        <div>
-          <label htmlFor='oldPassword'>Old password:</label>
+        <label htmlFor='oldPassword' className='flex items-center'>
+          <div className='mr-2 min-w-[140px]'>Old password:</div>
           <input type='password' name='oldPassword' autoComplete='current-password' value={oldPassword} onChange={(event) => setOldPassword(event.target.value)} />
-        </div>
-        <div>
-          <label htmlFor='newPassword'>New password:</label>
-          <input type='password' name='newPassword' autoComplete='new-password' value={newPassword} onChange={(event) => setNewPassword(event.target.value)} />
-        </div>
-        <div>
-          <label htmlFor='confirmPassword'>Confirm password:</label>
-          <input type='password' name='confirmPassword' autoComplete='new-password' value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} />
-        </div>
+        </label>
         <br />
-        <button disabled={changingPassword} type='submit'>Change password</button>
-        {changingPassword && <span>Changing password...</span>}
+        <label htmlFor='newPassword' className='flex items-center'>
+          <div className='mr-2 min-w-[140px]'>New password:</div>
+          <input type='password' name='newPassword' autoComplete='new-password' value={newPassword} onChange={(event) => setNewPassword(event.target.value)} />
+        </label>
+        <br />
+        <label htmlFor='confirmPassword' className='flex items-center'>
+          <div className='mr-2 min-w-[140px]'>Confirm password:</div>
+          <input type='password' name='confirmPassword' autoComplete='new-password' value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} />
+        </label>
+        <br />
+        <button disabled={changingPassword} type='submit'>
+          {changingPassword ? 'Changing password...' : 'Change password'}
+        </button>
+        &nbsp;
+        <button type='button' onClick={onReset}>Reset form</button>
         {passwordValidationErrors.length > 0 && (
           <div>
             <p><b>Issues:</b></p>
@@ -82,6 +133,13 @@ const ChangePasswordForm = () => {
           </div>
         )}
       </form>
+      <br />
+      <div>
+        Note: Once your password has been changed, you will automatically be signed out.
+        <br />
+        <br />
+        Note: If you signed up with Google, you can set a password by signing out and then using the 'Reset password' feature in the Sign In page.
+      </div>
     </>
   )
 }
@@ -373,7 +431,8 @@ const TotpSection = () => {
   return (
     <>
       <p>Two-factor authentication is accomplished with 'Timed One Time Passwords' (TOTP), which can be generated with popular OTP generators like 'Google Authenticator' or 'Authy'.</p>
-      <p>Is TOTP enabled and active? {totpEnabled ? '✅' : '❌'}</p>
+      <br />
+      <p>Is TOTP enabled and active? <b>{totpEnabled ? 'Yes! ✅' : 'No ❌'}</b></p>
       {totpEnabled && !totpAdded && <button disabled={loadingTotp} type='button' onClick={onRemoveTotp}>Remove TOTP</button>}
       {!totpEnabled && !totpAdded && <button disabled={loadingTotp} type='button' onClick={onAddTotp}>Add TOTP</button>}
       {loadingTotp && <span>Updating TOTP settings...</span>}
@@ -382,33 +441,44 @@ const TotpSection = () => {
   )
 }
 
+const ProfileHome = () => {
+  return (
+    <div>
+      Some profile details can go here.
+    </div>
+  )
+}
+
 /**
  * Component: User's profile, parent component
  */
 const Profile = () => {
+  const [elementDisplayed, setElementDisplayed] = useState<JSX.Element | null>(null)
+
+
+  const onSidebarItemClick = (item: ProfileSidebar) => {
+    setElementDisplayed(item.element)
+  }
+
+  const defaultLanding = (
+    <div>You may configure your account by choosing the options in the sidebar.</div>
+  )
 
   return (
-    <>
-      <h2>Profile</h2>
+    <div className='flex'>
 
-      <div>Here you can configure your profile...</div>
+      <ProfileSidebar onSidebarItemClick={onSidebarItemClick} />
 
-      <hr />
-      <h3>Change password</h3>
-      <ChangePasswordForm />
+      <div className='flex-1 p-4 ml-56'>
+        <h1>Profile</h1>
 
-      <hr />
-      <h3>Verify email</h3>
-      <VerifyEmail />
+        <hr />
+        <br />
 
-      <hr />
-      <h3>Two-factor authentication</h3>
-      <TotpSection />
-
-      <hr />
-      <h3>Sign out of all devices</h3>
-      <SignOutAllDevices />
-    </>
+        {elementDisplayed}
+        {!elementDisplayed && defaultLanding}
+      </div>
+    </div>
   )
 }
 
