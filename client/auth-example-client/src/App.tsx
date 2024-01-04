@@ -50,14 +50,16 @@ const Layout = () => {
       setCanRender(true)
     }
     request()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]) // We re-authenticate every time a location/route changes to keep it up-to-date.
 
   const content = (
-    <>
+    <div>
       <Header />
-      <Outlet />
-    </>
+      <div className='mt-16 container-xl mx-auto px-4'>
+        <Outlet />
+      </div>
+    </div>
   )
   const loading = <div>Loading...</div>
   return (

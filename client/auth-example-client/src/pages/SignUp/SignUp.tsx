@@ -1,8 +1,9 @@
 // Import React and required hooks
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { signUp, validateEmailFormat, validateNewPassword } from '../../services/authService'
+import { signUp, useGoogleSSO, validateEmailFormat, validateNewPassword } from '../../services/authService'
 import { useAuth } from '../../contexts/AuthContext'
+import GoogleSignInButton from '../../components/GoogleSignInButton/GoogleSignInButton'
 
 // Define the SignUp component
 const SignUp: React.FC = () => {
@@ -69,65 +70,75 @@ const SignUp: React.FC = () => {
   }
 
   return (
-    <div>
-      <h2>Sign Up</h2>
-      <form onSubmit={handleSubmit}>
+    <div className='container-sm'>
+      <div className='max-w-sm mx-auto border rounded p-4'>
+        <h2 className='text-center'>Sign Up</h2>
+        <form onSubmit={handleSubmit}>
+          <hr />
+          <br />
+          <label className='flex'>
+            <div className='mr-2 min-w-[140px]'>Email:</div>
+            <input
+              type='email'
+              name='email'
+              className='w-full'
+              autoComplete='username'
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </label>
+          <br />
+          <label className='flex'>
+            <div className='mr-2 min-w-[140px]'>Password:</div>
+            <input
+              type='password'
+              name='password'
+              className='w-full'
+              autoComplete='new-password'
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </label>
+          <br />
+          <label className='flex'>
+            <div className='mr-2 min-w-[140px]'>Confirm Password:</div>
+            <input
+              type='password'
+              name='confirmPassword'
+              autoComplete='new-password'
+              className='w-full'
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+          </label>
+          {validationMessages.length > 0 && (
+            <div>
+              <p className='text-red-500'><b>Issues:</b></p>
+              <ul>
+                {validationMessages.map((message, index) => (
+                  <li className='text-red-500' key={index}>{message}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <br />
+          {isSubmitting && <span >Signing up...</span>}
+          <button className='w-full' type='submit'>Sign Up</button>
+          <button className='w-full mt-1' type='button' onClick={resetForm}>Reset</button>
+        </form>
         <br />
-        <label>
-          Email:
-          <input
-            type='email'
-            name='email'
-            autoComplete='username'
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </label>
+        <div className='flex justify-center'>
+          <GoogleSignInButton onClick={useGoogleSSO} />
+        </div>
         <br />
-        <label>
-          Password:
-          <input
-            type='password'
-            name='password'
-            autoComplete='new-password'
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </label>
-        <br />
-        <label>
-          Confirm password:
-          <input
-            type='password'
-            name='confirmPassword'
-            autoComplete='new-password'
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
-        </label>
-        <br />
-        {validationMessages.length > 0 && (
-          <div>
-            <p><b>Issues:</b></p>
-            <ul>
-              {validationMessages.map((message, index) => (
-                <li key={index}>{message}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-        <button type='submit'>SIGN UP</button>
-        <button type='button' onClick={resetForm}>reset</button>
-        {isSubmitting && <span>Signing up...</span>}
-      </form>
-      <div>
-        <Link to='/sign-in'>Sign in instead</Link>
-        <br />
-        <Link to='/'>Home</Link>
+        <Link to='/sign-in'>Sign in instead &rarr;</Link>
+        <div>
+        </div>
       </div>
+
     </div>
   )
 }

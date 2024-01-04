@@ -23,7 +23,7 @@ const Header: React.FC = () => {
     { label: 'Home', to: '/', type: HeaderItemType.all },
     { label: 'Sign in', to: '/sign-in', type: HeaderItemType.unauth },
     { label: 'Sign up', to: '/sign-up', type: HeaderItemType.unauth },
-    { label: '👤 Profile', to: '/profile', type: HeaderItemType.auth },
+    { label: 'Profile', to: '/profile', type: HeaderItemType.auth },
   ].filter(({ type }) => {
     if (type === HeaderItemType.all) return true
     else if (type === HeaderItemType.auth && auth.authenticated) return true
@@ -40,24 +40,20 @@ const Header: React.FC = () => {
     auth.setAuthenticated(false)
   }
 
+  const classNames = {
+    active: 'text-white font-bold',
+    nonactive: 'text-white',
+  }
+
   return (
-    <header className=''>
-      <h1>Auth Example</h1>
-      <nav>
-        <ul className='inline-flex'>
-          {navItems
-            .map(({ to, label }, index) => {
-              return (
-                <li key={index}>
-                  <NavLink to={to}>{label}</NavLink>
-                  {/* <NavLink to={to} className={({ isActive }) => isActive ? 'font-bold underline' : ''}>{label}</NavLink> */}
-                </li>
-              )
-            })}
-          {auth.authenticated && <li><a href='' onClick={onSignOut}>Sign out</a></li>}
-        </ul>
-      </nav>
-      <hr />
+    <header className='bg-gray-800 p-4 fixed w-full top-0 z-10'>
+      <div className='container mx-auto flex items-center justify-between '>
+        <div className='text-white font-bold text-lg'>Auth Example</div>
+        <div className='hidden md:flex space-x-4'>
+          {navItems.map(({ to, label }, index) => <NavLink key={index} to={to} className={({ isActive }) => isActive ? classNames.active : classNames.nonactive}>{label}</NavLink>)}
+          {auth.authenticated && <a className='text-white' href='' onClick={onSignOut}>Sign out</a>}
+        </div>
+      </div>
     </header>
   )
 }
