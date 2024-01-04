@@ -45,8 +45,8 @@ const SignIn = () => {
   const totpInput = (
     <>
       <label className='flex items-center'>
-        <div className='mr-2 min-w-[150px]'>TOTP required:</div>
-        <input required type='text' name='totp' value={totp} onChange={(e) => setTotp(e.target.value)} />
+        <div className='mr-2 min-w-[120px]'>TOTP required:</div>
+        <input required className='w-full' type='text' name='totp' value={totp} onChange={(e) => setTotp(e.target.value)} />
       </label>
       <br />
     </>
@@ -70,7 +70,6 @@ const SignIn = () => {
           </label>
           <br />
           {requireTotp && totpInput}
-          {isSubmitting && <span>Signing in...</span>}
           <button className='w-full primary' disabled={isSubmitting} type='submit'>
             {isSubmitting ? 'Signing in...' : 'Sign In'}
           </button>
