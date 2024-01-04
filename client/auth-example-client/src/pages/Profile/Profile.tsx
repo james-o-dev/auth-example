@@ -112,7 +112,7 @@ const ChangePasswordForm = () => {
         <br />
         <FormInput type='password' name='confirmPassword' autoComplete='new-password' label='Confirm password' value={confirmPassword} setValue={setConfirmPassword} minLabelWidth={minLabelWidth} />
         <br />
-        <FormButton text='Change password' isSubmittingText='Changing password...' isSubmitting={changingPassword} />
+        <FormButton text='Change password' isSubmittingText='Changing password...' isSubmitting={changingPassword} type='submit' />
         &nbsp;
         <button type='button' onClick={onReset}>Reset form</button>
         {passwordValidationErrors.length > 0 && (
@@ -167,9 +167,9 @@ const SignOutAllDevices = () => {
 
   return (
     <>
-      <p>This will sign out of all your devices.</p>
-      <button disabled={signingOut} type='button' onClick={onSignOutAllDevices}>Sign out of all devices</button>
-      {signingOut && <span>Signing out...</span>}
+      <div>This will sign out of all your devices.</div>
+      <br />
+      <FormButton disabled={signingOut} type='button' onClick={onSignOutAllDevices} text='Sign out of all devices' isSubmitting={signingOut} isSubmittingText='Signing out...' />
     </>
   )
 }
@@ -248,14 +248,12 @@ const VerifyEmail = () => {
       <>
         <p>Please verify your email address.</p>
         <form onSubmit={onVerifyEmailFormSubmit}>
-          <button disabled={disableActions} type='button' onClick={onSendVerificationEmail}>Send verification email</button>
-          {sendingVerificationEmail && <span>Sending verification email...</span>}
+          <FormButton disabled={disableActions} onClick={onSendVerificationEmail} text='Send verification email' isSubmitting={sendingVerificationEmail} isSubmittingText='Sending verification email...' />
           <br />
           <br />
           <FormInput type='text' name='email' required value={verificationCode} setValue={setVerificationCode} label='Verification code' />
           <br />
-          <FormButton text='Send verification email' isSubmittingText='Sending...' disabled={disableActions} isSubmitting={sendingVerificationEmail} />
-          {verifying && <span>Verifying...</span>}
+          <FormButton text='Verify email' isSubmittingText='Verifying...' disabled={disableActions} isSubmitting={sendingVerificationEmail} type='submit' />
         </form>
       </>
     )
@@ -267,8 +265,7 @@ const VerifyEmail = () => {
   const alreadyVerified = (
     <>
       <p>Your email has been verified. ✅</p>
-      <button disabled={disableActions} type='button' onClick={onSendVerificationEmail}>Re-verify</button>
-      {sendingVerificationEmail && <span>Sending verification email...</span>}
+      <FormButton disabled={disableActions} onClick={onSendVerificationEmail} text='Re-verify' isSubmitting={sendingVerificationEmail} isSubmittingText='Sending verification email...' />
     </>
   )
 
@@ -414,7 +411,8 @@ const TotpSection = () => {
           You must activate the TOTP by using it below at least once, to ensure it has been set up on your end.
           <br /><strong>Be sure to save/copy the backup codes before activating the TOTP!</strong>
         </div>
-        <button disabled={loadingTotp} type='button' onClick={onActivateTotp}>Activate TOTP</button>
+
+        <FormButton onClick={onActivateTotp} text='Activate TOTP' isSubmitting={loadingTotp} isSubmittingText='Activating...' />
       </div>
     </>
   )
@@ -424,9 +422,8 @@ const TotpSection = () => {
       <p>Two-factor authentication is accomplished with 'Timed One Time Passwords' (TOTP), which can be generated with popular OTP generators like 'Google Authenticator' or 'Authy'.</p>
       <br />
       <p>Is TOTP enabled and active? <b>{totpEnabled ? 'Yes! ✅' : 'No ❌'}</b></p>
-      {totpEnabled && !totpAdded && <button disabled={loadingTotp} type='button' onClick={onRemoveTotp}>Remove TOTP</button>}
-      {!totpEnabled && !totpAdded && <button disabled={loadingTotp} type='button' onClick={onAddTotp}>Add TOTP</button>}
-      {loadingTotp && <span>Updating TOTP settings...</span>}
+      {totpEnabled && !totpAdded && <FormButton isSubmitting={loadingTotp} type='button' onClick={onRemoveTotp} text='Remove TOTP' isSubmittingText='Removing...' />}
+      {!totpEnabled && !totpAdded &&  <FormButton isSubmitting={loadingTotp} type='button' onClick={onAddTotp} text='Add TOTP' isSubmittingText='Adding...' />}
       {qrcode && backup.length && totpAdded && totpContent}
     </>
   )

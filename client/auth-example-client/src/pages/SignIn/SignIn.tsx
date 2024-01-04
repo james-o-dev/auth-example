@@ -65,7 +65,7 @@ const SignIn = () => {
           <FormInput type='password' name='password' autoComplete='current-password' value={password} setValue={setPassword} required={true} label='Password' minLabelWidth={minLabelWidth} />
           <br />
           {requireTotp && totpInput}
-          <FormButton text='Sign In' isSubmittingText='Signing in...' isSubmitting={isSubmitting} fullWidth={true} />
+          <FormButton text='Sign In' isSubmittingText='Signing in...' isSubmitting={isSubmitting} fullWidth={true} type='submit' />
         </form>
         <br />
         <div className='flex justify-center'>

@@ -81,7 +81,7 @@ const ResetPassword = () => {
     <form onSubmit={onRequestSubmit}>
       <FormInput required type='email' name='email' value={email} setValue={setEmail} label='Email' minLabelWidth={requestMinLabelWidth} />
       <br />
-      <FormButton text='Send verification email' isSubmittingText='Sending...' disabled={disableActions} isSubmitting={isSending} fullWidth={true} />
+      <FormButton text='Send verification email' isSubmittingText='Sending...' disabled={disableActions} isSubmitting={isSending} fullWidth={true} type='submit' />
     </form>
   )
 
@@ -93,7 +93,7 @@ const ResetPassword = () => {
       <br />
       <FormInput required type='password' autoComplete='new-password' name='confirmPassword' value={confirmPassword} setValue={setConfirmPassword} label='Confirm password' minLabelWidth={confirmMinLabelWidth} />
       <br />
-      <FormButton text='Change password' isSubmittingText='Changing...' disabled={disableActions} isSubmitting={isChanging} fullWidth={true} />
+      <FormButton text='Change password' isSubmittingText='Changing...' disabled={disableActions} isSubmitting={isChanging} fullWidth={true} type='submit' />
       {passwordValidationErrors.length > 0 && (
         <div>
           <p><b>Issues:</b></p>

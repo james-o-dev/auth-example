@@ -73,7 +73,7 @@ const GoogleSSOCallback = () => {
           <br />
           <FormInput label='TOTP required' name='totp' value={totpInput} setValue={setTotpInput} />
           <br />
-          <FormButton text='Submit TOTP' isSubmittingText='Submitting TOTP...' isSubmitting={isLoading} />
+          <FormButton text='Submit TOTP' isSubmittingText='Submitting TOTP...' isSubmitting={isLoading} type='submit' />
         </form>
       )}
     </>

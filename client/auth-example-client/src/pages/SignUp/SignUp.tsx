@@ -96,7 +96,7 @@ const SignUp: React.FC = () => {
             </div>
           )}
           <br />
-          <FormButton text='Sign Up' isSubmittingText='Signing up...' isSubmitting={isSubmitting} fullWidth={true} />
+          <FormButton text='Sign Up' isSubmittingText='Signing up...' isSubmitting={isSubmitting} fullWidth={true} type='submit' />
           <button className='w-full mt-1' type='button' onClick={resetForm}>Reset Form</button>
         </form>
         <br />
