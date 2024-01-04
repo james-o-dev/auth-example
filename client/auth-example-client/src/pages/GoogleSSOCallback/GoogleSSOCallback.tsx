@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { googleSSOCallback } from '../../services/authService'
 import { useAuth } from '../../contexts/AuthContext'
 import FormInput from '../../components/FormInput/FormInput'
+import FormButton from '../../components/FormButton/FormButton'
 
 const GoogleSSOCallback = () => {
   // Get the current location object
@@ -71,9 +72,8 @@ const GoogleSSOCallback = () => {
         <form onSubmit={signInWithGoogle}>
           <br />
           <FormInput label='TOTP required' name='totp' value={totpInput} setValue={setTotpInput} />
-          <button disabled={isLoading} type='submit'>
-            {isLoading ? 'Submitting TOTP...' : 'Submit TOTP'}
-          </button>
+          <br />
+          <FormButton text='Submit TOTP' isSubmittingText='Submitting TOTP...' isSubmitting={isLoading} />
         </form>
       )}
     </>

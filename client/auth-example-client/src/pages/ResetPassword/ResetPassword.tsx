@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { clearJwt, resetPasswordConfirm, resetPasswordRequest, validateNewPassword } from '../../services/authService'
 import { useAuth } from '../../contexts/AuthContext'
 import FormInput from '../../components/FormInput/FormInput'
+import FormButton from '../../components/FormButton/FormButton'
 
 const ResetPassword = () => {
   const navigate = useNavigate()
@@ -80,9 +81,7 @@ const ResetPassword = () => {
     <form onSubmit={onRequestSubmit}>
       <FormInput required type='email' name='email' value={email} setValue={setEmail} label='Email' minLabelWidth={requestMinLabelWidth} />
       <br />
-      <button className='w-full' disabled={disableActions} type='submit'>
-        {isSending ? 'Sending...' : 'Send verification email'}
-      </button>
+      <FormButton text='Send verification email' isSubmittingText='Sending...' disabled={disableActions} isSubmitting={isSending} fullWidth={true} />
     </form>
   )
 
@@ -94,9 +93,7 @@ const ResetPassword = () => {
       <br />
       <FormInput required type='password' autoComplete='new-password' name='confirmPassword' value={confirmPassword} setValue={setConfirmPassword} label='Confirm password' minLabelWidth={confirmMinLabelWidth} />
       <br />
-      <button className='w-full' disabled={disableActions} type='submit'>
-        {isChanging ? 'Changing...' : 'Change password'}
-      </button>
+      <FormButton text='Change password' isSubmittingText='Changing...' disabled={disableActions} isSubmitting={isChanging} fullWidth={true} />
       {passwordValidationErrors.length > 0 && (
         <div>
           <p><b>Issues:</b></p>

@@ -5,6 +5,7 @@ import { signUp, useGoogleSSO, validateEmailFormat, validateNewPassword } from '
 import { useAuth } from '../../contexts/AuthContext'
 import GoogleSignInButton from '../../components/GoogleSignInButton/GoogleSignInButton'
 import FormInput from '../../components/FormInput/FormInput'
+import FormButton from '../../components/FormButton/FormButton'
 
 // Define the SignUp component
 const SignUp: React.FC = () => {
@@ -95,9 +96,7 @@ const SignUp: React.FC = () => {
             </div>
           )}
           <br />
-          <button disabled={isSubmitting} className='w-full' type='submit'>
-            {isSubmitting ? 'Signing up...' : 'Sign Up'}
-          </button>
+          <FormButton text='Sign Up' isSubmittingText='Signing up...' isSubmitting={isSubmitting} fullWidth={true} />
           <button className='w-full mt-1' type='button' onClick={resetForm}>Reset Form</button>
         </form>
         <br />

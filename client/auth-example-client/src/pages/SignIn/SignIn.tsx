@@ -4,6 +4,7 @@ import { useGoogleSSO, signIn } from '../../services/authService'
 import { useAuth } from '../../contexts/AuthContext'
 import GoogleSignInButton from '../../components/GoogleSignInButton/GoogleSignInButton'
 import FormInput from '../../components/FormInput/FormInput'
+import FormButton from '../../components/FormButton/FormButton'
 
 
 const SignIn = () => {
@@ -64,9 +65,7 @@ const SignIn = () => {
           <FormInput type='password' name='password' autoComplete='current-password' value={password} setValue={setPassword} required={true} label='Password' minLabelWidth={minLabelWidth} />
           <br />
           {requireTotp && totpInput}
-          <button className='w-full primary' disabled={isSubmitting} type='submit'>
-            {isSubmitting ? 'Signing in...' : 'Sign In'}
-          </button>
+          <FormButton text='Sign In' isSubmittingText='Signing in...' isSubmitting={isSubmitting} fullWidth={true} />
         </form>
         <br />
         <div className='flex justify-center'>

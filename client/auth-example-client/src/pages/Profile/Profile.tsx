@@ -3,6 +3,7 @@ import { addTotp, changePassword, getVerifiedEmailStatus, hasTotp, removeTotp, c
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import FormInput from '../../components/FormInput/FormInput'
+import FormButton from '../../components/FormButton/FormButton'
 
 interface ProfileSidebar {
   label: string,
@@ -111,9 +112,7 @@ const ChangePasswordForm = () => {
         <br />
         <FormInput type='password' name='confirmPassword' autoComplete='new-password' label='Confirm password' value={confirmPassword} setValue={setConfirmPassword} minLabelWidth={minLabelWidth} />
         <br />
-        <button disabled={changingPassword} type='submit'>
-          {changingPassword ? 'Changing password...' : 'Change password'}
-        </button>
+        <FormButton text='Change password' isSubmittingText='Changing password...' isSubmitting={changingPassword} />
         &nbsp;
         <button type='button' onClick={onReset}>Reset form</button>
         {passwordValidationErrors.length > 0 && (
@@ -254,7 +253,8 @@ const VerifyEmail = () => {
           <br />
           <br />
           <FormInput type='text' name='email' required value={verificationCode} setValue={setVerificationCode} label='Verification code' />
-          <button disabled={disableActions} type='submit'>Verify email</button>
+          <br />
+          <FormButton text='Send verification email' isSubmittingText='Sending...' disabled={disableActions} isSubmitting={sendingVerificationEmail} />
           {verifying && <span>Verifying...</span>}
         </form>
       </>
