@@ -51,7 +51,7 @@ const Header: React.FC = () => {
         <div className='text-white font-bold text-lg cursor-pointer' onClick={() => navigate('/')}>Auth Example</div>
         <div className='hidden md:flex space-x-4'>
           {navItems.map(({ to, label }, index) => <NavLink key={index} to={to} className={({ isActive }) => isActive ? classNames.active : classNames.nonactive}>{label}</NavLink>)}
-          {auth.authenticated && <a className='text-white' href='' onClick={onSignOut}>Sign out</a>}
+          {auth.authenticated && <a className='text-white' href='#' onClick={onSignOut}>Sign out</a>}
         </div>
       </div>
     </header>
