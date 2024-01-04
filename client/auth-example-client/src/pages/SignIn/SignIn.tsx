@@ -44,7 +44,7 @@ const SignIn = () => {
    */
   const totpInput = (
     <>
-      <label className='flex'>
+      <label className='flex items-center'>
         <div className='mr-2 min-w-[150px]'>TOTP required:</div>
         <input required type='text' name='totp' value={totp} onChange={(e) => setTotp(e.target.value)} />
       </label>
@@ -64,7 +64,7 @@ const SignIn = () => {
             <input className='w-full' required type='email' name='email' autoComplete='username' value={email} onChange={(e) => setEmail(e.target.value)} />
           </label>
           <br />
-          <label className='flex'>
+          <label className='flex items-center'>
             <div className='mr-2 min-w-[70px]'>Password:</div>
             <input className='w-full' required type='password' name='password' autoComplete='current-password' value={password} onChange={(e) => setPassword(e.target.value)} />
           </label>
