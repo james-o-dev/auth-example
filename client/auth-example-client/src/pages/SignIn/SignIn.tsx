@@ -59,7 +59,7 @@ const SignIn = () => {
         <form onSubmit={handleSubmit}>
           <hr />
           <br />
-          <label className='flex'>
+          <label className='flex items-center'>
             <div className='mr-2 min-w-[70px]'>Email:</div>
             <input className='w-full' required type='email' name='email' autoComplete='username' value={email} onChange={(e) => setEmail(e.target.value)} />
           </label>
@@ -71,7 +71,9 @@ const SignIn = () => {
           <br />
           {requireTotp && totpInput}
           {isSubmitting && <span>Signing in...</span>}
-          <button className='w-full primary' disabled={isSubmitting} type='submit'>Sign In</button>
+          <button className='w-full primary' disabled={isSubmitting} type='submit'>
+            {isSubmitting ? 'Signing in...' : 'Sign In'}
+          </button>
         </form>
         <br />
         <div className='flex justify-center'>

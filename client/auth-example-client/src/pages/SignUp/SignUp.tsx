@@ -76,7 +76,7 @@ const SignUp: React.FC = () => {
         <form onSubmit={handleSubmit}>
           <hr />
           <br />
-          <label className='flex'>
+          <label className='flex items-center'>
             <div className='mr-2 min-w-[140px]'>Email:</div>
             <input
               type='email'
@@ -89,7 +89,7 @@ const SignUp: React.FC = () => {
             />
           </label>
           <br />
-          <label className='flex'>
+          <label className='flex items-center'>
             <div className='mr-2 min-w-[140px]'>Password:</div>
             <input
               type='password'
@@ -102,7 +102,7 @@ const SignUp: React.FC = () => {
             />
           </label>
           <br />
-          <label className='flex'>
+          <label className='flex items-center'>
             <div className='mr-2 min-w-[140px]'>Confirm Password:</div>
             <input
               type='password'
@@ -125,9 +125,10 @@ const SignUp: React.FC = () => {
             </div>
           )}
           <br />
-          {isSubmitting && <span >Signing up...</span>}
-          <button className='w-full' type='submit'>Sign Up</button>
-          <button className='w-full mt-1' type='button' onClick={resetForm}>Reset</button>
+          <button disabled={isSubmitting} className='w-full' type='submit'>
+            {isSubmitting ? 'Signing up...' : 'Sign Up'}
+          </button>
+          <button className='w-full mt-1' type='button' onClick={resetForm}>Reset Form</button>
         </form>
         <br />
         <div className='flex justify-center'>
