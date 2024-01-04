@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { addTotp, changePassword, getVerifiedEmailStatus, hasTotp, removeTotp, clearJwt, signOutAllDevices, verifyEmailConfirm, verifyEmailRequest, validateNewPassword, activateTotp } from '../../services/authService'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import FormInput from '../../components/FormInput/FormInput'
 
 interface ProfileSidebar {
   label: string,
@@ -98,24 +99,17 @@ const ChangePasswordForm = () => {
     setPasswordValidationErrors([])
   }
 
+  const minLabelWidth = 'min-w-[140px]'
+
   return (
     <>
       <form onSubmit={onChangePasswordFormSubmit}>
         <input type='email' name='email' autoComplete='username' style={{ display: 'none' }} />
-        <label htmlFor='oldPassword' className='flex items-center'>
-          <div className='mr-2 min-w-[140px]'>Old password:</div>
-          <input type='password' name='oldPassword' autoComplete='current-password' value={oldPassword} onChange={(event) => setOldPassword(event.target.value)} />
-        </label>
+        <FormInput type='password' name='oldPassword' autoComplete='current-password' label='Old password' value={oldPassword} setValue={setOldPassword} minLabelWidth={minLabelWidth} />
         <br />
-        <label htmlFor='newPassword' className='flex items-center'>
-          <div className='mr-2 min-w-[140px]'>New password:</div>
-          <input type='password' name='newPassword' autoComplete='new-password' value={newPassword} onChange={(event) => setNewPassword(event.target.value)} />
-        </label>
+        <FormInput type='password' name='newPassword' autoComplete='new-password' label='New password' value={newPassword} setValue={setNewPassword} minLabelWidth={minLabelWidth} />
         <br />
-        <label htmlFor='confirmPassword' className='flex items-center'>
-          <div className='mr-2 min-w-[140px]'>Confirm password:</div>
-          <input type='password' name='confirmPassword' autoComplete='new-password' value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} />
-        </label>
+        <FormInput type='password' name='confirmPassword' autoComplete='new-password' label='Confirm password' value={confirmPassword} setValue={setConfirmPassword} minLabelWidth={minLabelWidth} />
         <br />
         <button disabled={changingPassword} type='submit'>
           {changingPassword ? 'Changing password...' : 'Change password'}
@@ -259,10 +253,7 @@ const VerifyEmail = () => {
           {sendingVerificationEmail && <span>Sending verification email...</span>}
           <br />
           <br />
-          <label>
-            Verification code:
-            <input type='text' name='email' required value={verificationCode} onChange={e => setVerificationCode(e.target.value)} />
-          </label>
+          <FormInput type='text' name='email' required value={verificationCode} setValue={setVerificationCode} label='Verification code' />
           <button disabled={disableActions} type='submit'>Verify email</button>
           {verifying && <span>Verifying...</span>}
         </form>

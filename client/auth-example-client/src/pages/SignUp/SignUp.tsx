@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { signUp, useGoogleSSO, validateEmailFormat, validateNewPassword } from '../../services/authService'
 import { useAuth } from '../../contexts/AuthContext'
 import GoogleSignInButton from '../../components/GoogleSignInButton/GoogleSignInButton'
+import FormInput from '../../components/FormInput/FormInput'
 
 // Define the SignUp component
 const SignUp: React.FC = () => {
@@ -69,6 +70,8 @@ const SignUp: React.FC = () => {
     setIsSubmitting(false)
   }
 
+  const minLabelWidth = 'min-w-[140px]'
+
   return (
     <div className='container-sm'>
       <div className='max-w-sm mx-auto border rounded p-4'>
@@ -76,44 +79,11 @@ const SignUp: React.FC = () => {
         <form onSubmit={handleSubmit}>
           <hr />
           <br />
-          <label className='flex items-center'>
-            <div className='mr-2 min-w-[140px]'>Email:</div>
-            <input
-              type='email'
-              name='email'
-              className='w-full'
-              autoComplete='username'
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </label>
+          <FormInput type='email' name='email' autoComplete='username' value={email} setValue={setEmail} required={true} label='Email' minLabelWidth={minLabelWidth} />
           <br />
-          <label className='flex items-center'>
-            <div className='mr-2 min-w-[140px]'>Password:</div>
-            <input
-              type='password'
-              name='password'
-              className='w-full'
-              autoComplete='new-password'
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </label>
+          <FormInput type='password' name='password' autoComplete='new-password' value={password} setValue={setPassword} required={true} label='Password' minLabelWidth={minLabelWidth} />
           <br />
-          <label className='flex items-center'>
-            <div className='mr-2 min-w-[140px]'>Confirm Password:</div>
-            <input
-              type='password'
-              name='confirmPassword'
-              autoComplete='new-password'
-              className='w-full'
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-          </label>
+          <FormInput type='password' name='confirmPassword' autoComplete='new-password' value={confirmPassword} setValue={setConfirmPassword} required={true} label='Confirm Password' minLabelWidth={minLabelWidth} />
           {validationMessages.length > 0 && (
             <div>
               <p className='text-red-500'><b>Issues:</b></p>

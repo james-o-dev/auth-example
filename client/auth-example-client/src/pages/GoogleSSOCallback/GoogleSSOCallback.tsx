@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { googleSSOCallback } from '../../services/authService'
 import { useAuth } from '../../contexts/AuthContext'
+import FormInput from '../../components/FormInput/FormInput'
 
 const GoogleSSOCallback = () => {
   // Get the current location object
@@ -70,10 +71,7 @@ const GoogleSSOCallback = () => {
       {totpRequired && (
         <form onSubmit={signInWithGoogle}>
           <br />
-          <label htmlFor='totp' className='flex items-center'>
-            <div className='mr-2 '>TOTP required:</div>
-            <input required type='text' name='totp' value={totpInput} onChange={(e) => setTotpInput(e.target.value)} />
-          </label>
+          <FormInput label='TOTP required' name='totp' value={totpInput} setValue={setTotpInput} />
           <button disabled={isLoading} type='submit'>
             {isLoading ? 'Submitting TOTP...' : 'Submit TOTP'}
           </button>

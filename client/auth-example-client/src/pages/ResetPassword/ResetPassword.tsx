@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { clearJwt, resetPasswordConfirm, resetPasswordRequest, validateNewPassword } from '../../services/authService'
 import { useAuth } from '../../contexts/AuthContext'
+import FormInput from '../../components/FormInput/FormInput'
 
 const ResetPassword = () => {
   const navigate = useNavigate()
@@ -71,12 +72,13 @@ const ResetPassword = () => {
     }
   }
 
+  const requestMinLabelWidth = 'min-w-[60px]'
+  const confirmMinLabelWidth = 'min-w-[140px]'
+
+
   const RequestForm = (
     <form onSubmit={onRequestSubmit}>
-      <label htmlFor='email' className='flex items-center'>
-        <div className='mr-2 min-w-[60px]'>Email:</div>
-        <input required className='w-full' type='email' name='email' value={email} onChange={(e) => setEmail(e.target.value)} />
-      </label>
+      <FormInput required type='email' name='email' value={email} setValue={setEmail} label='Email' minLabelWidth={requestMinLabelWidth} />
       <br />
       <button className='w-full' disabled={disableActions} type='submit'>
         {isSending ? 'Sending...' : 'Send verification email'}
@@ -86,20 +88,11 @@ const ResetPassword = () => {
 
   const ConfirmForm = (
     <form onSubmit={onConfirmSubmit}>
-      <label htmlFor='code' className='flex items-center'>
-        <div className='mr-2 min-w-[140px]'>Verification code:</div>
-        <input required className='w-full' type='text' name='code' value={code} onChange={(e) => setCode(e.target.value)} />
-      </label>
+      <FormInput required name='code' value={code} setValue={setCode} label='Verification code' minLabelWidth={confirmMinLabelWidth} />
       <br />
-      <label htmlFor='newPassword' className='flex items-center'>
-        <div className='mr-2 min-w-[140px]'>New password:</div>
-        <input required className='w-full' type='password' name='newPassword' autoComplete='new-password' value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-      </label>
+      <FormInput required type='password' autoComplete='new-password' name='newPassword' value={newPassword} setValue={setNewPassword} label='New password' minLabelWidth={confirmMinLabelWidth} />
       <br />
-      <label htmlFor='confirmPassword' className='flex items-center'>
-        <div className='mr-2 min-w-[140px]'>Confirm password:</div>
-        <input required className='w-full' type='password' name='confirmPassword' autoComplete='new-password' value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-      </label>
+      <FormInput required type='password' autoComplete='new-password' name='confirmPassword' value={confirmPassword} setValue={setConfirmPassword} label='Confirm password' minLabelWidth={confirmMinLabelWidth} />
       <br />
       <button className='w-full' disabled={disableActions} type='submit'>
         {isChanging ? 'Changing...' : 'Change password'}

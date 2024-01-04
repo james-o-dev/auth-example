@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useGoogleSSO, signIn } from '../../services/authService'
 import { useAuth } from '../../contexts/AuthContext'
 import GoogleSignInButton from '../../components/GoogleSignInButton/GoogleSignInButton'
+import FormInput from '../../components/FormInput/FormInput'
 
 
 const SignIn = () => {
@@ -39,15 +40,14 @@ const SignIn = () => {
     }
   }
 
+  const minLabelWidth = 'min-w-[120px]'
+
   /**
    * Additional input for TOTP.
    */
   const totpInput = (
     <>
-      <label className='flex items-center'>
-        <div className='mr-2 min-w-[120px]'>TOTP required:</div>
-        <input required className='w-full' type='text' name='totp' value={totp} onChange={(e) => setTotp(e.target.value)} />
-      </label>
+      <FormInput name='totp' value={totp} setValue={setTotp} required={true} label='TOTP required' minLabelWidth={minLabelWidth} />
       <br />
     </>
   )
@@ -59,15 +59,9 @@ const SignIn = () => {
         <form onSubmit={handleSubmit}>
           <hr />
           <br />
-          <label className='flex items-center'>
-            <div className='mr-2 min-w-[70px]'>Email:</div>
-            <input className='w-full' required type='email' name='email' autoComplete='username' value={email} onChange={(e) => setEmail(e.target.value)} />
-          </label>
+          <FormInput type='email' name='email' autoComplete='username' value={email} setValue={setEmail} required={true} label='Email' minLabelWidth={minLabelWidth} />
           <br />
-          <label className='flex items-center'>
-            <div className='mr-2 min-w-[70px]'>Password:</div>
-            <input className='w-full' required type='password' name='password' autoComplete='current-password' value={password} onChange={(e) => setPassword(e.target.value)} />
-          </label>
+          <FormInput type='password' name='password' autoComplete='current-password' value={password} setValue={setPassword} required={true} label='Password' minLabelWidth={minLabelWidth} />
           <br />
           {requireTotp && totpInput}
           <button className='w-full primary' disabled={isSubmitting} type='submit'>
