@@ -1,7 +1,7 @@
 // Header.tsx
 
 import React from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { clearJwt } from '../../services/authService'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -18,9 +18,9 @@ enum HeaderItemType {
 
 const Header: React.FC = () => {
   const auth = useAuth()
+  const navigate = useNavigate()
 
   const navItems: HeaderItem[] = [
-    { label: 'Home', to: '/', type: HeaderItemType.all },
     { label: 'Sign in', to: '/sign-in', type: HeaderItemType.unauth },
     { label: 'Sign up', to: '/sign-up', type: HeaderItemType.unauth },
     { label: 'Profile', to: '/profile', type: HeaderItemType.auth },
@@ -48,7 +48,7 @@ const Header: React.FC = () => {
   return (
     <header className='bg-gray-800 p-4 fixed w-full top-0 z-10'>
       <div className='container mx-auto flex items-center justify-between '>
-        <div className='text-white font-bold text-lg'>Auth Example</div>
+        <div className='text-white font-bold text-lg cursor-pointer' onClick={() => navigate('/')}>Auth Example</div>
         <div className='hidden md:flex space-x-4'>
           {navItems.map(({ to, label }, index) => <NavLink key={index} to={to} className={({ isActive }) => isActive ? classNames.active : classNames.nonactive}>{label}</NavLink>)}
           {auth.authenticated && <a className='text-white' href='' onClick={onSignOut}>Sign out</a>}
