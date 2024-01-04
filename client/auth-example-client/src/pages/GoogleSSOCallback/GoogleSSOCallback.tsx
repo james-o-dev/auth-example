@@ -66,13 +66,17 @@ const GoogleSSOCallback = () => {
   return (
     <>
       <p>Signing in with Google...</p>
-      {!isLoading && <Link to='/sign-in'>Sign in again</Link>}
+      {!isLoading && <Link to='/sign-in'>Sign in again &rarr;</Link>}
       {totpRequired && (
         <form onSubmit={signInWithGoogle}>
           <br />
-          <p>TOTP required:</p>
-          <input required type='text' value={totpInput} onChange={(e) => setTotpInput(e.target.value)} />
-          <button type='submit'>Submit TOTP</button>
+          <label htmlFor='totp' className='flex items-center'>
+            <div className='mr-2 '>TOTP required:</div>
+            <input required type='text' name='totp' value={totpInput} onChange={(e) => setTotpInput(e.target.value)} />
+          </label>
+          <button disabled={isLoading} type='submit'>
+            {isLoading ? 'Submitting TOTP...' : 'Submit TOTP'}
+          </button>
         </form>
       )}
     </>
