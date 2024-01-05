@@ -9,7 +9,7 @@ import GoogleSSOCallback from './pages/GoogleSSOCallback/GoogleSSOCallback'
 import Profile from './pages/Profile/Profile'
 import { AuthProvider, RequireAuth } from './providers/AuthProvider'
 import { useAuth } from './contexts/AuthContext'
-import { Suspense, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { isAuthenticated } from './services/authService'
 
 const App = () => {
@@ -62,11 +62,7 @@ const Layout = () => {
     </div>
   )
   const loading = <div>Loading...</div>
-  return (
-    <Suspense fallback={loading}>
-      {canRender && content}
-    </Suspense>
-  )
+  return canRender ? content : loading
 }
 
 export default App
