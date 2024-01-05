@@ -131,14 +131,14 @@ Please change this to the AWS profile name of your choice.
 
 ## Deployment
 
-Once the CDK has been bootstrapped and configured, `cd` to the [`cdk/auth-example-cdk`](./cdk//auth-example-cdk) and run:
+Once the CDK has been bootstrapped and configured, `cd` to the [`cdk/auth-example-cdk`](./cdk//auth-example-cdk) directory and run one of the following:
 
-* `npm run cdk:synth` to do a test run and only generate CloudFormation templates. Useful as a 'dry-run' to catch any CDK configuration mistakes.
+* `npm run cdk:synth` to do a test run and only generate CloudFormation templates. Useful as a 'dry-run' to catch any CDK configuration or coding issues.
 * `npm run cdk:deploy` to deploy the stack.
 
 ## Teardown
 
-When the AWS resources are not longer required, run `npm run cdk:destroy` to run the command to destroy the CDK stack.
+When the AWS resources are no longer required, run `npm run cdk:destroy` to run the command to destroy the CDK stack.
 
 ## Links
 - [AWS CDK Documentation](https://docs.aws.amazon.com/cdk/latest/guide/home.html)
