@@ -16,14 +16,15 @@ Explore and demonstrate authentication in REST APIs using JWT tokens.
 Practice and apply knowledge of React Typescript and TailwindCSS to create an acompanying front-end client to demonstrate the authentication API.
 
 ## Features & Demonstration
+- Full-stack web app using AWS Dynamo DB, AWS API Gateway, Lambda, and React Typescript
+- Access and refresh JWTs
 - Email and password sign-up and sign-in
 - Email verification
-- Access and refresh JWTs
 - Two-factor authentication with Timed One-Time Passwords (TOTP)
 - Reset password and change password
 - Google Single Sign-On
 - Responsive demo client, custom styling with minimal dependencies
-- Full-stack web app using AWS Dynamo DB, AWS API Gateway, Lambda, and React Typescript
+- Client dark/light mode toggle
 - Included API unit tests
 - Detailed documentation
 
