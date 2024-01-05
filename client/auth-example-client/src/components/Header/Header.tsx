@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { clearJwt } from '../../services/authService'
-import { useAuth } from '../../contexts/AuthContext'
+import { useApp } from '../../contexts/AppContext'
 import DropdownMenu from '../DropdownMenu/DropdownMenu'
 import MenuIcon from '../../assets/menu.svg'
 import DarkModeIcon from '../../assets/dark-mode.svg'
@@ -21,7 +21,7 @@ enum HeaderItemType {
 }
 
 const Header: React.FC = () => {
-  const auth = useAuth()
+  const app = useApp()
   const navigate = useNavigate()
   const [dropMenuOpened, setDropMenuOpened] = useState(false)
 
@@ -31,14 +31,14 @@ const Header: React.FC = () => {
     { label: 'Profile', to: '/profile', type: HeaderItemType.auth },
   ].filter(({ type }) => {
     if (type === HeaderItemType.all) return true
-    else if (type === HeaderItemType.auth && auth.authenticated) return true
-    else if (type === HeaderItemType.unauth && !auth.authenticated) return true
+    else if (type === HeaderItemType.auth && app.authenticated) return true
+    else if (type === HeaderItemType.unauth && !app.authenticated) return true
     else return false
   })
 
   // Nav items for the responsive nav menu.
   const navMenuItems = navItems.map(({ to, label }) => ({ value: to, text: label }))
-  if (auth.authenticated) navMenuItems.push({ value: '/sign-out', text: 'Sign out' })
+  if (app.authenticated) navMenuItems.push({ value: '/sign-out', text: 'Sign out' })
 
   /**
    * Sign the user out.
@@ -46,7 +46,7 @@ const Header: React.FC = () => {
   const onSignOut = () => {
     clearJwt()
     // alert('You have been signed out.')
-    auth.setAuthenticated(false)
+    app.setAuthenticated(false)
   }
 
   const navMenuClassName = 'text-white hover:text-sky-700 dark:hover:hover:text-sky-500'
@@ -58,7 +58,7 @@ const Header: React.FC = () => {
   }
 
   const toggleDarkMode = () => {
-    auth.setDarkMode(!auth.darkMode)
+    app.setDarkMode(!app.darkMode)
   }
 
   const darkModeButton = (
@@ -77,12 +77,12 @@ const Header: React.FC = () => {
     <header className='bg-sky-500 dark:bg-sky-900 p-2 fixed w-full top-0 z-10 h-14 items-center mx-auto flex justify-between text-white'>
       <div className='flex gap-4'>
         <div className='font-bold text-lg cursor-pointer' onClick={() => navigate('/')}>Auth Example</div>
-        {!auth.darkMode ? darkModeButton : lightModeButton}
+        {!app.darkMode ? darkModeButton : lightModeButton}
       </div>
 
       <div className='hidden sm:flex space-x-4'>
         {navItems.map(({ to, label }, index) => <NavLink key={index} to={to} className={({ isActive }) => `${navMenuClassName} ${isActive ? navMenuActiveClassName : ''}`}>{label}</NavLink>)}
-        {auth.authenticated && <a className={navMenuClassName} href='#' onClick={onSignOut}>Sign out</a>}
+        {app.authenticated && <a className={navMenuClassName} href='#' onClick={onSignOut}>Sign out</a>}
       </div>
 
       <div className='flex sm:hidden'>

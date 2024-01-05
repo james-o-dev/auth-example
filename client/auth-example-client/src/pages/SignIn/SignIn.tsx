@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useGoogleSSO, signIn } from '../../services/authService'
-import { useAuth } from '../../contexts/AuthContext'
+import { useApp } from '../../contexts/AppContext'
 import GoogleSignInButton from '../../components/GoogleSignInButton/GoogleSignInButton'
 import FormInput from '../../components/FormInput/FormInput'
 import FormButton from '../../components/FormButton/FormButton'
@@ -14,7 +14,7 @@ const SignIn = () => {
   const [totp, setTotp] = useState('')
   const [requireTotp, setRequireTotp] = useState(false)
   const navigate = useNavigate()
-  const auth = useAuth()
+  const app = useApp()
 
   // Handle form submission.
   const handleSubmit = async (event: React.FormEvent) => {
@@ -31,7 +31,7 @@ const SignIn = () => {
         return
       } else {
         // alert(response.message)
-        auth.setAuthenticated(true)
+        app.setAuthenticated(true)
         navigate('/profile')
       }
     } catch (error) {

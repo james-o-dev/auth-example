@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { addTotp, changePassword, getVerifiedEmailStatus, hasTotp, removeTotp, clearJwt, signOutAllDevices, verifyEmailConfirm, verifyEmailRequest, validateNewPassword, activateTotp } from '../../services/authService'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../contexts/AuthContext'
+import { useApp } from '../../contexts/AppContext'
 import FormInput from '../../components/FormInput/FormInput'
 import FormButton from '../../components/FormButton/FormButton'
 
@@ -101,7 +101,7 @@ const ChangePasswordForm = () => {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [changingPassword, setChangingPassword] = useState(false)
   const [passwordValidationErrors, setPasswordValidationErrors] = useState([] as string[])
-  const auth = useAuth()
+  const app = useApp()
 
   /**
    * Change password.
@@ -125,7 +125,7 @@ const ChangePasswordForm = () => {
       await changePassword(oldPassword, newPassword, confirmPassword)
       alert('Password changed successful; You will be signed out shortly.')
       clearJwt()
-      auth.setAuthenticated(false)
+      app.setAuthenticated(false)
       navigate('/sign-in')
     } catch (error) {
       alert((error as Error).message || 'Sign up unsuccessful; Please try again.')
@@ -186,7 +186,7 @@ const ChangePasswordForm = () => {
 const SignOutAllDevices = () => {
   const navigate = useNavigate()
   const [signingOut, setSigningOut] = useState(false)
-  const auth = useAuth()
+  const app = useApp()
 
   /**
    * Make request to sign out of all devices.
@@ -199,7 +199,7 @@ const SignOutAllDevices = () => {
       await signOutAllDevices()
       // alert('Sign out of all devices successfully; You will be redirected shortly')
       clearJwt()
-      auth.setAuthenticated(false)
+      app.setAuthenticated(false)
       navigate('/sign-in')
     } catch (_) {
       alert('Could not complete at this time.')
@@ -337,7 +337,7 @@ const TotpSection = () => {
   const [qrcode, setQrcode] = useState('')
   const [backup, setBackup] = useState([])
   const [toggleTotpContent, setToggleTotpContent] = useState(false)
-  const auth = useAuth()
+  const app = useApp()
 
   useEffect(() => {
     // Check if TOTP is enabled initially.
@@ -423,7 +423,7 @@ const TotpSection = () => {
       setTotpEnabled(true)
       alert('TOTP has been activated; You will now be signed out.')
       clearJwt()
-      auth.setAuthenticated(false)
+      app.setAuthenticated(false)
       navigate('/sign-in')
     } catch (error) {
       alert((error as Error)?.message || 'TOTP could not be activated at this time.')

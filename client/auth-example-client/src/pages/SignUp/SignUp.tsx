@@ -2,7 +2,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { signUp, useGoogleSSO, validateEmailFormat, validateNewPassword } from '../../services/authService'
-import { useAuth } from '../../contexts/AuthContext'
+import { useApp } from '../../contexts/AppContext'
 import GoogleSignInButton from '../../components/GoogleSignInButton/GoogleSignInButton'
 import FormInput from '../../components/FormInput/FormInput'
 import FormButton from '../../components/FormButton/FormButton'
@@ -16,7 +16,7 @@ const SignUp: React.FC = () => {
   const [validationMessages, setValidationMessages] = useState([] as string[])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
-  const auth = useAuth()
+  const app = useApp()
 
   /**
    * Function to handle form submission.
@@ -51,7 +51,7 @@ const SignUp: React.FC = () => {
     try {
       await signUp(email, password, confirmPassword)
       // alert('Sign up successful; You will be redirected shortly.')
-      auth.setAuthenticated(true)
+      app.setAuthenticated(true)
       navigate('/profile')
     } catch (error) {
       alert((error as Error).message || 'Sign up unsuccessful; Please try again.')

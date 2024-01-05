@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { clearJwt, resetPasswordConfirm, resetPasswordRequest, validateNewPassword } from '../../services/authService'
-import { useAuth } from '../../contexts/AuthContext'
+import { useApp } from '../../contexts/AppContext'
 import FormInput from '../../components/FormInput/FormInput'
 import FormButton from '../../components/FormButton/FormButton'
 
@@ -16,7 +16,7 @@ const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordValidationErrors, setPasswordValidationErrors] = useState([] as string[])
-  const auth = useAuth()
+  const app = useApp()
 
   const disableActions = isSending || isChanging
 
@@ -64,7 +64,7 @@ const ResetPassword = () => {
       await resetPasswordConfirm(userId, code, newPassword, confirmPassword)
       alert('Password changed successfully')
       clearJwt()
-      auth.setAuthenticated(false)
+      app.setAuthenticated(false)
       navigate('/sign-in')
     } catch (error) {
       alert(error)

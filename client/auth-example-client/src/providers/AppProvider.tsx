@@ -1,24 +1,24 @@
 import React, { useEffect, useState } from 'react'
 import { useLocation, Navigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { useApp } from '../contexts/AppContext'
 
-interface AuthContextType {
+interface AppContextType {
   authenticated: boolean;
   setAuthenticated: (authenticated: boolean) => void;
   darkMode: boolean;
-  setDarkMode: (authenticated: boolean) => void;
+  setDarkMode: (darkMode: boolean) => void;
 }
 
 /**
  * Provide the auth context for child components.
  */
-export const AuthContext = React.createContext<AuthContextType>(null!)
+export const AppContext = React.createContext<AppContextType>(null!)
 
 /**
  * Provider for the auth context.
  * * Include this at the root level, above the Routes.
  */
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [authenticated, setAuthenticated] = useState(false)
   const [darkMode, setDarkMode] = useState(false)
 
@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }
 
-  return <AuthContext.Provider value={{ authenticated, setAuthenticated, darkMode, setDarkMode: setDarkModeInternal }}>{children}</AuthContext.Provider>
+  return <AppContext.Provider value={{ authenticated, setAuthenticated, darkMode, setDarkMode: setDarkModeInternal }}>{children}</AppContext.Provider>
 }
 
 /**
@@ -51,10 +51,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
  * * If not authenticated, it will redirect to the sign-in page.
  */
 export const RequireAuth = ({ children }: { children: JSX.Element }) => {
-  const auth = useAuth()
+  const app = useApp()
   const location = useLocation()
 
-  if (!auth.authenticated) {
+  if (!app.authenticated) {
     // Redirect them to the /login page, but save the current location they were
     // trying to go to when they were redirected. This allows us to send them
     // along to that page after they login, which is a nicer user experience
