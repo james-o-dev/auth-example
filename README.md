@@ -40,15 +40,16 @@ Practice and apply knowledge of React Typescript and TailwindCSS to create an ac
 
 ## Notable Dependencies
 - [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) and [react-jwt](https://www.npmjs.com/package/react-jwt)
-- [bcrypt](https://www.npmjs.com/package/bcrypt)
+- [bcryptjs](https://www.npmjs.com/package/bcryptjs)
 - [nodemailer](https://nodemailer.com/about/) and [googleapis](https://github.com/googleapis/google-api-nodejs-client)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [ESLint](https://eslint.org/)
+- [time2fa](https://www.npmjs.com/package/time2fa) and [qrcode](https://www.npmjs.com/package/qrcode)
 
 ## Project Structure
-- `aws`: Contains Lambda and CDK
-- `client`: Contains React TS
-- `tests`: Contains tests
+- [`/aws`](./aws/): Contains Lambda and CDK
+- [`/client`](./client/): Contains React TS
+- [`/tests`](./tests/): Contains tests
 
 ## Prerequisites
 - NodeJS v20+
