@@ -30,7 +30,7 @@ const SignIn = () => {
         setRequireTotp(true)
         return
       } else {
-        alert(response.message)
+        // alert(response.message)
         auth.setAuthenticated(true)
         navigate('/profile')
       }

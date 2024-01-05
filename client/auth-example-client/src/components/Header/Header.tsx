@@ -43,7 +43,7 @@ const Header: React.FC = () => {
    */
   const onSignOut = () => {
     clearJwt()
-    alert('You have been signed out.')
+    // alert('You have been signed out.')
     auth.setAuthenticated(false)
   }
 

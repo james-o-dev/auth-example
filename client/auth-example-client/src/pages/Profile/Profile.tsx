@@ -197,7 +197,7 @@ const SignOutAllDevices = () => {
     setSigningOut(true)
     try {
       await signOutAllDevices()
-      alert('Sign out of all devices successfully; You will be redirected shortly')
+      // alert('Sign out of all devices successfully; You will be redirected shortly')
       clearJwt()
       auth.setAuthenticated(false)
       navigate('/sign-in')
@@ -251,8 +251,8 @@ const VerifyEmail = () => {
 
     setVerifying(true)
     try {
-      const verifyEmailConfirmResponse = await verifyEmailConfirm(verificationCode)
-      alert(verifyEmailConfirmResponse)
+      await verifyEmailConfirm(verificationCode)
+      // alert(verifyEmailConfirmResponse)
       setEmailVerified(true)
     } catch (error) {
       alert((error as Error).message || 'Verification unsuccessful; Please try again.')
@@ -275,8 +275,8 @@ const VerifyEmail = () => {
 
     setSendingVerificationEmail(true)
     try {
-      const verifyEmailConfirmResponse = await verifyEmailRequest()
-      alert(verifyEmailConfirmResponse)
+      const verifyEmailSendResponse = await verifyEmailRequest()
+      alert(verifyEmailSendResponse)
       setEmailVerified(false)
     } catch (error) {
       alert((error as Error).message || 'Unable to send verification email; Please try again.')
@@ -359,8 +359,8 @@ const TotpSection = () => {
 
     setLoadingTotp(true)
     try {
-      const message = await removeTotp(code)
-      alert(message)
+      await removeTotp(code)
+      // alert(message)
       setTotpEnabled(false)
     } catch (error) {
       console.error(error)

@@ -50,7 +50,7 @@ const SignUp: React.FC = () => {
     setIsSubmitting(true)
     try {
       await signUp(email, password, confirmPassword)
-      alert('Sign up successful; You will be redirected shortly.')
+      // alert('Sign up successful; You will be redirected shortly.')
       auth.setAuthenticated(true)
       navigate('/profile')
     } catch (error) {

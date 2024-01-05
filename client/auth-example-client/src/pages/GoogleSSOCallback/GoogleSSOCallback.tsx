@@ -48,7 +48,7 @@ const GoogleSSOCallback = () => {
         setSsoToken(response.ssoToken)
         return
       }
-      alert(response.message)
+      // alert(response.message)
       auth.setAuthenticated(true)
       navigate('/profile')
     } catch (error) {
