@@ -52,6 +52,7 @@ The stack is defined in [`./cdk/auth-example-cdk/lib/auth-example-cdk-stack.ts`]
     * See the [AWS docs](https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html) for further information.
 
 ## Authentication Logic Lambda
+Used to handle the main authentication API request logic.
 
 ### Code Location
 Authentication logic Lambda function code is located in [`/lambda/auth-example-lambda`](./lambda/auth-example-lambda).
@@ -62,6 +63,11 @@ The Lambda layer for this function is located in [`/lambda/auth-example-lambda-l
 Lambda dependencies are updated here. Once updated, be sure to `npm install` and then re-deploy the CDK stack again to update.
 
 ## Email Lambda
+Used to handle the asynchronously sending emails to recipients.
+
+Requests to send emails are pushed to an SQS queue, which triggers this Lambda function.
+
+Retries upon errors; Eventually the 'bad' messages gets transferred to a dead-letter SQS queue once a retry limit has been exceeded. These can be manually re-driven at a later time.
 
 ### Code Location
 Email Lambda function code is located in [`/lambda/nodemailer-lambda`](./lambda/nodemailer-lambda).
