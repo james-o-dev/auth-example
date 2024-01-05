@@ -57,7 +57,7 @@ const Header: React.FC = () => {
   }
 
   return (
-    <header className='bg-gray-800 p-4 fixed w-full top-0 z-10 h-14 items-center mx-auto flex justify-between'>
+    <header className='bg-gray-800 p-2 fixed w-full top-0 z-10 h-14 items-center mx-auto flex justify-between'>
       <div className='text-white font-bold text-lg cursor-pointer' onClick={() => navigate('/')}>Auth Example</div>
 
       <div className='hidden sm:flex space-x-4'>
