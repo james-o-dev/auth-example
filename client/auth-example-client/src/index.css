@@ -1,3 +1,50 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Base/initial theme styling. */
+
+/* See https://tailwindcss.com/docs/customizing-colors#default-color-palette */
+
+/* Primary theme: sky-500 */
+/* Primary theme hover: sky-600 */
+
+body {
+  @apply bg-neutral-50
+}
+
+.btn {
+  @apply inline-block p-2 text-center border rounded transition-all duration-200 border-sky-500 hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed
+}
+
+.btn-primary {
+  @apply btn bg-sky-500 text-white hover:bg-sky-600
+}
+
+a {
+  @apply text-sky-500 hover:text-sky-600
+}
+
+ul {
+  @apply list-inside
+}
+
+li {
+  @apply list-disc
+}
+
+input {
+  @apply p-1 bg-white rounded border border-inherit outline-sky-500
+}
+
+h1 {
+  @apply text-2xl
+}
+
+h2 {
+  @apply text-xl
+}
+
+h2 {
+  @apply text-lg
+}

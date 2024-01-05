@@ -26,9 +26,6 @@ const ProfileSidebar = ({ onSidebarItemClick }: { onSidebarItemClick: (item: Pro
     { label: 'Sign out all devices', element: <SignOutAllDevices /> },
   ]
 
-  const normalButtonClassName = 'bg-gray-200 text-black border-none'
-  const selectedButtonClassName = 'bg-gray-200 text-black border-none font-bold'
-
   const onSidebarItemClickInternal = (item: ProfileSidebar, index: number) => {
     setIndexSelected(index)
     onSidebarItemClick(item)
@@ -70,8 +67,8 @@ const ProfileSidebar = ({ onSidebarItemClick }: { onSidebarItemClick: (item: Pro
       {/* Opened */}
       <div className={openedSidebarClassName} ref={sidebarArea}>
         <div className='sm:hidden mb-2'>
-          <button className={normalButtonClassName} onClick={() => setSidebarOpened(false)}>
-            &larr;Collapse
+          <button onClick={() => setSidebarOpened(false)}>
+            <em>&larr;Collapse</em>
           </button>
         </div>
 
@@ -79,7 +76,7 @@ const ProfileSidebar = ({ onSidebarItemClick }: { onSidebarItemClick: (item: Pro
         {items.map((item, index) => (
           <div key={index}>
             <button
-              className={indexSelected === index ? selectedButtonClassName : normalButtonClassName}
+              className={`my-4 ${indexSelected === index ? 'font-bold' : ''}`}
               onClick={() => onSidebarItemClickInternal(item, index)}>
               {indexSelected === index && <span>⚙&nbsp;</span>}
               {item.label}
@@ -155,9 +152,9 @@ const ChangePasswordForm = () => {
         <br />
         <FormInput type='password' name='confirmPassword' autoComplete='new-password' label='Confirm password' value={confirmPassword} setValue={setConfirmPassword} minLabelWidth={minLabelWidth} />
         <br />
-        <FormButton text='Change password' isSubmittingText='Changing password...' isSubmitting={changingPassword} type='submit' />
+        <FormButton text='Change password' isSubmittingText='Changing password...' isSubmitting={changingPassword} type='submit' primary={true} />
         &nbsp;
-        <button type='button' onClick={onReset}>Reset form</button>
+        <button className='btn' type='button' onClick={onReset}>Reset form</button>
         {passwordValidationErrors.length > 0 && (
           <div>
             <p><b>Issues:</b></p>
@@ -214,7 +211,7 @@ const SignOutAllDevices = () => {
       <br />
       <div>This will sign out of all your devices.</div>
       <br />
-      <FormButton disabled={signingOut} type='button' onClick={onSignOutAllDevices} text='Sign out of all devices' isSubmitting={signingOut} isSubmittingText='Signing out...' />
+      <FormButton disabled={signingOut} type='button' onClick={onSignOutAllDevices} text='Sign out of all devices' isSubmitting={signingOut} isSubmittingText='Signing out...' primary={true} />
     </>
   )
 }
@@ -294,12 +291,12 @@ const VerifyEmail = () => {
       <>
         <p>Please verify your email address.</p>
         <form onSubmit={onVerifyEmailFormSubmit}>
-          <FormButton disabled={disableActions} onClick={onSendVerificationEmail} text='Send verification email' isSubmitting={sendingVerificationEmail} isSubmittingText='Sending verification email...' />
+          <FormButton disabled={disableActions} onClick={onSendVerificationEmail} text='Send verification email' isSubmitting={sendingVerificationEmail} isSubmittingText='Sending verification email...' primary={true} />
           <br />
           <br />
           <FormInput type='text' name='email' required value={verificationCode} setValue={setVerificationCode} label='Verification code' />
           <br />
-          <FormButton text='Verify email' isSubmittingText='Verifying...' disabled={disableActions} isSubmitting={sendingVerificationEmail} type='submit' />
+          <FormButton text='Verify email' isSubmittingText='Verifying...' disabled={disableActions} isSubmitting={sendingVerificationEmail} type='submit' primary={true} />
         </form>
       </>
     )
@@ -310,7 +307,7 @@ const VerifyEmail = () => {
   const alreadyVerified = (
     <>
       <p>Your email has been verified. ✅</p>
-      <FormButton disabled={disableActions} onClick={onSendVerificationEmail} text='Re-verify' isSubmitting={sendingVerificationEmail} isSubmittingText='Sending verification email...' />
+      <FormButton disabled={disableActions} onClick={onSendVerificationEmail} text='Re-verify' isSubmitting={sendingVerificationEmail} isSubmittingText='Sending verification email...' primary={true} />
     </>
   )
 
@@ -439,14 +436,14 @@ const TotpSection = () => {
     <>
       <div>
         Click this button to show/hide the TOTP content:&nbsp;
-        <button onClick={() => setToggleTotpContent(val => !val)} type='button'>{toggleTotpContent ? 'Hide' : 'Show'}</button>
+        <button className={toggleTotpContent ? 'btn' : 'btn-primary'} onClick={() => setToggleTotpContent(val => !val)} type='button'>{toggleTotpContent ? 'Hide' : 'Show'}</button>
       </div>
       <br />
       <h3>QR Code</h3>
       <div>
         Scan this with your OTP generator app of choice:
         <br />
-        {toggleTotpContent && totpAdded ? <img src={qrcode} /> : <div><em>**QR CODE HIDDEN**</em></div>}
+        {toggleTotpContent && totpAdded ? <img className='border rounded p-1 bg-white' src={qrcode} /> : <div><em>**QR CODE HIDDEN**</em></div>}
       </div>
       <br />
       <div>
@@ -466,7 +463,7 @@ const TotpSection = () => {
           <br /><strong>Be sure to save/copy the backup codes before activating the TOTP!</strong>
         </div>
 
-        <FormButton onClick={onActivateTotp} text='Activate TOTP' isSubmitting={loadingTotp} isSubmittingText='Activating...' />
+        <FormButton onClick={onActivateTotp} text='Activate TOTP' isSubmitting={loadingTotp} isSubmittingText='Activating...' primary={true} />
       </div>
     </>
   )
@@ -479,8 +476,8 @@ const TotpSection = () => {
       <br />
       <p>TOTP active? <b>{totpEnabled ? 'Yes! ✅' : 'No ❌'}</b></p>
       <br />
-      {totpEnabled && !totpAdded && <FormButton isSubmitting={loadingTotp} type='button' onClick={onRemoveTotp} text='Remove TOTP' isSubmittingText='Removing...' />}
-      {!totpEnabled && !totpAdded && <FormButton isSubmitting={loadingTotp} type='button' onClick={onAddTotp} text='Add TOTP' isSubmittingText='Adding...' />}
+      {totpEnabled && !totpAdded && <FormButton isSubmitting={loadingTotp} type='button' onClick={onRemoveTotp} text='Remove TOTP' isSubmittingText='Removing...'  primary={true}/>}
+      {!totpEnabled && !totpAdded && <FormButton isSubmitting={loadingTotp} type='button' onClick={onAddTotp} text='Add TOTP' isSubmittingText='Adding...'  primary={true}/>}
       {qrcode && backup.length && totpAdded && totpContent}
     </>
   )

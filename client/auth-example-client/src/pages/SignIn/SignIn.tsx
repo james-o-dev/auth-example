@@ -55,7 +55,7 @@ const SignIn = () => {
 
   return (
     <div className='container-sm'>
-      <div className='max-w-sm mx-auto border rounded p-4'>
+      <div className='max-w-sm mx-auto border rounded p-4 bg-neutral-100'>
         <h2 className='text-center'>Sign In</h2>
         <form onSubmit={handleSubmit}>
           <hr />
@@ -65,7 +65,7 @@ const SignIn = () => {
           <FormInput type='password' name='password' autoComplete='current-password' value={password} setValue={setPassword} required={true} label='Password' minLabelWidth={minLabelWidth} />
           <br />
           {requireTotp && totpInput}
-          <FormButton text='Sign In' isSubmittingText='Signing in...' isSubmitting={isSubmitting} fullWidth={true} type='submit' />
+          <FormButton text='Sign In' isSubmittingText='Signing in...' isSubmitting={isSubmitting} fullWidth={true} type='submit' primary={true} />
         </form>
         <br />
         <div className='flex justify-center'>

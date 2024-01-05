@@ -75,7 +75,7 @@ const SignUp: React.FC = () => {
 
   return (
     <div className='container-sm'>
-      <div className='max-w-sm mx-auto border rounded p-4'>
+      <div className='max-w-sm mx-auto border rounded p-4 bg-neutral-100'>
         <h2 className='text-center'>Sign Up</h2>
         <form onSubmit={handleSubmit}>
           <hr />
@@ -96,8 +96,8 @@ const SignUp: React.FC = () => {
             </div>
           )}
           <br />
-          <FormButton text='Sign Up' isSubmittingText='Signing up...' isSubmitting={isSubmitting} fullWidth={true} type='submit' />
-          <button className='w-full mt-1' type='button' onClick={resetForm}>Reset Form</button>
+          <FormButton text='Sign Up' isSubmittingText='Signing up...' isSubmitting={isSubmitting} fullWidth={true} type='submit' primary={true} />
+          <button className='w-full mt-1 btn' type='button' onClick={resetForm}>Reset Form</button>
         </form>
         <br />
         <div className='flex justify-center'>

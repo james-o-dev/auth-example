@@ -47,27 +47,29 @@ const Header: React.FC = () => {
     auth.setAuthenticated(false)
   }
 
-  const classNames = {
-    active: 'text-white font-bold',
-    nonactive: 'text-white',
-  }
+  const navMenuClassName = 'text-white hover:text-sky-700'
+  const navMenuActiveClassName = 'font-bold underline'
+
   const onResponsiveNavMenuClick = (v: string) => {
     if (v === '/sign-out') onSignOut()
     else navigate(v)
   }
 
   return (
-    <header className='bg-gray-800 p-2 fixed w-full top-0 z-10 h-14 items-center mx-auto flex justify-between'>
-      <div className='text-white font-bold text-lg cursor-pointer' onClick={() => navigate('/')}>Auth Example</div>
+    <header className='bg-sky-500 p-2 fixed w-full top-0 z-10 h-14 items-center mx-auto flex justify-between text-white'>
+      <div className='flex gap-4'>
+        <div className='font-bold text-lg cursor-pointer' onClick={() => navigate('/')}>Auth Example</div>
+        {/* <button className='bg-gray-800'>Dark mode</button> */}
+      </div>
 
       <div className='hidden sm:flex space-x-4'>
-        {navItems.map(({ to, label }, index) => <NavLink key={index} to={to} className={({ isActive }) => isActive ? classNames.active : classNames.nonactive}>{label}</NavLink>)}
-        {auth.authenticated && <a className='text-white' href='#' onClick={onSignOut}>Sign out</a>}
+        {navItems.map(({ to, label }, index) => <NavLink key={index} to={to} className={({ isActive }) => `${navMenuClassName} ${isActive ? navMenuActiveClassName : ''}`}>{label}</NavLink>)}
+        {auth.authenticated && <a className={navMenuClassName} href='#' onClick={onSignOut}>Sign out</a>}
       </div>
 
       <div className='flex sm:hidden'>
         <DropdownMenu options={navMenuItems} onSelect={onResponsiveNavMenuClick} opened={dropMenuOpened} setOpened={setDropMenuOpened} rtl={true}>
-          <button onClick={() => setDropMenuOpened(v => !v)}>
+          <button className='bg-white p-1 rounded' onClick={() => setDropMenuOpened(v => !v)}>
             <img src={MenuIcon} alt='Responsive menu' />
           </button>
         </DropdownMenu>
