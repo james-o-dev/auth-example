@@ -227,6 +227,7 @@ const VerifyEmail = () => {
   const [verifying, setVerifying] = useState(false)
   const [sendingVerificationEmail, setSendingVerificationEmail] = useState(false)
   const [verificationCode, setVerificationCode] = useState('')
+  const [initiallyLoaded, setInitiallyLoaded] = useState(false)
 
   const disableActions = verifying || sendingVerificationEmail
 
@@ -235,6 +236,7 @@ const VerifyEmail = () => {
     const request = async () => {
       const emailVerifiedRequest = await getVerifiedEmailStatus()
       setEmailVerified(emailVerifiedRequest)
+      setInitiallyLoaded(true)
     }
     request()
   }, [])
@@ -316,7 +318,7 @@ const VerifyEmail = () => {
     <>
       <h2>Email Verification</h2>
       <br />
-      {emailVerified ? alreadyVerified : verifyEmailForm}
+      {initiallyLoaded && (emailVerified ? alreadyVerified : verifyEmailForm)}
     </>
   )
 }
