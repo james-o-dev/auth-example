@@ -142,6 +142,9 @@ Once the CDK has been bootstrapped and configured, `cd` to the [`cdk/auth-exampl
 * `npm run cdk:synth` to do a test run and only generate CloudFormation templates. Useful as a 'dry-run' to catch any CDK configuration or coding issues.
 * `npm run cdk:deploy` to deploy the stack.
 
+Once deployed, it will print out the following outputs
+* `ApiGatewayUrl` - The host URL of the API Gateway that was deployed.
+
 ## Teardown
 
 When the AWS resources are no longer required, run `npm run cdk:destroy` to run the command to destroy the CDK stack.
