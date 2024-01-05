@@ -6,6 +6,7 @@ import { useApp } from '../../contexts/AppContext'
 import GoogleSignInButton from '../../components/GoogleSignInButton/GoogleSignInButton'
 import FormInput from '../../components/FormInput/FormInput'
 import FormButton from '../../components/FormButton/FormButton'
+import SignInCard from '../../components/SignInCard/SignInCard'
 
 // Define the SignUp component
 const SignUp: React.FC = () => {
@@ -75,11 +76,9 @@ const SignUp: React.FC = () => {
 
   return (
     <div className='container-sm'>
-      <div className='max-w-sm mx-auto border rounded p-4 bg-neutral-100 dark:bg-neutral-600 dark:border-none'>
-        <h2 className='text-center'>Sign Up</h2>
+      <br />
+      <SignInCard title='Sign Up'>
         <form onSubmit={handleSubmit}>
-          <hr />
-          <br />
           <FormInput type='email' name='email' autoComplete='username' value={email} setValue={setEmail} required={true} label='Email' minLabelWidth={minLabelWidth} />
           <br />
           <FormInput type='password' name='password' autoComplete='new-password' value={password} setValue={setPassword} required={true} label='Password' minLabelWidth={minLabelWidth} />
@@ -105,9 +104,7 @@ const SignUp: React.FC = () => {
         </div>
         <br />
         <Link to='/sign-in'>Sign in instead &rarr;</Link>
-        <div>
-        </div>
-      </div>
+      </SignInCard>
 
     </div>
   )

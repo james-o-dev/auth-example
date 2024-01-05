@@ -4,6 +4,7 @@ import { clearJwt, resetPasswordConfirm, resetPasswordRequest, validateNewPasswo
 import { useApp } from '../../contexts/AppContext'
 import FormInput from '../../components/FormInput/FormInput'
 import FormButton from '../../components/FormButton/FormButton'
+import SignInCard from '../../components/SignInCard/SignInCard'
 
 const ResetPassword = () => {
   const navigate = useNavigate()
@@ -109,10 +110,8 @@ const ResetPassword = () => {
 
   return (
     <div className='container-sm'>
-      <div className='max-w-sm mx-auto border rounded p-4 bg-neutral-100 dark:bg-neutral-600 dark:border-none'>
-        <h2 className='text-center'>Reset Password</h2>
-        <hr />
-        <br />
+      <br />
+      <SignInCard title='Reset Password'>
         <p>Enter your email address below to reset your password.</p>
         <br />
         <p>This will send an email to the address containing a verification code. Use this code in conjunction with your new password in order to complete the process.</p>
@@ -121,7 +120,7 @@ const ResetPassword = () => {
         {emailSent && ConfirmForm}
         <br />
         <Link to='/sign-in'>Sign in instead &rarr;</Link>
-      </div>
+      </SignInCard>
     </div>
   )
 }

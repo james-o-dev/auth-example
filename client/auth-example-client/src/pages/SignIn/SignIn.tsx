@@ -5,6 +5,7 @@ import { useApp } from '../../contexts/AppContext'
 import GoogleSignInButton from '../../components/GoogleSignInButton/GoogleSignInButton'
 import FormInput from '../../components/FormInput/FormInput'
 import FormButton from '../../components/FormButton/FormButton'
+import SignInCard from '../../components/SignInCard/SignInCard'
 
 
 const SignIn = () => {
@@ -55,11 +56,9 @@ const SignIn = () => {
 
   return (
     <div className='container-sm'>
-      <div className='max-w-sm mx-auto border rounded p-4 bg-neutral-100 dark:bg-neutral-600 dark:border-none'>
-        <h2 className='text-center'>Sign In</h2>
+      <br />
+      <SignInCard title='Sign In'>
         <form onSubmit={handleSubmit}>
-          <hr />
-          <br />
           <FormInput type='email' name='email' autoComplete='username' value={email} setValue={setEmail} required={true} label='Email' minLabelWidth={minLabelWidth} />
           <br />
           <FormInput type='password' name='password' autoComplete='current-password' value={password} setValue={setPassword} required={true} label='Password' minLabelWidth={minLabelWidth} />
@@ -76,7 +75,7 @@ const SignIn = () => {
           <Link to='/sign-up'>Sign up instead &rarr;</Link>
           <Link to='/reset-password'>Reset password &rarr;</Link>
         </div>
-      </div>
+      </SignInCard>
     </div>
   )
 }
