@@ -49,7 +49,7 @@ const Header: React.FC = () => {
     app.setAuthenticated(false)
   }
 
-  const navMenuClassName = 'text-white hover:text-sky-700 dark:hover:hover:text-sky-500'
+  const navMenuClassName = 'text-white hover:text-sky-600 dark:hover:text-sky-500'
   const navMenuActiveClassName = 'font-bold underline'
 
   const onResponsiveNavMenuClick = (v: string) => {
@@ -74,7 +74,7 @@ const Header: React.FC = () => {
   )
 
   return (
-    <header className='bg-sky-500 dark:bg-sky-900 p-2 fixed w-full top-0 z-10 h-14 items-center mx-auto flex justify-between text-white'>
+    <header className='bg-sky-500 dark:bg-sky-600 p-2 fixed w-full top-0 z-10 h-14 items-center mx-auto flex justify-between text-white'>
       <div className='flex gap-4'>
         <div className='font-bold text-lg cursor-pointer' onClick={() => navigate('/')}>Auth Example</div>
         {!app.darkMode ? darkModeButton : lightModeButton}
