@@ -32,8 +32,11 @@ const ProfileSidebar = ({ onSidebarItemClick }: { onSidebarItemClick: (item: Pro
     setSidebarOpened(false)
   }
 
+  const sidebarSharedClassName = 'fixed bg-neutral-200 dark:bg-neutral-400 text-black h-screen left-0'
+
   const openedSidebarClassName = [
-    'sm:block bg-gray-200 text-black h-screen w-52 fixed top-14 left-0 p-2',
+    'sm:block w-52 top-14 p-2',
+    sidebarSharedClassName,
     sidebarOpened ? 'block' : 'hidden',
   ].join(' ')
 
@@ -60,7 +63,7 @@ const ProfileSidebar = ({ onSidebarItemClick }: { onSidebarItemClick: (item: Pro
   return (
     <>
       {/* Responsive */}
-      <div className='sm:hidden bg-gray-200 text-black h-screen w-8 fixed top-14 left-0 text-center' onClick={() => setSidebarOpened(true)}>
+      <div className={`${sidebarSharedClassName} sm:hidden left-0 w-8 top-14 pt-2 text-center`} onClick={() => setSidebarOpened(true)}>
         <span>⚙</span>
       </div>
 

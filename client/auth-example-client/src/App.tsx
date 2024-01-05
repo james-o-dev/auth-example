@@ -54,10 +54,12 @@ const Layout = () => {
   }, [location]) // We re-authenticate every time a location/route changes to keep it up-to-date.
 
   const content = (
-    <div>
-      <Header />
-      <div className='mt-14 container-xl mx-auto px-4'>
-        <Outlet />
+    <div className={auth.darkMode ? 'dark' : ''}>
+      <div className='content'>
+        <Header />
+        <div className='mt-14 container-xl mx-auto px-4'>
+          <Outlet />
+        </div>
       </div>
     </div>
   )

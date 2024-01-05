@@ -6,7 +6,9 @@
 export default {
   content: [
     './src/**/*.tsx',
+    './src/**/*.css',
   ],
+  darkMode: 'class',
   theme: {
     extend: {},
   },

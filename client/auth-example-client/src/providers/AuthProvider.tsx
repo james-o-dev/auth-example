@@ -1,10 +1,12 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useLocation, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 interface AuthContextType {
   authenticated: boolean;
   setAuthenticated: (authenticated: boolean) => void;
+  darkMode: boolean;
+  setDarkMode: (authenticated: boolean) => void;
 }
 
 /**
@@ -18,8 +20,30 @@ export const AuthContext = React.createContext<AuthContextType>(null!)
  */
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [authenticated, setAuthenticated] = useState(false)
+  const [darkMode, setDarkMode] = useState(false)
 
-  return <AuthContext.Provider value={{ authenticated, setAuthenticated }}>{children}</AuthContext.Provider>
+  useEffect(() => {
+    const storedDarkMode = JSON.parse(localStorage.getItem('darkMode') || 'false')
+    if (storedDarkMode || (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      setDarkMode(true)
+    } else {
+      setDarkMode(false)
+    }
+  }, [])
+
+  /**
+   * Additional logic to store dark mode in browser storage.
+   */
+  const setDarkModeInternal = (darkMode: boolean) => {
+    setDarkMode(darkMode)
+    if (darkMode) {
+      localStorage.setItem('darkMode', 'true')
+    } else {
+      localStorage.removeItem('darkMode')
+    }
+  }
+
+  return <AuthContext.Provider value={{ authenticated, setAuthenticated, darkMode, setDarkMode: setDarkModeInternal }}>{children}</AuthContext.Provider>
 }
 
 /**

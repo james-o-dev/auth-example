@@ -55,7 +55,7 @@ const SignIn = () => {
 
   return (
     <div className='container-sm'>
-      <div className='max-w-sm mx-auto border rounded p-4 bg-neutral-100'>
+      <div className='max-w-sm mx-auto border rounded p-4 bg-neutral-100 dark:bg-neutral-600 dark:border-none'>
         <h2 className='text-center'>Sign In</h2>
         <form onSubmit={handleSubmit}>
           <hr />

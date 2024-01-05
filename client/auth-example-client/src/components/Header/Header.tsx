@@ -6,6 +6,8 @@ import { clearJwt } from '../../services/authService'
 import { useAuth } from '../../contexts/AuthContext'
 import DropdownMenu from '../DropdownMenu/DropdownMenu'
 import MenuIcon from '../../assets/menu.svg'
+import DarkModeIcon from '../../assets/dark-mode.svg'
+import LightModeIcon from '../../assets/light-mode.svg'
 
 interface HeaderItem {
   to: string,
@@ -47,7 +49,7 @@ const Header: React.FC = () => {
     auth.setAuthenticated(false)
   }
 
-  const navMenuClassName = 'text-white hover:text-sky-700'
+  const navMenuClassName = 'text-white hover:text-sky-700 dark:hover:hover:text-sky-500'
   const navMenuActiveClassName = 'font-bold underline'
 
   const onResponsiveNavMenuClick = (v: string) => {
@@ -55,11 +57,27 @@ const Header: React.FC = () => {
     else navigate(v)
   }
 
+  const toggleDarkMode = () => {
+    auth.setDarkMode(!auth.darkMode)
+  }
+
+  const darkModeButton = (
+    <button className='rounded-full p-1 bg-neutral-500' title='Enable Dark Mode' onClick={toggleDarkMode}>
+      <img src={DarkModeIcon} alt='Dark mode' />
+    </button>
+  )
+
+  const lightModeButton = (
+    <button className='rounded-full p-1 bg-white' title='Enable Light Mode' onClick={toggleDarkMode}>
+      <img src={LightModeIcon} alt='Light mode' />
+    </button>
+  )
+
   return (
-    <header className='bg-sky-500 p-2 fixed w-full top-0 z-10 h-14 items-center mx-auto flex justify-between text-white'>
+    <header className='bg-sky-500 dark:bg-sky-900 p-2 fixed w-full top-0 z-10 h-14 items-center mx-auto flex justify-between text-white'>
       <div className='flex gap-4'>
         <div className='font-bold text-lg cursor-pointer' onClick={() => navigate('/')}>Auth Example</div>
-        {/* <button className='bg-gray-800'>Dark mode</button> */}
+        {!auth.darkMode ? darkModeButton : lightModeButton}
       </div>
 
       <div className='hidden sm:flex space-x-4'>
