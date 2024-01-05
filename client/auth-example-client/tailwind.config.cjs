@@ -27,7 +27,7 @@ export default {
         },
         button: {
           display: 'inline-block',
-          padding: '4px',
+          padding: '2px',
           // fontSize: '16px',
           textAlign: 'center',
           textDecoration: 'none',

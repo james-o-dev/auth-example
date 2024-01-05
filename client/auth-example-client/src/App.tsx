@@ -56,7 +56,7 @@ const Layout = () => {
   const content = (
     <div>
       <Header />
-      <div className='mt-16 container-xl mx-auto px-4'>
+      <div className='mt-14 container-xl mx-auto px-4'>
         <Outlet />
       </div>
     </div>
