@@ -288,8 +288,7 @@ const VerifyEmail = () => {
   /**
    * Verify email form.
    */
-  const verifyEmailForm = () => {
-    return (
+  const verifyEmailForm = (
       <>
         <p>Please verify your email address.</p>
         <form onSubmit={onVerifyEmailFormSubmit}>
@@ -302,7 +301,6 @@ const VerifyEmail = () => {
         </form>
       </>
     )
-  }
 
   /**
    * Display if already verified.
