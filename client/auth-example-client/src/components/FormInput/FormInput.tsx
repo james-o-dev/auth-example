@@ -18,17 +18,17 @@ export interface FormInputProps {
 const FormInput = ({ value, setValue, required, type, name, autoComplete, minLabelWidth, label }: FormInputProps) => {
 
   const labelClassName = [
-    'mr-1 text-right',
+    'mr-1 sm:text-right',
     minLabelWidth,
   ].join(' ')
 
   const inputClassName = [
     'w-full',
-    'max-w-64',
+    'sm:max-w-64',
   ].join(' ')
 
   return (
-    <label className='flex items-center' htmlFor={name}>
+    <label className='flex-col sm:flex-row flex sm:items-center' htmlFor={name}>
       <div className={labelClassName}>{label}</div>
       <input
         className={inputClassName}

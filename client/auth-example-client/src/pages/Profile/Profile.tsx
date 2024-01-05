@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { addTotp, changePassword, getVerifiedEmailStatus, hasTotp, removeTotp, clearJwt, signOutAllDevices, verifyEmailConfirm, verifyEmailRequest, validateNewPassword, activateTotp } from '../../services/authService'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
@@ -15,9 +15,11 @@ interface ProfileSidebar {
  */
 const ProfileSidebar = ({ onSidebarItemClick }: { onSidebarItemClick: (item: ProfileSidebar) => void }) => {
   const [indexSelected, setIndexSelected] = useState(0)
+  const [sidebarOpened, setSidebarOpened] = useState(false)
+  const sidebarArea = useRef(null)
 
   const items = [
-    { label: 'Home', element: <ProfileHome /> },
+    { label: 'Dashboard', element: <ProfileDash /> },
     { label: 'Change password', element: <ChangePasswordForm /> },
     { label: 'Verify email', element: <VerifyEmail /> },
     { label: 'Two-factor auth', element: <TotpSection /> },
@@ -30,23 +32,62 @@ const ProfileSidebar = ({ onSidebarItemClick }: { onSidebarItemClick: (item: Pro
   const onSidebarItemClickInternal = (item: ProfileSidebar, index: number) => {
     setIndexSelected(index)
     onSidebarItemClick(item)
+    setSidebarOpened(false)
   }
 
+  const openedSidebarClassName = [
+    'sm:block bg-gray-200 text-black h-screen w-52 fixed top-14 left-0 p-2',
+    sidebarOpened ? 'block' : 'hidden',
+  ].join(' ')
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleOutsideClick)
+    document.addEventListener('keydown', handleEscKeypress)
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick)
+      document.removeEventListener('keydown', handleEscKeypress)
+    }
+  })
+
+  const handleOutsideClick = (e: MouseEvent) => {
+    if (sidebarOpened && sidebarArea.current && !(sidebarArea.current as HTMLDivElement).contains(e.target as Node)) {
+      setSidebarOpened(false)
+    }
+  }
+
+  const handleEscKeypress = (e: KeyboardEvent) => {
+    if (sidebarOpened && e.key === 'Escape') setSidebarOpened(false)
+  }
 
   return (
-    <div className='bg-gray-200 text-black h-screen w-56 fixed top-14 left-0 p-4'>
-      {/* Sidebar content goes here */}
-      {items.map((item, index) => (
-        <div key={index}>
-          <button
-            className={indexSelected === index ? selectedButtonClassName : normalButtonClassName}
-            onClick={() => onSidebarItemClickInternal(item, index)}>
-            {indexSelected === index && <span>&rarr;&nbsp;</span>}
-            {item.label}
+    <>
+      {/* Responsive */}
+      <div className='sm:hidden bg-gray-200 text-black h-screen w-8 fixed top-14 left-0 text-center' onClick={() => setSidebarOpened(true)}>
+        <span>⚙</span>
+      </div>
+
+      {/* Opened */}
+      <div className={openedSidebarClassName} ref={sidebarArea}>
+        <div className='sm:hidden mb-2'>
+          <button className={normalButtonClassName} onClick={() => setSidebarOpened(false)}>
+            &larr;Collapse
           </button>
         </div>
-      ))}
-    </div>
+
+        {/* Sidebar content goes here */}
+        {items.map((item, index) => (
+          <div key={index}>
+            <button
+              className={indexSelected === index ? selectedButtonClassName : normalButtonClassName}
+              onClick={() => onSidebarItemClickInternal(item, index)}>
+              {indexSelected === index && <span>⚙&nbsp;</span>}
+              {item.label}
+            </button>
+          </div>
+        ))}
+      </div>
+    </>
   )
 }
 
@@ -104,6 +145,8 @@ const ChangePasswordForm = () => {
 
   return (
     <>
+      <h2>Change Password</h2>
+      <br />
       <form onSubmit={onChangePasswordFormSubmit}>
         <input type='email' name='email' autoComplete='username' style={{ display: 'none' }} />
         <FormInput type='password' name='oldPassword' autoComplete='current-password' label='Old password' value={oldPassword} setValue={setOldPassword} minLabelWidth={minLabelWidth} />
@@ -167,6 +210,8 @@ const SignOutAllDevices = () => {
 
   return (
     <>
+      <h2>Sign Out All Devices</h2>
+      <br />
       <div>This will sign out of all your devices.</div>
       <br />
       <FormButton disabled={signingOut} type='button' onClick={onSignOutAllDevices} text='Sign out of all devices' isSubmitting={signingOut} isSubmittingText='Signing out...' />
@@ -243,8 +288,7 @@ const VerifyEmail = () => {
   /**
    * Verify email form.
    */
-  const verifyEmailForm = () => {
-    return (
+  const verifyEmailForm = (
       <>
         <p>Please verify your email address.</p>
         <form onSubmit={onVerifyEmailFormSubmit}>
@@ -257,7 +301,6 @@ const VerifyEmail = () => {
         </form>
       </>
     )
-  }
 
   /**
    * Display if already verified.
@@ -269,7 +312,13 @@ const VerifyEmail = () => {
     </>
   )
 
-  return emailVerified ? alreadyVerified : verifyEmailForm()
+  return (
+    <>
+      <h2>Email Verification</h2>
+      <br />
+      {emailVerified ? alreadyVerified : verifyEmailForm}
+    </>
+  )
 }
 
 /**
@@ -386,16 +435,18 @@ const TotpSection = () => {
    */
   const totpContent = (
     <>
-      <p>
-        Click this button to show/hide the TOTP content:
+      <div>
+        Click this button to show/hide the TOTP content:&nbsp;
         <button onClick={() => setToggleTotpContent(val => !val)} type='button'>{toggleTotpContent ? 'Hide' : 'Show'}</button>
-      </p>
+      </div>
+      <br />
       <h3>QR Code</h3>
       <div>
         Scan this with your OTP generator app of choice:
         <br />
         {toggleTotpContent && totpAdded ? <img src={qrcode} /> : <div><em>**QR CODE HIDDEN**</em></div>}
       </div>
+      <br />
       <div>
         <h3>Backup codes x10</h3>
         <div>
@@ -405,6 +456,7 @@ const TotpSection = () => {
           <br />If you are running out of backup codes, you must remove the TOTP and then re-add it again.
         </div>
       </div>
+      <br />
       <div>
         <h3>Confirm</h3>
         <div>
@@ -419,21 +471,28 @@ const TotpSection = () => {
 
   return (
     <>
+      <h2>Two-factor Authentication</h2>
+      <br />
       <p>Two-factor authentication is accomplished with 'Timed One Time Passwords' (TOTP), which can be generated with popular OTP generators like 'Google Authenticator' or 'Authy'.</p>
       <br />
-      <p>Is TOTP enabled and active? <b>{totpEnabled ? 'Yes! ✅' : 'No ❌'}</b></p>
+      <p>TOTP active? <b>{totpEnabled ? 'Yes! ✅' : 'No ❌'}</b></p>
+      <br />
       {totpEnabled && !totpAdded && <FormButton isSubmitting={loadingTotp} type='button' onClick={onRemoveTotp} text='Remove TOTP' isSubmittingText='Removing...' />}
-      {!totpEnabled && !totpAdded &&  <FormButton isSubmitting={loadingTotp} type='button' onClick={onAddTotp} text='Add TOTP' isSubmittingText='Adding...' />}
+      {!totpEnabled && !totpAdded && <FormButton isSubmitting={loadingTotp} type='button' onClick={onAddTotp} text='Add TOTP' isSubmittingText='Adding...' />}
       {qrcode && backup.length && totpAdded && totpContent}
     </>
   )
 }
 
-const ProfileHome = () => {
+const ProfileDash = () => {
   return (
-    <div>
-      Some profile details can go here.
-    </div>
+    <>
+      <h2>Dashboard</h2>
+      <br />
+      <div>
+        Some profile details can go here.
+      </div>
+    </>
   )
 }
 
@@ -441,7 +500,7 @@ const ProfileHome = () => {
  * Component: User's profile, parent component
  */
 const Profile = () => {
-  const [elementDisplayed, setElementDisplayed] = useState<JSX.Element | null>(<ProfileHome />)
+  const [elementDisplayed, setElementDisplayed] = useState<JSX.Element | null>(<ProfileDash />)
 
 
   const onSidebarItemClick = (item: ProfileSidebar) => {
@@ -457,7 +516,7 @@ const Profile = () => {
 
       <ProfileSidebar onSidebarItemClick={onSidebarItemClick} />
 
-      <div className='flex-1 p-4 ml-56'>
+      <div className='flex-1 p-4 ml-4 sm:ml-52'>
         <h1>Profile</h1>
 
         <hr />
