@@ -435,16 +435,18 @@ const TotpSection = () => {
    */
   const totpContent = (
     <>
-      <p>
-        Click this button to show/hide the TOTP content:
+      <div>
+        Click this button to show/hide the TOTP content:&nbsp;
         <button onClick={() => setToggleTotpContent(val => !val)} type='button'>{toggleTotpContent ? 'Hide' : 'Show'}</button>
-      </p>
+      </div>
+      <br />
       <h3>QR Code</h3>
       <div>
         Scan this with your OTP generator app of choice:
         <br />
         {toggleTotpContent && totpAdded ? <img src={qrcode} /> : <div><em>**QR CODE HIDDEN**</em></div>}
       </div>
+      <br />
       <div>
         <h3>Backup codes x10</h3>
         <div>
@@ -454,6 +456,7 @@ const TotpSection = () => {
           <br />If you are running out of backup codes, you must remove the TOTP and then re-add it again.
         </div>
       </div>
+      <br />
       <div>
         <h3>Confirm</h3>
         <div>
@@ -472,7 +475,8 @@ const TotpSection = () => {
       <br />
       <p>Two-factor authentication is accomplished with 'Timed One Time Passwords' (TOTP), which can be generated with popular OTP generators like 'Google Authenticator' or 'Authy'.</p>
       <br />
-      <p>Is TOTP enabled and active? <b>{totpEnabled ? 'Yes! ✅' : 'No ❌'}</b></p>
+      <p>TOTP active? <b>{totpEnabled ? 'Yes! ✅' : 'No ❌'}</b></p>
+      <br />
       {totpEnabled && !totpAdded && <FormButton isSubmitting={loadingTotp} type='button' onClick={onRemoveTotp} text='Remove TOTP' isSubmittingText='Removing...' />}
       {!totpEnabled && !totpAdded && <FormButton isSubmitting={loadingTotp} type='button' onClick={onAddTotp} text='Add TOTP' isSubmittingText='Adding...' />}
       {qrcode && backup.length && totpAdded && totpContent}
