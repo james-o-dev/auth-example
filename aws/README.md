@@ -92,11 +92,13 @@ Note down the `client id`, `client secret` and `refresh token` for the [environm
 5. Follow the remaining instructions until the OAuth consent screen is updated.
 6. Open `APIs and services` > `Credentials` > `+ Create Credentials` > `OAuth client ID`.
 7. Choose the `Web application` type.
-8. Add the localhost of the hosted client here; It can be updated later.
-9. Add `(localhost)/google-sso` here, where (localhost) is the hosted client; It can be updated later.
+8. Add the domains of the hosted clients here; They can be updated later.
+9. Add `(domain)/google-sso` for each hosted client here, where (domain) is the hosted client; It can be updated later.
 
 Once done you can submit this and a client id and secret should be available to you.
 Note down the `client id` and `client secret` for the [environment configuration](#configuration).
+
+Remember that if more client domains are added, they should also be added in both `Authorised JavaScript origins`(step 8) and `Authorised redirect URIs`(step 9).
 
 ## Configuration
 
