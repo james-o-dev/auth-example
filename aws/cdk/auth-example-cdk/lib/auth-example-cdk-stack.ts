@@ -177,6 +177,7 @@ export class AuthExampleCdkStack extends Stack {
         USERS_TABLE_NAME,
       },
       functionUrlCors,
+      reservedConcurrentExecutions: 2,
     })
 
     // Create DynamoDB.
@@ -357,6 +358,7 @@ export class AuthExampleCdkStack extends Stack {
         GMAIL_USER_EMAIL,
         NODEMAILER_SQS: nodemailerSQS.queueUrl,
       },
+      reservedConcurrentExecutions: 1,
     })
     nodemailerSQS.grantConsumeMessages(nodemailerLambda)
 
@@ -374,8 +376,15 @@ export class AuthExampleCdkStack extends Stack {
     { functionName, isPublic }:
       { functionName: string, isPublic: boolean },
     // Optional params.
-    { layers, environment, description, timeout, functionUrlCors }:
-      { layers?: LayerVersion[], environment?: { [key: string]: string }, description?: string, timeout?: Duration, functionUrlCors?: FunctionUrlCorsOptions },
+    { layers, environment, description, timeout, functionUrlCors, reservedConcurrentExecutions }:
+      {
+        layers?: LayerVersion[],
+        environment?: { [key: string]: string },
+        description?: string,
+        timeout?: Duration,
+        functionUrlCors?: FunctionUrlCorsOptions,
+        reservedConcurrentExecutions?: number
+      },
   ) {
     // Create Lambda.
     const lambda = new Function(this, functionName, {
@@ -384,6 +393,7 @@ export class AuthExampleCdkStack extends Stack {
       runtime: Runtime.NODEJS_20_X,
       architecture: Architecture.ARM_64,
       handler: 'index.handler',
+      reservedConcurrentExecutions,
       code: Code.fromAsset(`../../lambda/${functionName}`),
       timeout: timeout || Duration.seconds(29),
       memorySize: 256,
