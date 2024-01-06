@@ -1,4 +1,4 @@
-import { addClientHostToCors, buildLambdaResponse, buildValidationError, generateRandomString } from './lib/common.mjs'
+import { buildLambdaResponse, buildValidationError, generateRandomString, lambdaRespond } from './lib/common.mjs'
 import { batchDeleteCommand, getCommand, putCommand, queryCommand, scanCommand, updateCommand } from './lib/dynamodb.mjs'
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs'
 const sqsClient = new SQSClient({})
@@ -27,6 +27,8 @@ const GOOGLE_SSO_CLIENT_ID = process.env.GOOGLE_SSO_CLIENT_ID
 if (!GOOGLE_SSO_CLIENT_ID) throw new Error('Missing GOOGLE_SSO_CLIENT_ID environment variable')
 const GOOGLE_SSO_CLIENT_SECRET = process.env.GOOGLE_SSO_CLIENT_SECRET
 if (!GOOGLE_SSO_CLIENT_SECRET) throw new Error('Missing GOOGLE_SSO_CLIENT_SECRET environment variable')
+const DEV_CLIENT_HOST = process.env.DEV_CLIENT_HOST
+if (!DEV_CLIENT_HOST) throw new Error('DEV_CLIENT_HOST environment variable is not set')
 
 const ACCESS_TOKEN_EXPIRY = '10m'
 const REFRESH_TOKEN_EXPIRY = '7d'
@@ -164,7 +166,6 @@ const throwInvalidTotp = () => {
 /**
  * Helper: Do sign in validation.
  * * Throws a 400 error if they are invalid.
- * * TODO: Replace with API Gateway validation
  *
  * @param {*} reqBody
  */
@@ -179,7 +180,6 @@ const signInValidation = (reqBody) => {
 /**
  * Helper: Do sign up validation.
  * * Throws a 400 error if they are invalid.
- * * TODO: Replace with API Gateway validation
  *
  * @param {*} reqBody
  */
@@ -198,7 +198,7 @@ const signUpValidation = (reqBody) => {
  * @param {*} reqHeaders
  */
 const getAuthHeaderToken = (reqHeaders) => {
-  const authHeader = reqHeaders.Authorization
+  const authHeader = reqHeaders.Authorization || reqHeaders.authorization
   if (!authHeader) return null
 
   const incomingToken = authHeader.split(' ')[1]
@@ -951,22 +951,20 @@ const updateTestUser = async (email, userId, reqBody) => {
 
 // index.js
 export const handler = async (event) => {
-  const reqMethod = event.httpMethod
-  const reqPath = event.path
-  const reqResourcePath = event.requestContext.resourcePath
-  const reqPathParameters = event.pathParameters
+  // Get attributes of the request.
+  const reqBody = JSON.parse(event.body || null)
+  const reqMethod = event.httpMethod || event.requestContext.http.method
+  const reqPath = event.requestContext.resourcePath || event.requestContext.http.path
+  const reqPathParameters = event.pathParameters // Note: Only available when using API Gateway.
   const reqQueryStringParameters = event.queryStringParameters
   const reqHeaders = event.headers
-  const stageVariables = event.stageVariables // Stage variables are set in the API Gateway stages.
-  const clientHost = stageVariables.clientHost
+  const reqOrigin = reqHeaders.origin || reqHeaders.Origin
   // If non-empty, this is a dev environment. Only the 'admin' test endpoints are available in dev.
-  const dev = stageVariables.dev
+  const dev = reqOrigin === DEV_CLIENT_HOST
 
-  const googleRedirectUri = `${clientHost}/google-sso-callback`
+  const googleRedirectUri = `${reqOrigin}/google-sso-callback`
 
   try {
-    // Get attributes of the request.
-    const reqBody = JSON.parse(event.body)
 
     // Console log attributes.
     console.log({
@@ -975,9 +973,7 @@ export const handler = async (event) => {
       reqPath,
       reqPathParameters,
       reqQueryStringParameters,
-      reqResourcePath,
       reqHeaders,
-      stageVariables,
     })
 
     // By default, the API is not found or implemented.
@@ -1084,13 +1080,19 @@ export const handler = async (event) => {
       response = await updateTestUser(accessToken.email, accessToken.userId, reqBody)
     }
 
-    // Respond.
-    return addClientHostToCors(response, clientHost)
+    // Respond to the client.
+    return lambdaRespond(response, reqOrigin)
 
   } catch (error) {
-    if (error.validation) return addClientHostToCors(buildLambdaResponse(error.code, error.message), clientHost)
+    let errorResponse
+    if (error.validation) {
+      errorResponse = buildLambdaResponse(error.code, error.message)
+    } else {
+      console.error('Error:', error)
+      errorResponse = buildLambdaResponse(500, 'Internal Server Error')
+    }
 
-    console.error('Error:', error)
-    return addClientHostToCors(buildLambdaResponse(500, 'Internal Server Error'), clientHost)
+    // Respond to the client.
+    return lambdaRespond(errorResponse, reqOrigin)
   }
 }
