@@ -149,17 +149,17 @@ const ChangePasswordForm = () => {
       <br />
       <form onSubmit={onChangePasswordFormSubmit}>
         <input type='email' name='email' autoComplete='username' style={{ display: 'none' }} />
-        <FormInput type='password' name='oldPassword' autoComplete='current-password' label='Old password' value={oldPassword} setValue={setOldPassword} minLabelWidth={minLabelWidth} />
+        <FormInput type='password' required={true} name='oldPassword' autoComplete='current-password' label='Old password' value={oldPassword} setValue={setOldPassword} minLabelWidth={minLabelWidth} />
         <br />
-        <FormInput type='password' name='newPassword' autoComplete='new-password' label='New password' value={newPassword} setValue={setNewPassword} minLabelWidth={minLabelWidth} />
+        <FormInput type='password' required={true} name='newPassword' autoComplete='new-password' label='New password' value={newPassword} setValue={setNewPassword} minLabelWidth={minLabelWidth} />
         <br />
-        <FormInput type='password' name='confirmPassword' autoComplete='new-password' label='Confirm password' value={confirmPassword} setValue={setConfirmPassword} minLabelWidth={minLabelWidth} />
+        <FormInput type='password' required={true} name='confirmPassword' autoComplete='new-password' label='Confirm password' value={confirmPassword} setValue={setConfirmPassword} minLabelWidth={minLabelWidth} />
         <br />
         <FormButton text='Change password' isSubmittingText='Changing password...' isSubmitting={changingPassword} type='submit' primary={true} />
         &nbsp;
         <button className='btn' type='button' onClick={onReset}>Reset form</button>
         {passwordValidationErrors.length > 0 && (
-          <div>
+          <div className='text-warn'>
             <p><b>Issues:</b></p>
             <ul>
               {passwordValidationErrors.map((message, index) => (

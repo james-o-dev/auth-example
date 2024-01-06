@@ -51,3 +51,7 @@ h2 {
 h2 {
   @apply text-lg
 }
+
+.text-warn {
+  @apply text-red-500 dark:text-orange-400
+}

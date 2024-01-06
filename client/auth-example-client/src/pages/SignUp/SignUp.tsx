@@ -85,11 +85,11 @@ const SignUp: React.FC = () => {
           <br />
           <FormInput type='password' name='confirmPassword' autoComplete='new-password' value={confirmPassword} setValue={setConfirmPassword} required={true} label='Confirm Password' minLabelWidth={minLabelWidth} />
           {validationMessages.length > 0 && (
-            <div>
-              <p className='text-red-500'><b>Issues:</b></p>
+            <div className='text-warn'>
+              <p><b>Issues:</b></p>
               <ul>
                 {validationMessages.map((message, index) => (
-                  <li className='text-red-500' key={index}>{message}</li>
+                  <li key={index}>{message}</li>
                 ))}
               </ul>
             </div>

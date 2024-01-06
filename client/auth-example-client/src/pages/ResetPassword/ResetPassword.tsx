@@ -96,7 +96,7 @@ const ResetPassword = () => {
       <br />
       <FormButton text='Change password' isSubmittingText='Changing...' disabled={disableActions} isSubmitting={isChanging} fullWidth={true} type='submit' primary={true} />
       {passwordValidationErrors.length > 0 && (
-        <div>
+        <div className='text-warn'>
           <p><b>Issues:</b></p>
           <ul>
             {passwordValidationErrors.map((message, index) => (
