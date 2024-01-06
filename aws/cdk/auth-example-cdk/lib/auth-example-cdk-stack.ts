@@ -107,13 +107,13 @@ export class AuthExampleCdkStack extends Stack {
         errorConfigurations: [
           {
             errorCode: 403,
-            errorCachingMinTtl: 0,
+            errorCachingMinTtl: 300,
             responseCode: 200,
             responsePagePath: '/index.html',
           },
           {
             errorCode: 404,
-            errorCachingMinTtl: 0,
+            errorCachingMinTtl: 300,
             responseCode: 200,
             responsePagePath: '/index.html',
           },
