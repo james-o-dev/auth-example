@@ -1,4 +1,4 @@
-import { buildLambdaResponse, buildValidationError, generateRandomString } from './lib/common.mjs'
+import { addClientHostToCors, buildLambdaResponse, buildValidationError, generateRandomString } from './lib/common.mjs'
 import { batchDeleteCommand, getCommand, putCommand, queryCommand, scanCommand, updateCommand } from './lib/dynamodb.mjs'
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs'
 const sqsClient = new SQSClient({})
@@ -19,8 +19,6 @@ const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET
 if (!REFRESH_TOKEN_SECRET) throw new Error('Missing REFRESH_TOKEN_SECRET environment variable')
 const SSO_TOKEN_SECRET = process.env.SSO_TOKEN_SECRET
 if (!SSO_TOKEN_SECRET) throw new Error('Missing SSO_TOKEN_SECRET environment variable')
-const CLIENT_HOST = process.env.CLIENT_HOST
-if (!CLIENT_HOST) throw new Error('Missing CLIENT_HOST environment variable')
 const USERS_TABLE_NAME = process.env.USERS_TABLE_NAME
 if (!USERS_TABLE_NAME) throw new Error('Missing USERS_TABLE_NAME environment variable')
 const NODEMAILER_SQS = process.env.NODEMAILER_SQS
@@ -38,9 +36,6 @@ const PASSWORD_REGEXP = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+-])[A-
 
 // Standard email format. Also includes '+' symbol.
 const EMAIL_REGEXP = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
-
-// Used in the Google SSO redirect uri parameter.
-const GOOGLE_SSO_REDIRECT_URI = `${CLIENT_HOST}/google-sso-callback`
 
 // If the user email contains this, it is determined to be a test user/email.
 const TEST_EMAIL_CONTAINS = '+apitest'
@@ -751,9 +746,11 @@ const activateTotpEndpoint = async (userId, reqBody) => {
 
 /**
  * Returns Google SSO URL, for the client to redirect to
+ *
+ * @param {string} redirectUri The Google Redirect URI required by Google
  */
-const googleSSORedirect = async () => {
-  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_SSO_CLIENT_ID}&redirect_uri=${GOOGLE_SSO_REDIRECT_URI}&response_type=code&scope=profile email`
+const googleSSORedirect = async (redirectUri) => {
+  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_SSO_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&scope=profile email`
   return buildLambdaResponse(200, { message: 'Google SSO link', url })
 }
 
@@ -763,8 +760,9 @@ const googleSSORedirect = async () => {
  * * Returns the email
  *
  * @param {string} code From the Google callback
+ * @param {string} redirectUri The Google Redirect URI required by Google
  */
-const getProfileFromGoogleCallback = async (code) => {
+const getProfileFromGoogleCallback = async (code, redirectUri) => {
   // Get access token.
   const accessTokenResponse = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -772,7 +770,7 @@ const getProfileFromGoogleCallback = async (code) => {
       grant_type: 'authorization_code',
       client_id: GOOGLE_SSO_CLIENT_ID,
       client_secret: GOOGLE_SSO_CLIENT_SECRET,
-      redirect_uri: GOOGLE_SSO_REDIRECT_URI,
+      redirect_uri: redirectUri,
       code,
     }),
   })
@@ -797,8 +795,9 @@ const getProfileFromGoogleCallback = async (code) => {
  * * The client passes code from its query parameters as the payload here.
  *
  * @param {*} reqBody
+ * @param {string} redirectUri The Google Redirect URI required by Google
  */
-const googleSSOCallbackEndpoint = async (reqBody) => {
+const googleSSOCallbackEndpoint = async (reqBody, redirectUri) => {
   // Note about `ssoToken`:
   // From my understanding, once a Google code has been used, it can not be used again.
   // So the `ssoToken` is required if TOTP is required - it stores the verified email in a JWT without requiring getting another Google token.
@@ -817,7 +816,7 @@ const googleSSOCallbackEndpoint = async (reqBody) => {
       email = ssoTokenVerified.email
     } else if (code) {
       // By default, verify via Google SSO API .
-      const callbackReturn = await getProfileFromGoogleCallback(code)
+      const callbackReturn = await getProfileFromGoogleCallback(code, redirectUri)
       email = callbackReturn.email
     } else if (testEmail?.includes(TEST_EMAIL_CONTAINS)) {
       // Test user email only.
@@ -952,15 +951,22 @@ const updateTestUser = async (email, userId, reqBody) => {
 
 // index.js
 export const handler = async (event) => {
+  const reqMethod = event.httpMethod
+  const reqPath = event.path
+  const reqResourcePath = event.requestContext.resourcePath
+  const reqPathParameters = event.pathParameters
+  const reqQueryStringParameters = event.queryStringParameters
+  const reqHeaders = event.headers
+  const stageVariables = event.stageVariables // Stage variables are set in the API Gateway stages.
+  const clientHost = stageVariables.clientHost
+  // If non-empty, this is a dev environment. Only the 'admin' test endpoints are available in dev.
+  const dev = stageVariables.dev
+
+  const googleRedirectUri = `${clientHost}/google-sso-callback`
+
   try {
     // Get attributes of the request.
     const reqBody = JSON.parse(event.body)
-    const reqMethod = event.httpMethod
-    const reqPath = event.path
-    const reqResourcePath = event.requestContext.resourcePath
-    const reqPathParameters = event.pathParameters
-    const reqQueryStringParameters = event.queryStringParameters
-    const reqHeaders = event.headers
 
     // Console log attributes.
     console.log({
@@ -971,6 +977,7 @@ export const handler = async (event) => {
       reqQueryStringParameters,
       reqResourcePath,
       reqHeaders,
+      stageVariables,
     })
 
     // By default, the API is not found or implemented.
@@ -1056,29 +1063,34 @@ export const handler = async (event) => {
     }
 
     // Google SSO routes.
-    if (reqPath === '/auth/sso/google' && reqMethod === 'GET') response = await googleSSORedirect()
-    if (reqPath === '/auth/sso/google/callback' && reqMethod === 'POST') response = await googleSSOCallbackEndpoint(reqBody)
+    if (reqPath === '/auth/sso/google' && reqMethod === 'GET') response = await googleSSORedirect(googleRedirectUri)
+    if (reqPath === '/auth/sso/google/callback' && reqMethod === 'POST') response = await googleSSOCallbackEndpoint(reqBody, googleRedirectUri)
 
     // Admin routes.
-    if (reqPath === '/admin/cleanup-tests' && reqMethod === 'GET') response = await cleanupTests()
+    if (reqPath === '/admin/cleanup-tests' && reqMethod === 'GET') {
+      if (dev !== 'true') throwUnauthError()
+      response = await cleanupTests()
+    }
     // Get test user.
     if (reqPath === '/admin/test-user' && reqMethod === 'GET') {
+      if (dev !== 'true') throwUnauthError()
       const accessToken = await getJWT(reqHeaders)
       response = await getTestUser(accessToken.email, accessToken.userId)
     }
     // Update test user.
     if (reqPath === '/admin/test-user' && reqMethod === 'PUT') {
+      if (dev !== 'true') throwUnauthError()
       const accessToken = await getJWT(reqHeaders)
       response = await updateTestUser(accessToken.email, accessToken.userId, reqBody)
     }
 
     // Respond.
-    return response
+    return addClientHostToCors(response, clientHost)
 
   } catch (error) {
-    if (error.validation) return buildLambdaResponse(error.code, error.message)
+    if (error.validation) return addClientHostToCors(buildLambdaResponse(error.code, error.message), clientHost)
 
     console.error('Error:', error)
-    return buildLambdaResponse(500, 'Internal Server Error')
+    return addClientHostToCors(buildLambdaResponse(500, 'Internal Server Error'), clientHost)
   }
 }

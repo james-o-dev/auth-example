@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib'
 import { RemovalPolicy } from 'aws-cdk-lib'
-import { Cors, EndpointType, LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway'
+import { Cors, Deployment, EndpointType, LambdaIntegration, RestApi, Stage } from 'aws-cdk-lib/aws-apigateway'
 import { AttributeType, BillingMode, ProjectionType, Table } from 'aws-cdk-lib/aws-dynamodb'
 import { Runtime, Architecture, Code, LogFormat, Function, LayerVersion } from 'aws-cdk-lib/aws-lambda'
 import { Construct } from 'constructs'
@@ -8,12 +8,13 @@ import { Queue } from 'aws-cdk-lib/aws-sqs'
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
 import { BlockPublicAccess, Bucket } from 'aws-cdk-lib/aws-s3'
 import { CloudFrontWebDistribution, OriginAccessIdentity, PriceClass, ViewerProtocolPolicy } from 'aws-cdk-lib/aws-cloudfront'
+import { ServicePrincipal } from 'aws-cdk-lib/aws-iam'
 
 // Environment variables.
 // Read from .env file.
 import 'dotenv/config'
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || ''
-const CLIENT_HOST = process.env.CLIENT_HOST || ''
+const DEV_CLIENT_HOST = process.env.DEV_CLIENT_HOST || ''
 const GMAIL_CLIENT_ID = process.env.GMAIL_CLIENT_ID || ''
 const GMAIL_CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET || ''
 const GMAIL_REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN || ''
@@ -24,7 +25,7 @@ const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || ''
 const SSO_TOKEN_SECRET = process.env.SSO_TOKEN_SECRET || ''
 if (
   !ACCESS_TOKEN_SECRET
-  // !CLIENT_HOST // Allow it to be overridden in the .env.
+  || !DEV_CLIENT_HOST
   || !GMAIL_CLIENT_ID
   || !GMAIL_CLIENT_SECRET
   || !GMAIL_REFRESH_TOKEN
@@ -121,13 +122,11 @@ export class AuthExampleCdkStack extends cdk.Stack {
 
     bucket.grantRead(cloudFrontOAI.grantPrincipal)
 
-    const cloudfrontDomain = `https://${cloudFrontDistribution.distributionDomainName}`
-
-    const clientHost = CLIENT_HOST || cloudfrontDomain
+    const prodClientHost = `https://${cloudFrontDistribution.distributionDomainName}`
 
     // Output CloudFront URL
     new cdk.CfnOutput(this, 'CloudFrontURL', {
-      value: cloudfrontDomain,
+      value: prodClientHost,
       description: 'CloudFront Distribution URL',
     })
 
@@ -141,7 +140,6 @@ export class AuthExampleCdkStack extends cdk.Stack {
       environment: {
         ACCESS_TOKEN_SECRET,
         AUTH_INDEX_NAME,
-        CLIENT_HOST: clientHost,
         GOOGLE_SSO_CLIENT_ID,
         GOOGLE_SSO_CLIENT_SECRET,
         REFRESH_TOKEN_SECRET,
@@ -149,6 +147,9 @@ export class AuthExampleCdkStack extends cdk.Stack {
         USERS_TABLE_NAME,
       },
     })
+    // IMPORTANT: Lambda grant invoke to APIGateway.
+    // https://stackoverflow.com/a/62474072
+    authLambdaFunction.grantInvoke(new ServicePrincipal('apigateway.amazonaws.com'))
 
     // Create DynamoDB.
     const dynamoTable = new Table(this, USERS_TABLE_NAME, {
@@ -183,23 +184,32 @@ export class AuthExampleCdkStack extends cdk.Stack {
       description: 'Authentication example API.',
       deploy: true,
       deployOptions: {
-        stageName: 'dev',
+        stageName: 'prod',
+        description: 'Used by the deployed client',
+        throttlingRateLimit: 2,
+        throttlingBurstLimit: 4,
+        variables: {
+          clientHost: prodClientHost,
+        },
       },
       endpointTypes: [EndpointType.REGIONAL],
       defaultCorsPreflightOptions: {
-        allowOrigins: [clientHost],
+        allowOrigins: [DEV_CLIENT_HOST, prodClientHost],
         allowCredentials: true,
         allowHeaders: Cors.DEFAULT_HEADERS,
         allowMethods: Cors.ALL_METHODS,
       },
     })
-    api.addUsagePlan('defaultUsage', {
-      name: 'defaultUsage',
-      throttle: {
-        rateLimit: 2,
-        burstLimit: 4,
+
+    // Dev stage is used for local development.
+    new Stage(this, 'dev', {
+      stageName: 'dev',
+      deployment: api.latestDeployment as Deployment,
+      description: 'Used by the local client',
+      variables: {
+        clientHost: DEV_CLIENT_HOST,
+        dev: 'true',
       },
-      apiStages: [{ api, stage: api.deploymentStage }],
     })
 
     const integration = new LambdaIntegration(authLambdaFunction)

@@ -1,7 +1,15 @@
 import { randomBytes } from 'crypto'
 
-const CLIENT_HOST = process.env.CLIENT_HOST
-if (!CLIENT_HOST || CLIENT_HOST === '*') throw new Error('CLIENT_HOST environment variable has not been set; It can not be a wildcard (*) either.')
+/**
+ * Adds the client host to the response headers
+ *
+ * @param {*} response Intended response
+ * @param {string} clientHost
+ */
+export const addClientHostToCors = (response, clientHost) => {
+  response.headers['Access-Control-Allow-Origin'] = clientHost
+  return response
+}
 
 /**
  * Returns an object used to throw validation errors.
@@ -26,7 +34,7 @@ export const buildLambdaResponse = (statusCode, body, options = {}) => {
   return {
     statusCode,
     headers: {
-      'Access-Control-Allow-Origin': CLIENT_HOST,
+      'Access-Control-Allow-Origin': null, // It is set with `addClientHostToCors()`
       'Access-Control-Allow-Credentials': true,
       'Content-Type': 'application/json',
       ...options.headers,
