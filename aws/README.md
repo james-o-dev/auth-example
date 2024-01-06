@@ -127,10 +127,11 @@ REFRESH_TOKEN_SECRET=""
 SSO_TOKEN_SECRET=""
 ```
 
-Update based on the client host:
+Update based on the localhost client used:
 ```
-CLIENT_HOST=""
+DEV_CLIENT_HOST=""
 ```
+(Note: Defining the remote host is currently not needed, since it is already set during the CloudFront creation in the CDK.)
 
 ### CDK Config
 The [`cdk.json`](./cdk/auth-example-cdk/cdk.json) file defines the AWS profile that will be used, defined as the `profile` value.
@@ -147,6 +148,7 @@ Once the CDK has been bootstrapped and configured, `cd` to the [`cdk/auth-exampl
 Once deployed, it will print out the following outputs
 * `ApiGatewayUrl` - The host URL of the API Gateway that was deployed. - i.e. the hosted API.
 * `CloudFrontURL` - The host URL of the CloudFront distribution - i.e. the hosted client.
+* `CloudFrontDistributionId` - CloudFront Distribution ID. Set this in the [`client .env`](../client/auth-example-client)
 
 ## Teardown
 

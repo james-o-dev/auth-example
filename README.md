@@ -65,11 +65,24 @@ Practice and apply knowledge of React Typescript and TailwindCSS to create an ac
   - Google OAuth credentials for Gmail
 
 ## Getting Started In Summary
+
+**Run locally**
+
 1. Deploy the AWS CDK stack
    - See [README](/aws/README.md) in `aws` folder.
-2. Run the client on your local host
+2. Set the appropriate environment variables in the `.env` file in the client React folder
+    - See [README](/client/README.md) in `client` folder.
+3. Run the client on your local host
    - See [README](/client/README.md) in `client` folder.
-3. Visit the localhost in your browser when the client is running.
+4. Visit the localhost in your browser when the client is running.
+
+**Deploy the client**
+
+1. Deploy the AWS CDK stack
+   - See [README](/aws/README.md) in `aws` folder.
+2. Set the appropriate environment variables in the `.env` file in the client React folder
+    - See [README](/client/README.md) in `client` folder.
+3. Run the `npm run build:deploy` npm script in the client directory.
 
 ## License
 This project is licensed under the [Apache 2.0 License](LICENSE).
