@@ -14,6 +14,8 @@ import { ServicePrincipal } from 'aws-cdk-lib/aws-iam'
 import 'dotenv/config'
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || ''
 const DEV_CLIENT_HOST = process.env.DEV_CLIENT_HOST || ''
+const ENABLE_API_GATEWAY = JSON.parse(process.env.ENABLE_API_GATEWAY || 'false')
+const ENABLE_S3_CLOUDFRONT = JSON.parse(process.env.ENABLE_S3_CLOUDFRONT || 'false')
 const GMAIL_CLIENT_ID = process.env.GMAIL_CLIENT_ID || ''
 const GMAIL_CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET || ''
 const GMAIL_REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN || ''
@@ -44,22 +46,6 @@ const checkSecretsAreShared = [
 const checkSecretsAreSharedSet = new Set(checkSecretsAreShared)
 if (checkSecretsAreSharedSet.size !== checkSecretsAreShared.length) throw new Error('Some secrets are being shared!')
 
-/**
- * Enable/disable AWS features here.
- */
-const AWS_FEATURES = {
-  /**
-   * True to include S3 and CloudFormation in the stack.
-   * * Used to deploy the client host remotely.
-   */
-  S3_CLOUDFORMATION: false,
-  /**
-   * True to use API Gateway to handle REST API endpoints.
-   * * If false, it will use Lambda function URLs instead, for simplicity and to save on some costs.
-   */
-  API_GATEWAY: false,
-}
-
 // Other settings.
 const LAMBDA_NODE_MODULE_LAYER_NAME = 'auth-example-lambda-layer'
 const LAMBDA_NAME = 'auth-example-lambda'
@@ -86,7 +72,7 @@ export class AuthExampleCdkStack extends Stack {
 
     // Create S3 and CloudFront, in order to remotely host the client.
     // Do this first in order to get the CloudFront domain host to use in Lambda and API Gateway settings.
-    if (AWS_FEATURES.S3_CLOUDFORMATION) {
+    if (ENABLE_S3_CLOUDFRONT) {
 
       // Create an S3 bucket
       const bucket = new Bucket(this, CLIENT_S3_BUCKET, {
@@ -178,7 +164,7 @@ export class AuthExampleCdkStack extends Stack {
       layers: [authLambdaLayer],
       environment: {
         ACCESS_TOKEN_SECRET,
-        API_GATEWAY_ENABLED: AWS_FEATURES.API_GATEWAY.toString(),
+        API_GATEWAY_ENABLED: ENABLE_API_GATEWAY.toString(),
         AUTH_INDEX_NAME,
         DEV_CLIENT_HOST,
         GOOGLE_SSO_CLIENT_ID,
@@ -219,7 +205,7 @@ export class AuthExampleCdkStack extends Stack {
 
     // Create API Gateway.
     // Note: Also automatically deploys the API.
-    if (AWS_FEATURES.API_GATEWAY) {
+    if (ENABLE_API_GATEWAY) {
 
       const api = new RestApi(this, API_NAME, {
         restApiName: API_NAME,
@@ -407,7 +393,7 @@ export class AuthExampleCdkStack extends Stack {
 
     if (isPublic) {
       // If not using API Gateway, it must use Lambda function Url.
-      if (!AWS_FEATURES.API_GATEWAY) {
+      if (!ENABLE_API_GATEWAY) {
         const lambdaUrl = lambda.addFunctionUrl({
           authType: FunctionUrlAuthType.NONE,
           cors: functionUrlCors,

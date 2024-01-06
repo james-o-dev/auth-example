@@ -106,6 +106,14 @@ Remember that if more client domains are added, they should also be added in bot
 A template [`.env.template`](./cdk/auth-example-cdk/.env.template) is provided. Create a copy named `.env` and fill in the required values.
 
 #### Notable values
+Update the following based on whether you want to use certain AWS services
+```bash
+# Set to "true" to use API Gateway. False to use Lambda function URLs.
+ENABLE_API_GATEWAY=""
+# Set to "true" to include deploying S3 and CloudFront, in order to remotely host the client.
+ENABLE_S3_CLOUDFRONT=""
+```
+
 Update the following with the [Nodemailer setup](#nodemailer-setup):
 ```
 GMAIL_CLIENT_ID=""
