@@ -6,31 +6,33 @@ import { Runtime, Architecture, Code, LogFormat, Function, LayerVersion } from '
 import { Construct } from 'constructs'
 import { Queue } from 'aws-cdk-lib/aws-sqs'
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
+import { BlockPublicAccess, Bucket } from 'aws-cdk-lib/aws-s3'
+import { CloudFrontWebDistribution, OriginAccessIdentity, PriceClass, ViewerProtocolPolicy } from 'aws-cdk-lib/aws-cloudfront'
 
 // Environment variables.
 // Read from .env file.
 import 'dotenv/config'
-const CLIENT_HOST = process.env.CLIENT_HOST || ''
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || ''
-const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || ''
-const SSO_TOKEN_SECRET = process.env.SSO_TOKEN_SECRET || ''
+const CLIENT_HOST = process.env.CLIENT_HOST || ''
 const GMAIL_CLIENT_ID = process.env.GMAIL_CLIENT_ID || ''
 const GMAIL_CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET || ''
 const GMAIL_REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN || ''
 const GMAIL_USER_EMAIL = process.env.GMAIL_USER_EMAIL || ''
 const GOOGLE_SSO_CLIENT_ID = process.env.GOOGLE_SSO_CLIENT_ID || ''
 const GOOGLE_SSO_CLIENT_SECRET = process.env.GOOGLE_SSO_CLIENT_SECRET || ''
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || ''
+const SSO_TOKEN_SECRET = process.env.SSO_TOKEN_SECRET || ''
 if (
-  !CLIENT_HOST
-  || !ACCESS_TOKEN_SECRET
-  || !REFRESH_TOKEN_SECRET
-  || !SSO_TOKEN_SECRET
+  !ACCESS_TOKEN_SECRET
+  // !CLIENT_HOST // Allow it to be overridden in the .env.
   || !GMAIL_CLIENT_ID
   || !GMAIL_CLIENT_SECRET
   || !GMAIL_REFRESH_TOKEN
   || !GMAIL_USER_EMAIL
   || !GOOGLE_SSO_CLIENT_ID
   || !GOOGLE_SSO_CLIENT_SECRET
+  || !REFRESH_TOKEN_SECRET
+  || !SSO_TOKEN_SECRET
 ) throw new Error('Missing environment variables')
 
 // Ensure token secrets are not shared.
@@ -57,10 +59,77 @@ const NODEMAILER = {
   LAMBDA_NAME: 'nodemailer-lambda',
   LAYER_NAME: 'nodemailer-lambda-layer',
 }
+const CLIENT_S3_BUCKET = 'auth-example-client-s3'
+const CLIENT_CLOUDFRONT_DISTRIBUTION = 'auth-example-client-cloudfront'
 
 export class AuthExampleCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props)
+
+    // Create S3 and CloudFront, in order to remotely host the client.
+    // Do this first in order to get the CloudFront domain host to use in Lambda and API Gateway settings.
+
+    // Create an S3 bucket
+    const bucket = new Bucket(this, CLIENT_S3_BUCKET, {
+      bucketName: CLIENT_S3_BUCKET,
+      removalPolicy: cdk.RemovalPolicy.DESTROY, // Only for testing purposes
+      websiteIndexDocument: 'index.html',
+      websiteErrorDocument: 'index.html',
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      autoDeleteObjects: true,
+    })
+
+    const cloudFrontOAI = new OriginAccessIdentity(this, CLIENT_CLOUDFRONT_DISTRIBUTION + 'OAI')
+
+    const cloudFrontDistribution = new CloudFrontWebDistribution(this, CLIENT_CLOUDFRONT_DISTRIBUTION, {
+      enabled: true,
+      defaultRootObject: 'index.html',
+      originConfigs: [{
+        s3OriginSource: {
+          s3BucketSource: bucket,
+          originAccessIdentity: cloudFrontOAI,
+          // originPath: '/index.html',
+        },
+        behaviors: [{
+          isDefaultBehavior: true,
+          defaultTtl: cdk.Duration.seconds(3600), // Set TTL to one hour (adjust as needed)
+          minTtl: cdk.Duration.seconds(300), // Set minimum TTL
+          maxTtl: cdk.Duration.seconds(86400), // Set maximum TTL
+          compress: true, // Enable compression
+        }],
+      }],
+      errorConfigurations: [
+        {
+          errorCode: 403,
+          errorCachingMinTtl: 0,
+          responseCode: 200,
+          responsePagePath: '/index.html',
+        },
+        {
+          errorCode: 404,
+          errorCachingMinTtl: 0,
+          responseCode: 200,
+          responsePagePath: '/index.html',
+        },
+      ],
+      viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      // enableLogging: true, // Enable access logs
+      // logBucket: myLogBucket, // Specify the S3 bucket for access logs
+      comment: CLIENT_CLOUDFRONT_DISTRIBUTION,
+      priceClass: PriceClass.PRICE_CLASS_100, // Use the lowest price class
+    })
+
+    bucket.grantRead(cloudFrontOAI.grantPrincipal)
+
+    const cloudfrontDomain = `https://${cloudFrontDistribution.distributionDomainName}`
+
+    const clientHost = CLIENT_HOST || cloudfrontDomain
+
+    // Output CloudFront URL
+    new cdk.CfnOutput(this, 'CloudFrontURL', {
+      value: cloudfrontDomain,
+      description: 'CloudFront Distribution URL',
+    })
 
     // Create Lambda layer/s.
     const authLambdaLayer = this.createLambdaLayer(LAMBDA_NODE_MODULE_LAYER_NAME, LAMBDA_NODE_MODULE_LAYER_NAME)
@@ -72,9 +141,9 @@ export class AuthExampleCdkStack extends cdk.Stack {
       environment: {
         ACCESS_TOKEN_SECRET,
         AUTH_INDEX_NAME,
+        CLIENT_HOST: clientHost,
         GOOGLE_SSO_CLIENT_ID,
         GOOGLE_SSO_CLIENT_SECRET,
-        CLIENT_HOST,
         REFRESH_TOKEN_SECRET,
         SSO_TOKEN_SECRET,
         USERS_TABLE_NAME,
@@ -118,7 +187,7 @@ export class AuthExampleCdkStack extends cdk.Stack {
       },
       endpointTypes: [EndpointType.REGIONAL],
       defaultCorsPreflightOptions: {
-        allowOrigins: [CLIENT_HOST],
+        allowOrigins: [clientHost],
         allowCredentials: true,
         allowHeaders: Cors.DEFAULT_HEADERS,
         allowMethods: Cors.ALL_METHODS,

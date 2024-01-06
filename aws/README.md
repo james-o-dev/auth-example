@@ -145,7 +145,8 @@ Once the CDK has been bootstrapped and configured, `cd` to the [`cdk/auth-exampl
 * `npm run cdk:deploy` to deploy the stack.
 
 Once deployed, it will print out the following outputs
-* `ApiGatewayUrl` - The host URL of the API Gateway that was deployed.
+* `ApiGatewayUrl` - The host URL of the API Gateway that was deployed. - i.e. the hosted API.
+* `CloudFrontURL` - The host URL of the CloudFront distribution - i.e. the hosted client.
 
 ## Teardown
 

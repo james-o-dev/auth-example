@@ -34,6 +34,8 @@ Practice and apply knowledge of React Typescript and TailwindCSS to create an ac
 - [AWS DynamoDB](https://aws.amazon.com/dynamodb/) (NoSQL database)
 - [AWS SQS](https://aws.amazon.com/sqs/) (asynchronous queue and messaging)
 - [AWS CDK](https://aws.amazon.com/cdk/) (Infrastructure as Code)
+- [AWS S3](https://aws.amazon.com/s3/) (File and media storage, for client files)
+- [AWS CloudFront](https://aws.amazon.com/cloudfront/) (Managed CDN for client hosting, in conjunction with S3)
 - [React TS](https://reactjs.org/) (Demonstration front-end client)
 - [Tailwind CSS](https://tailwindcss.com/) (Client styling)
 - [Google Cloud](https://cloud.google.com/) (Google SSO, emailing)
