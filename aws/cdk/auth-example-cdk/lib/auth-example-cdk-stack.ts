@@ -130,6 +130,12 @@ export class AuthExampleCdkStack extends cdk.Stack {
       description: 'CloudFront Distribution URL',
     })
 
+    // Output CloudFront ID
+    new cdk.CfnOutput(this, 'CloudFrontDistributionId', {
+      value: cloudFrontDistribution.distributionId,
+      description: 'CloudFront Distribution ID',
+    })
+
     // Create Lambda layer/s.
     const authLambdaLayer = this.createLambdaLayer(LAMBDA_NODE_MODULE_LAYER_NAME, LAMBDA_NODE_MODULE_LAYER_NAME)
 
