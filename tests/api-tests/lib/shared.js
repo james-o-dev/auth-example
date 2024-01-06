@@ -4,6 +4,10 @@ const { Totp, generateConfig } = require('time2fa')
 const TEST_USER_UNIQUE_PART = '+apitest'
 const TEST_USER_UNIQUE_PART_2 = '+nontestuser'
 
+const devOriginHeader = {
+  origin: process.env.DEV_CLIENT_HOST,
+}
+
 /**
  * Generate a unique email address.
  *
@@ -41,6 +45,7 @@ const signUpUser = async ({ email, password } = {}) => {
       ...newUser,
       confirmPassword: newUser.password,
     }),
+    headers: devOriginHeader,
   })
   const data = await response.json()
   if (!response.ok) {
@@ -139,13 +144,14 @@ const refreshAccessToken = async (refreshToken) => {
 }
 
 const cleanupTests = async () => {
-  return fetch(`${process.env.API_HOST}/admin/cleanup-tests`, { method: 'GET' })
+  return fetch(`${process.env.API_HOST}/admin/cleanup-tests`, { method: 'GET', headers: devOriginHeader})
 }
 
 const getTestUser = async (accessToken) => {
   return fetch(`${process.env.API_HOST}/admin/test-user`, {
     method: 'GET',
     headers: {
+      ...devOriginHeader,
       ...getAuthHeader(accessToken),
     },
   })
@@ -156,6 +162,7 @@ const updateTestUser = async (accessToken, body) => {
     method: 'PUT',
     body: JSON.stringify(body),
     headers: {
+      ...devOriginHeader,
       ...getAuthHeader(accessToken),
     },
   })

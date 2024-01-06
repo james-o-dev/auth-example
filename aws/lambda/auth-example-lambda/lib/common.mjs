@@ -1,15 +1,16 @@
 import { randomBytes } from 'crypto'
 
+const API_GATEWAY_ENABLED = JSON.parse(process.env.API_GATEWAY_ENABLED || false)
+
+const DEV_CLIENT_HOST = process.env.DEV_CLIENT_HOST || ''
+const PROD_CLIENT_HOST = process.env.PROD_CLIENT_HOST || ''
+
+const allowedOrigins = new Set([DEV_CLIENT_HOST, PROD_CLIENT_HOST])
+
 /**
- * Adds the client host to the response headers
+ * Returns a random string of the specified length.
  *
- * @param {*} response Intended response
- * @param {string} clientHost
- */
-export const addClientHostToCors = (response, clientHost) => {
-  response.headers['Access-Control-Allow-Origin'] = clientHost
-  return response
-}
+ * @param {number}
 
 /**
  * Returns an object used to throw validation errors.
@@ -29,15 +30,41 @@ export const buildValidationError = (code, message) => {
  * @param {Object} [options={}] - Additional options for the response.
  * @param {Object} [options.headers={}] - Additional headers to include in the response.
  */
-export const buildLambdaResponse = (statusCode, body, options = {}) => {
+export const buildLambdaResponse = (statusCode, body, headers) => {
   // Build and return the Lambda response object
   return {
     statusCode,
-    headers: {
-      'Access-Control-Allow-Origin': null, // It is set with `addClientHostToCors()`
+    headers,
+    body,
+  }
+}
+
+/**
+ * Final object to respond to the client
+ *
+ * @param {object} responseObject - The response object.
+ * @param {number} res.statusCode - The HTTP status code for the response.
+ * @param {*} [res.body] - The body of the response.
+ * @param {Object} [options.headers={}] - Additional headers to include in the response.
+ * @param {string} origin Request origin
+ */
+export const lambdaRespond = ({ statusCode, body, headers }, origin) => {
+  let cors = {}
+  // If API Gateway is enabled, it must add the CORS headers.
+  // DO NOT ENABLE if using functionUrls (i.e. not CORS), or else these headers will be added twice - which is not allowed.
+  if (API_GATEWAY_ENABLED) {
+    cors = {
+      'Access-Control-Allow-Origin': allowedOrigins.has(origin) ? origin : '',
       'Access-Control-Allow-Credentials': true,
+    }
+  }
+
+  return {
+    statusCode,
+    headers: {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...cors,
+      ...headers,
     },
     body: JSON.stringify(body),
   }
