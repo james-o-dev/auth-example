@@ -325,8 +325,7 @@ const refreshTokenEndpoint = async (decodedRefreshToken) => {
  * @param {*} reqBody
  */
 const signUpEndpoint = async (reqBody) => {
-  signInValidation(reqBody)
-  const { email, password } = signUpValidation(reqBody)
+  const { email, password } = reqBody
 
   // Check that the email already exists.
   const findEmail = await findUserFromEmailQuery(email)
@@ -996,7 +995,13 @@ export const handler = async (event) => {
     }
 
     // Sign Up route.
-    if (reqPath === '/auth/sign-up' && reqMethod === 'POST') response = await signUpEndpoint(reqBody)
+    if (reqPath === '/auth/sign-up' && reqMethod === 'POST') {
+      signInValidation(reqBody)
+      const validatedBody = signUpValidation(reqBody)
+      // Do not allow signing up as a 'test' user, unless in the dev environment.
+      if (validatedBody.email.includes(TEST_EMAIL_CONTAINS) && !devMode) throw buildValidationError(400, 'Invalid email.')
+      response = await signUpEndpoint(validatedBody)
+    }
 
     // Sign In route.
     if (reqPath === '/auth/sign-in' && reqMethod === 'POST') response = await signInEndpoint(reqBody)
