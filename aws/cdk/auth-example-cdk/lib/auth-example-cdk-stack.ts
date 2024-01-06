@@ -24,6 +24,7 @@ const GOOGLE_SSO_CLIENT_ID = process.env.GOOGLE_SSO_CLIENT_ID || ''
 const GOOGLE_SSO_CLIENT_SECRET = process.env.GOOGLE_SSO_CLIENT_SECRET || ''
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || ''
 const SSO_TOKEN_SECRET = process.env.SSO_TOKEN_SECRET || ''
+const DEV_MODE = process.env.DEV_MODE || ''
 if (
   !ACCESS_TOKEN_SECRET
   || !DEV_CLIENT_HOST
@@ -167,6 +168,7 @@ export class AuthExampleCdkStack extends Stack {
         API_GATEWAY_ENABLED: ENABLE_API_GATEWAY.toString(),
         AUTH_INDEX_NAME,
         DEV_CLIENT_HOST,
+        DEV_MODE,
         GOOGLE_SSO_CLIENT_ID,
         GOOGLE_SSO_CLIENT_SECRET,
         PROD_CLIENT_HOST: prodClientHost,

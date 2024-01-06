@@ -29,6 +29,7 @@ const GOOGLE_SSO_CLIENT_SECRET = process.env.GOOGLE_SSO_CLIENT_SECRET
 if (!GOOGLE_SSO_CLIENT_SECRET) throw new Error('Missing GOOGLE_SSO_CLIENT_SECRET environment variable')
 const DEV_CLIENT_HOST = process.env.DEV_CLIENT_HOST
 if (!DEV_CLIENT_HOST) throw new Error('DEV_CLIENT_HOST environment variable is not set')
+const DEV_MODE = JSON.parse(process.env.DEV_MODE || 'false')
 
 const ACCESS_TOKEN_EXPIRY = '10m'
 const REFRESH_TOKEN_EXPIRY = '7d'
@@ -960,7 +961,7 @@ export const handler = async (event) => {
   const reqHeaders = event.headers
   const reqOrigin = reqHeaders.origin || reqHeaders.Origin
   // If non-empty, this is a dev environment. Only the 'admin' test endpoints are available in dev.
-  const dev = reqOrigin === DEV_CLIENT_HOST
+  const devMode = DEV_MODE || reqOrigin === DEV_CLIENT_HOST
 
   const googleRedirectUri = `${reqOrigin}/google-sso-callback`
 
@@ -1064,18 +1065,18 @@ export const handler = async (event) => {
 
     // Admin routes.
     if (reqPath === '/admin/cleanup-tests' && reqMethod === 'GET') {
-      if (dev !== 'true') throwUnauthError()
+      if (!devMode) throwUnauthError()
       response = await cleanupTests()
     }
     // Get test user.
     if (reqPath === '/admin/test-user' && reqMethod === 'GET') {
-      if (dev !== 'true') throwUnauthError()
+      if (!devMode) throwUnauthError()
       const accessToken = await getJWT(reqHeaders)
       response = await getTestUser(accessToken.email, accessToken.userId)
     }
     // Update test user.
     if (reqPath === '/admin/test-user' && reqMethod === 'PUT') {
-      if (dev !== 'true') throwUnauthError()
+      if (!devMode) throwUnauthError()
       const accessToken = await getJWT(reqHeaders)
       response = await updateTestUser(accessToken.email, accessToken.userId, reqBody)
     }
