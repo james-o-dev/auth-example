@@ -1,4 +1,4 @@
-# AWS Resources
+# AWS Resources for Auth Example
 
 This directory contains code relating to provisioning AWS resource, used to implement the API backend.
 

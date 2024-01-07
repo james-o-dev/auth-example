@@ -1,4 +1,4 @@
-# React TypeScript Project with Vite
+# Client for Auth Example
 
 ## Table Of Contents
 
