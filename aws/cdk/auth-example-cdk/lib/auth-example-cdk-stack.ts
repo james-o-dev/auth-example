@@ -214,6 +214,7 @@ export class AuthExampleCdkStack extends Stack {
         restApiName: API_NAME,
         description: 'Authentication example API.',
         deploy: true,
+        minCompressionSize: Size.kibibytes(1),
         deployOptions: {
           stageName: 'prod',
           // description: '',
