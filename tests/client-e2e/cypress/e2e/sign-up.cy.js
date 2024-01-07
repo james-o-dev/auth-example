@@ -1,6 +1,6 @@
 import { cleanUpTests, generateUser } from '../support/shared'
 
-describe('template spec', () => {
+describe('Sign Up spec', () => {
 
   const fillSignUpForm = (email, password, confirmPassword) => {
     cy.get('header a').contains('Sign up').click()

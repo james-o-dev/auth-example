@@ -1,4 +1,4 @@
-describe('Check health', () => {
+describe('Health Spec', () => {
   beforeEach(() => {
     cy.visit('/')
   })
