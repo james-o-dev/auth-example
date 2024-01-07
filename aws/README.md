@@ -20,8 +20,12 @@ This directory contains code relating to provisioning AWS resource, used to impl
   * [Environment File](#environment-file)
     * [Notable values](#notable-values)
   * [CDK Config](#cdk-config)
+* [Authorization](#authorization)
+  * [Invalidation](#invalidation)
 * [Deployment](#deployment)
-* [Teardown](#teardown)
+  * [Teardown](#teardown)
+* [Testing](#testing)
+* [API Endpoints](#api-endpoints)
 * [Links](#links)
 
 ## AWS CDK
@@ -83,10 +87,10 @@ Lambda dependencies are updated here. Once updated, be sure to `npm install` and
 Follow [these instructions](https://rupali.hashnode.dev/send-emails-in-nodejs-using-nodemailer-gmail-oauth2) on how to set up your Google account to be able to be used by Nodemailer.
 
 Particularly the sections:
-- `Set up your project`
-- `Configure oAuth consent screen`
-- `Create credentials for your project`
-- `Get the refresh and access token`
+- 'Set up your project'
+- 'Configure oAuth consent screen'
+- 'Create credentials for your project'
+- 'Get the refresh and access token'
 
 Note down the `client id`, `client secret` and `refresh token` for the [environment configuration](#configuration).
 
@@ -134,7 +138,7 @@ GOOGLE_SSO_CLIENT_ID=""
 GOOGLE_SSO_CLIENT_SECRET=""
 ```
 
-Generate long and complex password strings for these:
+Generate long and complex password strings for these. Ensure these passwords are unique and not shared between them.
 ```
 ACCESS_TOKEN_SECRET=""
 REFRESH_TOKEN_SECRET=""
@@ -152,6 +156,41 @@ The [`cdk.json`](./cdk/auth-example-cdk/cdk.json) file defines the AWS profile t
 
 Please change this to the AWS profile name of your choice.
 
+## Authorization
+
+JWT tokens are to be included in the `Authorization` header of a request. e.g.
+```json
+{
+  "method": "GET",
+  "hostname": "xxxx.lambda-url.ap-southeast-2.on.aws",
+  "path": "/auth",
+  "headers": {
+    "Accept": "*/*",
+    "Authorization": "Bearer (JWT)"
+  }
+}
+```
+This applies to both Refresh and Access JWTs.
+
+Tokens are returned in the body of the response on:
+* Sign-up (including SSO): Refresh + Access
+* Sign-in (including SSO): Refresh + Access
+* Refresh-token: Access
+
+### Invalidation
+
+JWTs can be invalidated by matching the `iat` timestamp of the JWT with the `iat` value in the database against the user.
+
+If the database `iat` is greater than the `iat` of the JWT, the JWT is considered to be expired and no longer valid.
+
+Tokens can be invalidated with the following:
+* Sign-out all devices.
+* Change password
+* Reset password confirm
+* TOTP activate
+
+When one of these events happen, the user must sign-in again.
+
 ## Deployment
 
 Once the CDK has been bootstrapped and configured, `cd` to the [`cdk/auth-example-cdk`](./cdk//auth-example-cdk) directory and run one of the following:
@@ -164,9 +203,56 @@ Once deployed, it will print out the following outputs
 * `CloudFrontURL` - The host URL of the CloudFront distribution - i.e. the hosted client.
 * `CloudFrontDistributionId` - CloudFront Distribution ID. Set this in the [`client .env`](../client/auth-example-client)
 
-## Teardown
+### Teardown
 
 When the AWS resources are no longer required, run `npm run cdk:destroy` to run the command to destroy the CDK stack.
+
+## Testing
+
+API testing is done via Jest unit testing [here](../tests/api-tests).
+
+The API supports the testing by defining test-only endpoints that are only available during local development.
+
+Furthermore, users that contains specific strings in their email addressess are considered test users.
+```javascript
+// If the user email contains this, it is determined to be a test user/email.
+const TEST_EMAIL_CONTAINS = '+apitest'
+```
+
+If attempting to sign-up with an email address that contain the `TEST_EMAIL_CONTAINS` string from anywhere other than local development, a `400` validation email will be returned and the user will not be created.
+
+## API Endpoints
+
+The following endpoints are currently defined:
+
+| Method | Path | Requires Auth JWT | Description & Notes |
+| -------- | -------- | -------- | -------- |
+| GET | `/health` | None | Check the general health of the API. |
+| GET | `/auth` | Access | Verify access token. |
+| GET | `/auth/refresh-token` | Refresh | Get new access token via refresh token. |
+| POST | `/auth/sign-up` | None | Sign up user. |
+| POST | `/auth/sign-in` | None | Sign in user. |
+| DELETE | `/auth/sign-out` | Access  | Sign out user, from all devices. |
+| POST | `/auth/change-password` | Acess | Change password. Must already be signed-in. |
+| POST | `/auth/reset-password/request` | None | Send email to an email address, containing a temporary code used to reset the password with `/auth/reset-password/confirm`.  |
+| POST | `/auth/reset-password/confirm` | None | Change the password. Requires the temporary code from `/auth/reset-password/request`.  |
+| GET | `/auth/verify-email` | Access | Is the email verified? |
+| GET | `/auth/verify-email/request` | Access | Send email to user's email address, containing a temporary code used to reset the password with `/auth/verify-email/confirm`.  |
+| POST | `/auth/verify-email/confirm` | Access | Verify email address, with the code received from `/auth/verify-email/request`.  |
+| GET | `/auth/totp` | Access | Does the user have an active 2FA TOTP?  |
+| PUT | `/auth/totp/add` | Access | Adds TOTP to the account. Note that it does not activate it yet.  |
+| PUT | `/auth/totp/activate` | Access | Activates the TOTP. Only once active will it be used for sign-in.  |
+| POST | `/auth/totp/remove` | Access | Removes existing TOTP. Requires an existing valid OTP or backup code.  |
+| GET | `/auth/sso/google` | None | Returns Google SSO Sign in URL, specific for this app.  |
+| POST | `/auth/sso/google/callback` | None | Signs in or signs up user once the user has signed in with Google. Requires TOTP if it is active.  |
+
+Further endpoints that are used for testing, only available during local development.
+
+| Method | Path | Requires Auth JWT | Description & Notes |
+| -------- | -------- | -------- | -------- |
+| GET | `/admin/cleanup-tests` | None | Delete existing test users from the database. |
+| GET | `/admin/test-user` | Access | Get a test user. May only be used on test users. |
+| PUT | `/admin/test-user` | Access | Update a test user. May only be used on test users. |
 
 ## Links
 - [AWS CDK Documentation](https://docs.aws.amazon.com/cdk/latest/guide/home.html)
