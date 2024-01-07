@@ -1,7 +1,11 @@
-import { generateUser } from '../support/shared'
+import { cleanUpTests, generateUser } from '../support/shared'
 
 describe('Sign In spec', () => {
   let user
+
+  after(async () => {
+    await cleanUpTests()
+  })
 
   const fillSignInForm = (email, password) => {
     cy.get('input[name="email"]').clear()
