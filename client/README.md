@@ -1,6 +1,14 @@
 # React TypeScript Project with Vite
 
-## Introduction / Description
+## Table Of Contents
+
+* [Description](#description)
+* [Features](#features)
+* [Getting Started](#getting-started)
+  * [How to Run Locally](#how-to-run-locally)
+  * [How to Deploy](#how-to-deploy)
+
+## Description
 
 This project is a React TypeScript application built with Vite.
 
