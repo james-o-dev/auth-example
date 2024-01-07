@@ -1,13 +1,14 @@
-import { CfnOutput, Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib'
+import { CfnOutput, Duration, RemovalPolicy, Size, Stack, StackProps } from 'aws-cdk-lib'
 import { Cors, EndpointType, IResource, LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway'
 import { AttributeType, BillingMode, ProjectionType, Table } from 'aws-cdk-lib/aws-dynamodb'
 import { Runtime, Architecture, Code, LogFormat, Function, LayerVersion, FunctionUrlAuthType, FunctionUrlCorsOptions, HttpMethod } from 'aws-cdk-lib/aws-lambda'
 import { Construct } from 'constructs'
 import { Queue } from 'aws-cdk-lib/aws-sqs'
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
-import { BlockPublicAccess, Bucket } from 'aws-cdk-lib/aws-s3'
-import { CloudFrontWebDistribution, OriginAccessIdentity, PriceClass, ViewerProtocolPolicy } from 'aws-cdk-lib/aws-cloudfront'
+import { BlockPublicAccess, Bucket, BucketEncryption } from 'aws-cdk-lib/aws-s3'
+import { CachePolicy, Distribution, PriceClass, ViewerProtocolPolicy } from 'aws-cdk-lib/aws-cloudfront'
 import { ServicePrincipal } from 'aws-cdk-lib/aws-iam'
+import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins'
 
 // Environment variables.
 // Read from .env file.
@@ -79,53 +80,27 @@ export class AuthExampleCdkStack extends Stack {
       const bucket = new Bucket(this, CLIENT_S3_BUCKET, {
         bucketName: CLIENT_S3_BUCKET,
         removalPolicy: RemovalPolicy.DESTROY, // Only for testing purposes
-        websiteIndexDocument: 'index.html',
-        websiteErrorDocument: 'index.html',
         blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+        encryption: BucketEncryption.S3_MANAGED,
         autoDeleteObjects: true,
       })
 
-      const cloudFrontOAI = new OriginAccessIdentity(this, CLIENT_CLOUDFRONT_DISTRIBUTION + 'OAI')
-
-      const cloudFrontDistribution = new CloudFrontWebDistribution(this, CLIENT_CLOUDFRONT_DISTRIBUTION, {
+      const cloudFrontDistribution = new Distribution(this, CLIENT_CLOUDFRONT_DISTRIBUTION, {
         enabled: true,
         defaultRootObject: 'index.html',
-        originConfigs: [{
-          s3OriginSource: {
-            s3BucketSource: bucket,
-            originAccessIdentity: cloudFrontOAI,
-            // originPath: '/index.html',
-          },
-          behaviors: [{
-            isDefaultBehavior: true,
-            defaultTtl: Duration.seconds(3600), // Set TTL to one hour (adjust as needed)
-            minTtl: Duration.seconds(300), // Set minimum TTL
-            maxTtl: Duration.seconds(86400), // Set maximum TTL
-            compress: true, // Enable compression
-          }],
-        }],
-        errorConfigurations: [
-          {
-            errorCode: 403,
-            errorCachingMinTtl: 300,
-            responseCode: 200,
-            responsePagePath: '/index.html',
-          },
-          {
-            errorCode: 404,
-            errorCachingMinTtl: 300,
-            responseCode: 200,
-            responsePagePath: '/index.html',
-          },
+        defaultBehavior: {
+          origin: new S3Origin(bucket),
+          // originRequestPolicy,
+          viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          cachePolicy: CachePolicy.CACHING_OPTIMIZED,
+        },
+        errorResponses: [
+          { httpStatus: 403, responseHttpStatus: 200, responsePagePath: '/' /** ttl: Duration.seconds(60) */  },
+          { httpStatus: 404, responseHttpStatus: 200, responsePagePath: '/' /** ttl: Duration.seconds(60) */  },
         ],
-        viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-        // enableLogging: true, // Enable access logs
-        // logBucket: myLogBucket, // Specify the S3 bucket for access logs
+        priceClass: PriceClass.PRICE_CLASS_100,
         comment: CLIENT_CLOUDFRONT_DISTRIBUTION,
-        priceClass: PriceClass.PRICE_CLASS_100, // Use the lowest price class
       })
-
-      bucket.grantRead(cloudFrontOAI.grantPrincipal)
 
       prodClientHost = `https://${cloudFrontDistribution.distributionDomainName}`
 
