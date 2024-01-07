@@ -82,6 +82,12 @@ Lambda dependencies are updated here. Once updated, be sure to `npm install` and
 ### Nodemailer setup
 Follow [these instructions](https://rupali.hashnode.dev/send-emails-in-nodejs-using-nodemailer-gmail-oauth2) on how to set up your Google account to be able to be used by Nodemailer.
 
+Particularly the sections:
+- `Set up your project`
+- `Configure oAuth consent screen`
+- `Create credentials for your project`
+- `Get the refresh and access token`
+
 Note down the `client id`, `client secret` and `refresh token` for the [environment configuration](#configuration).
 
 ### Google SSO setup
