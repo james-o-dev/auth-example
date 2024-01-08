@@ -61,7 +61,7 @@ const ProfileSidebar = ({ onSidebarItemClick }: { onSidebarItemClick: (item: Pro
   }
 
   return (
-    <>
+    <nav>
       {/* Responsive */}
       <div className={`${sidebarSharedClassName} sm:hidden left-0 w-8 top-14 pt-2 text-center`} onClick={() => setSidebarOpened(true)}>
         <span>⚙</span>
@@ -87,7 +87,7 @@ const ProfileSidebar = ({ onSidebarItemClick }: { onSidebarItemClick: (item: Pro
           </div>
         ))}
       </div>
-    </>
+    </nav>
   )
 }
 
@@ -518,7 +518,7 @@ const Profile = () => {
 
       <ProfileSidebar onSidebarItemClick={onSidebarItemClick} />
 
-      <div className='flex-1 p-4 ml-4 sm:ml-52'>
+      <main className='flex-1 p-4 ml-4 sm:ml-52'>
         <h1>Profile</h1>
 
         <hr />
@@ -526,7 +526,7 @@ const Profile = () => {
 
         {elementDisplayed}
         {!elementDisplayed && defaultLanding}
-      </div>
+      </main>
     </div>
   )
 }
