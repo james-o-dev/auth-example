@@ -34,7 +34,7 @@ describe('Verify Email Spec', () => {
       cy.get('input[name="code"]').type(code)
       cy.get('form button').contains('Verify email').click()
       // Successful.
-      cy.get('div').contains('Your email has been verified').should('exist')
+      cy.get('main p').contains('Your email has been verified. ✅').should('exist')
 
       // Re-verify to reset and be ready for the next test.
       cy.get('button').contains('Re-verify').click()
