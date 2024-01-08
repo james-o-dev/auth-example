@@ -1,4 +1,4 @@
-import { cleanUpTests, generateUser, getTestUser, signIn } from '../support/shared'
+import { cleanUpTests, generateUser, getTestUser } from '../support/shared'
 
 describe('Verify Email Spec', () => {
   let userAccount
@@ -6,7 +6,7 @@ describe('Verify Email Spec', () => {
   beforeEach(() => {
     cy.intercept('GET', '/auth/verify-email/request').as('verifyEmailRequest')
     const { email, password } = userAccount
-    signIn(email, password)
+    cy.signIn(email, password)
     cy.get('div.fixed button').contains('Verify email').click()
   })
 

@@ -40,3 +40,30 @@ Cypress.Commands.add('signUp', (email, password) => {
     Cypress.env('accessToken', localStorage.accessToken)
   })
 })
+
+/**
+ * Handle sign in.
+ *
+ * @param {string} email
+ * @param {string} password
+ * @param {string} [totp]
+ */
+Cypress.Commands.add('signIn', (email, password, totp) => {
+  cy.visit('/sign-in')
+  cy.get('input[name="email"]').type(email)
+  cy.get('input[name="password"]').type(password)
+
+  cy.get('button').contains('Sign In').click()
+
+  if (totp) {
+    cy.get('input[name="totp"]').type(totp)
+    cy.get('button').contains('Sign In').click()
+  }
+
+  cy.get('h1').contains('Profile').should('exist')
+
+  cy.getAllLocalStorage().then(async (result) => {
+    const localStorage = result[Cypress.env('DEV_CLIENT_HOST')]
+    Cypress.env('accessToken', localStorage.accessToken)
+  })
+})

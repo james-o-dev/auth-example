@@ -1,4 +1,4 @@
-import { cleanUpTests, generateUser, signIn } from '../support/shared'
+import { cleanUpTests, generateUser } from '../support/shared'
 
 describe('Change Password Spec', () => {
   let userAccount
@@ -14,7 +14,7 @@ describe('Change Password Spec', () => {
 
   const fillSignInForm = () => {
     const { email, password } = userAccount
-    signIn(email, password)
+    cy.signIn(email, password)
   }
 
   before(() => {
