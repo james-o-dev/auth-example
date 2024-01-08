@@ -446,13 +446,13 @@ const TotpSection = () => {
       <div>
         Scan this with your OTP generator app of choice:
         <br />
-        {toggleTotpContent && totpAdded ? <img className='border rounded p-1 bg-white' src={qrcode} /> : <div><em>**QR CODE HIDDEN**</em></div>}
+        {toggleTotpContent && totpAdded ? <img id='totp-qrcode' className='border rounded p-1 bg-white' src={qrcode} /> : <div><em>**QR CODE HIDDEN**</em></div>}
       </div>
       <br />
       <div>
         <h3>Backup codes x10</h3>
         <div>
-          {toggleTotpContent ? <strong>{backup.join(', ')}</strong> : <em>**BACKUP CODES HIDDEN**</em>}
+          {toggleTotpContent ? <strong id='totp-backup-codes'>{backup.join(', ')}</strong> : <em>**BACKUP CODES HIDDEN**</em>}
           <br />These can be used in place of a generated TOTP. Once one is used, it will be consumed and will not be able to be used again.
           <br />Please store these in a secure location and update your list each time you use a backup code.
           <br />If you are running out of backup codes, you must remove the TOTP and then re-add it again.
