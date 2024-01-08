@@ -62,7 +62,7 @@ describe('Sign In spec', () => {
     clickSignIn()
 
     cy.on('window:alert', (str) => {
-      expect(str).to.contain('Invalid email or password')
+      expect(str.message).to.contain('Invalid email or password')
     })
   })
 })
