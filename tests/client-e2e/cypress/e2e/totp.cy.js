@@ -4,25 +4,6 @@ import { Totp, generateConfig } from 'time2fa'
 describe('TOTP Spec', () => {
   let userAccount
 
-  beforeEach(() => {
-    cy.intercept('PUT', '/auth/totp/add').as('addTotp')
-
-    // Sign in.
-    const { email, password } = userAccount
-    cy.signIn(email, password)
-
-    cy.get('nav button').contains('Two-factor auth').click()
-  })
-
-  before(() => {
-    cy.visit('/')
-
-    userAccount = generateUser()
-    const { email, password } = userAccount
-    cy.signUp(email, password)
-    cy.get('header a').contains('Sign out').click()
-  })
-
   after(async () => {
     await cleanUpTests()
   })
@@ -34,6 +15,16 @@ describe('TOTP Spec', () => {
   }
 
   it('Add/activate/remove TOTP', () => {
+    cy.intercept('PUT', '/auth/totp/add').as('addTotp')
+    cy.intercept('Post', '/auth/sign-in').as('signIn')
+
+    cy.visit('/')
+
+    userAccount = generateUser()
+    const { email, password } = userAccount
+    cy.signUp(email, password)
+
+    cy.get('nav button').contains('Two-factor auth').click()
     cy.get('main button').contains('Add TOTP').click()
 
     cy.wait('@addTotp').then(async () => {
@@ -70,6 +61,7 @@ describe('TOTP Spec', () => {
       // Attempt to use the wrong code.
       cy.get('input[name="totp"]').type('totp')
       cy.get('button').contains('Sign In').click()
+      cy.wait('@signIn')
 
       // Then attempt the correct one.
       // Get a OTP code.
@@ -90,5 +82,29 @@ describe('TOTP Spec', () => {
       cy.get('b').contains('No ❌').should('exist')
       cy.get('main button').contains('Add TOTP').should('exist')
     })
+  })
+
+  it('Non-activated TOTP should not be applied', () => {
+    cy.visit('/')
+    const newUser = generateUser()
+    const { email, password } = newUser
+    cy.signUp(email, password)
+
+    cy.get('nav button').contains('Two-factor auth').click()
+    cy.get('main button').contains('Add TOTP').click()
+
+    // Show the TOTP content.
+    cy.get('main button').contains('Show').click()
+
+    // Check TOTP related elements are shown.
+    cy.get('main img#totp-qrcode').should('exist')
+    cy.get('main strong#totp-backup-codes').should('exist')
+
+    // Sign out.
+    cy.get('header a').contains('Sign out').click()
+
+    // Sign in again - it should allow signing in without a TOTP.
+    cy.signIn(email, password)
+    cy.get('h1').contains('Profile').should('exist')
   })
 })
