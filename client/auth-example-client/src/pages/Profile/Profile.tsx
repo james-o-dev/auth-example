@@ -254,7 +254,6 @@ const VerifyEmail = () => {
     setVerifying(true)
     try {
       await verifyEmailConfirm(verificationCode)
-      // alert(verifyEmailConfirmResponse)
       setEmailVerified(true)
     } catch (error) {
       alert((error as Error).message || 'Verification unsuccessful; Please try again.')
@@ -297,7 +296,7 @@ const VerifyEmail = () => {
           <FormButton disabled={disableActions} onClick={onSendVerificationEmail} text='Send verification email' isSubmitting={sendingVerificationEmail} isSubmittingText='Sending verification email...' primary={true} />
           <br />
           <br />
-          <FormInput type='text' name='email' required value={verificationCode} setValue={setVerificationCode} label='Verification code' />
+          <FormInput type='text' name='code' required value={verificationCode} setValue={setVerificationCode} label='Verification code' />
           <br />
           <FormButton text='Verify email' isSubmittingText='Verifying...' disabled={disableActions} isSubmitting={sendingVerificationEmail} type='submit' primary={true} />
         </form>
