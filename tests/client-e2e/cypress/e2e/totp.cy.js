@@ -16,7 +16,7 @@ describe('TOTP Spec', () => {
 
   it('Add/activate/remove TOTP', () => {
     cy.intercept('PUT', '/auth/totp/add').as('addTotp')
-    cy.intercept('Post', '/auth/sign-in').as('signIn')
+    cy.intercept('POST', '/auth/sign-in').as('signIn')
 
     cy.visit('/')
 

@@ -31,6 +31,7 @@ describe('Google SSO Spec', () => {
     let code
 
     cy.intercept('PUT', '/auth/totp/add').as('addTotp')
+    cy.intercept('POST', '/auth/sso/google/callback').as('googleSSOCallback')
 
     const { email } = generateUser()
     const encoded = encodeURIComponent(email)
@@ -77,6 +78,7 @@ describe('Google SSO Spec', () => {
         // Submit wrong code.
         cy.get('input[name="totp"]').type('code')
         cy.get('button').contains('Submit TOTP').click()
+        cy.wait('@googleSSOCallback')
 
         // Submit correct code.
         code = generateOtp(secret)
@@ -84,6 +86,7 @@ describe('Google SSO Spec', () => {
         cy.get('input[name="totp"]').type(code)
         cy.get('button').contains('Submit TOTP').click()
 
+        // Successfully signed in.
         cy.get('h1').contains('Profile').should('exist')
       })
     })
