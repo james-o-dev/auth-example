@@ -1,4 +1,4 @@
-import { generateUser } from '../support/shared'
+import { cleanUpTests, generateUser } from '../support/shared'
 
 describe('Change Password Spec', () => {
   let userAccount
@@ -30,6 +30,9 @@ describe('Change Password Spec', () => {
     cy.get('header a').contains('Sign out').click()
   })
 
+  after(async () => {
+    await cleanUpTests()
+  })
 
   it('passes', () => {
     const { password: newPassword } = generateUser()
