@@ -339,14 +339,15 @@ export const useGoogleSSO = async () => {
  * @param {string} code - Code provided by the Google SSO callback.
  * @param {string} [totpInput] - Two-factor authentication code.
  * @param {string} [ssoToken] - Temporary token used during SSO and TOTP.
+ * @param {string} [test] - Used during testing.
  */
-export const googleSSOCallback = async (code: string, totpInput?: string, ssoToken?: string) => {
+export const googleSSOCallback = async (code: string, totpInput?: string, ssoToken?: string, test?: string) => {
   try {
     // Send a POST request to the sign-in endpoint with user credentials.
     const successResponse = await makeCommonApiRequest({
       endpoint: '/auth/sso/google/callback',
       method: 'POST',
-      body: { code, totpInput, ssoToken },
+      body: { code, totpInput, ssoToken, test },
       includeCredentials: false,
       responseType: 'json',
     })

@@ -39,10 +39,11 @@ const GoogleSSOCallback = () => {
     // Access the query string parameters
     const queryParams = new URLSearchParams(location.search)
     const code = queryParams.get('code') as string
+    const test = queryParams.get('test') as string
 
     setIsLoading(true)
     try {
-      const response = await googleSSOCallback(code, totpInput, ssoToken)
+      const response = await googleSSOCallback(code, totpInput, ssoToken, test)
       if (response.totpRequired) {
         setTotpRequired(true)
         setSsoToken(response.ssoToken)
