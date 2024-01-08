@@ -72,9 +72,11 @@ Jest will run all the test cases and provide you with a detailed report.
 
 ### Client
 
+Firstly, the local client must already be running. To do so, run `npm run dev` in the [client project](./../client/auth-example-client/).
+
 Run `npm run cypress:open` to open the Cypress interface, where you can run tests individually.
 
-Run `npm run cypress:run` to run all tests in headless mode.
+Or, run `npm run cypress:run` to run all tests in headless mode.
 
 ## Project Structure
 
