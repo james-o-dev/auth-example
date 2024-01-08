@@ -40,3 +40,21 @@ export const getTestUser = async () => {
   const data = await response.json()
   return data
 }
+
+/**
+ * Handle sign in.
+ *
+ * @param {string} email
+ * @param {string} password
+ * @param {string} [totp]
+ */
+export const signIn = (email, password, totp) => {
+  cy.visit('/sign-in')
+  cy.get('input[name="email"]').type(email)
+  cy.get('input[name="password"]').type(password)
+  cy.get('button').contains('Sign In').click()
+
+  if (totp) {
+    // TODO handle sign in with TOTP.
+  }
+}
