@@ -46,19 +46,18 @@ Cypress.Commands.add('signUp', (email, password) => {
  *
  * @param {string} email
  * @param {string} password
- * @param {string} [totp]
  */
-Cypress.Commands.add('signIn', (email, password, totp) => {
+Cypress.Commands.add('signIn', (email, password) => {
   cy.visit('/sign-in')
   cy.get('input[name="email"]').type(email)
   cy.get('input[name="password"]').type(password)
 
   cy.get('button').contains('Sign In').click()
 
-  if (totp) {
-    cy.get('input[name="totp"]').type(totp)
-    cy.get('button').contains('Sign In').click()
-  }
+  // if (totp) {
+  //   cy.get('input[name="totp"]').type(totp)
+  //   cy.get('button').contains('Sign In').click()
+  // }
 
   cy.get('h1').contains('Profile').should('exist')
 
