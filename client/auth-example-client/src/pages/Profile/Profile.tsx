@@ -283,6 +283,7 @@ const VerifyEmail = () => {
       alert((error as Error).message || 'Unable to send verification email; Please try again.')
     } finally {
       setSendingVerificationEmail(false)
+      setVerificationCode('')
     }
   }
 
