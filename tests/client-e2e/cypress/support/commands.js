@@ -34,4 +34,9 @@ Cypress.Commands.add('signUp', (email, password) => {
   cy.get('button').contains('Sign Up').click()
 
   cy.get('h1').contains('Profile').should('exist')
+
+  cy.getAllLocalStorage().then(async (result) => {
+    const localStorage = result[Cypress.env('DEV_CLIENT_HOST')]
+    Cypress.env('accessToken', localStorage.accessToken)
+  })
 })
