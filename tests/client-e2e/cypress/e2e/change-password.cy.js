@@ -8,17 +8,14 @@ describe('Change Password Spec', () => {
     cy.visit('/sign-in')
     fillSignInForm()
 
-    // Switch to change password.
-    signInButton()
+    // Switch to change password in profile.
+    cy.get('div.fixed button').contains('Change password').click()
   })
 
   const fillSignInForm = () => {
     cy.get('input[name="email"]').type(userAccount.email)
     cy.get('input[name="password"]').type(userAccount.password)
     cy.get('button').contains('Sign In').click()
-  }
-  const signInButton = () => {
-    cy.get('div.fixed button').contains('Change password').click()
   }
 
   before(() => {
