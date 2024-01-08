@@ -1,7 +1,7 @@
 import { cleanUpTests, generateUser, getTestUser } from '../support/shared'
 import { Totp, generateConfig } from 'time2fa'
 
-describe('Change Password Spec', () => {
+describe('TOTP Spec', () => {
   let userAccount
 
   beforeEach(() => {
