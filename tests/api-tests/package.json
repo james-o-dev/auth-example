@@ -19,7 +19,6 @@
   "dependencies": {
     "@types/jest": "^29.5.11",
     "dotenv": "^16.3.1",
-    "save-dev": "^0.0.1-security",
     "time2fa": "^1.2.2"
   }
 }
